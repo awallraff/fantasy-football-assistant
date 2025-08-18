@@ -196,7 +196,7 @@ export function PlayerSearch({ rankingSystems }: PlayerSearchProps) {
         )}
 
         {searchTerm && searchResults.length === 0 && (
-          <div className="text-center py-8 text-gray-500">No players found matching "{searchTerm}"</div>
+          <div className="text-center py-8 text-gray-500">No players found matching &quot;{searchTerm}&quot;</div>
         )}
 
         {rankingSystems.length === 0 && (

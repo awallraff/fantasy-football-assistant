@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,11 @@ interface EnhancedTransaction extends SleeperTransaction {
 export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentActivityProps) {
   const [transactions, setTransactions] = useState<EnhancedTransaction[]>([])
   const [loading, setLoading] = useState(false)
-  const { players, isLoading: playersLoading } = useContext(PlayerDataContext)
+  const context = useContext(PlayerDataContext)
+  if (!context) {
+    throw new Error('RecentActivity must be used within a PlayerDataProvider')
+  }
+  const { players, isLoading: playersLoading } = context
 
   const calculatePlayerValue = (playerId: string): number => {
     const player = players[playerId]
@@ -151,7 +155,7 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
     return Math.min(Math.max(weeksSinceStart + 1, 1), 18) // NFL regular season is 18 weeks
   }
 
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     setLoading(true)
     try {
       if (!leagueId) {
@@ -236,13 +240,13 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
     } finally {
       setLoading(false)
     }
-  }
+  }, [leagueId, players, playersLoading])
 
   useEffect(() => {
     if (!playersLoading && Object.keys(players).length > 0) {
       loadTransactions()
     }
-  }, [leagueId, playersLoading, players])
+  }, [leagueId, playersLoading, players, loadTransactions])
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {

@@ -131,7 +131,7 @@ class PlayerService {
       injury_impact: injuryImpact,
       trend,
       trade_value: tradeValue,
-      fantasy_outlook: this.generateFantasyOutlook(player, news, stats, trend),
+      fantasy_outlook: this.generateFantasyOutlook(player, news, stats),
     }
   }
 
@@ -244,7 +244,6 @@ class PlayerService {
     player: SleeperPlayer,
     news: PlayerNews[],
     stats: PlayerStats[],
-    trend: "up" | "down" | "stable",
   ): string {
     if (stats.length === 0 && news.length === 0) {
       return `${player.full_name} - No recent performance data or news available.`

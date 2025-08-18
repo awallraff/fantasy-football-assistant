@@ -18,12 +18,18 @@ interface RankingsImporterProps {
 }
 
 export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string
+    description: string
+    source: string
+    season: string
+    scoringFormat: "ppr" | "standard" | "half-ppr"
+  }>({
     name: "",
     description: "",
     source: "",
     season: "2024",
-    scoringFormat: "ppr" as const,
+    scoringFormat: "ppr",
   })
   const [file, setFile] = useState<File | null>(null)
   const [importing, setImporting] = useState(false)
@@ -194,7 +200,7 @@ export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
         }))
       }
       throw new Error("JSON must be an array of player objects")
-    } catch (err) {
+    } catch {
       throw new Error("Invalid JSON format")
     }
   }
@@ -234,6 +240,7 @@ export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
         source: formData.source,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
         season: formData.season,
         scoringFormat: formData.scoringFormat,
         positions,
@@ -339,7 +346,7 @@ export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
               <Label htmlFor="scoring">Scoring Format</Label>
               <Select
                 value={formData.scoringFormat}
-                onValueChange={(value: any) => setFormData({ ...formData, scoringFormat: value })}
+                onValueChange={(value: string) => setFormData({ ...formData, scoringFormat: value as "ppr" | "standard" | "half-ppr" })}
               >
                 <SelectTrigger>
                   <SelectValue />

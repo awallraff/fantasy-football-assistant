@@ -36,10 +36,10 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-600" />
+              <Users className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{league.total_rosters}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Teams</p>
+                <p className="text-sm text-muted-foreground">Teams</p>
               </div>
             </div>
           </CardContent>
@@ -48,10 +48,10 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              <Target className="h-5 w-5 text-green-600" />
+              <Target className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{avgPoints.toFixed(1)}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Points</p>
+                <p className="text-sm text-muted-foreground">Avg Points</p>
               </div>
             </div>
           </CardContent>
@@ -60,10 +60,10 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              <Calendar className="h-5 w-5 text-purple-600" />
+              <Calendar className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{league.season}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Season</p>
+                <p className="text-sm text-muted-foreground">Season</p>
               </div>
             </div>
           </CardContent>
@@ -72,10 +72,10 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              <Trophy className="h-5 w-5 text-orange-600" />
+              <Trophy className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{league.settings.playoff_teams || "N/A"}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Playoff Teams</p>
+                <p className="text-sm text-muted-foreground">Playoff Teams</p>
               </div>
             </div>
           </CardContent>
@@ -94,15 +94,15 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
               <h4 className="font-medium">Basic Settings</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Teams:</span>
+                  <span className="text-muted-foreground">Teams:</span>
                   <span>{league.total_rosters}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Playoff Teams:</span>
+                  <span className="text-muted-foreground">Playoff Teams:</span>
                   <span>{league.settings.playoff_teams || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Draft Rounds:</span>
+                  <span className="text-muted-foreground">Draft Rounds:</span>
                   <span>{league.settings.draft_rounds || "N/A"}</span>
                 </div>
               </div>
@@ -127,7 +127,7 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
                   .slice(0, 6)
                   .map(([key, value]) => (
                     <div key={key} className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">
+                      <span className="text-muted-foreground">
                         {key.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}:
                       </span>
                       <span>{value}</span>
@@ -145,15 +145,15 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+                <TrendingUp className="h-5 w-5 text-primary" />
                 Highest Scorer
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <p className="text-2xl font-bold">{highestScorer.settings.fpts?.toFixed(1) || "0"} pts</p>
-                <p className="text-gray-600 dark:text-gray-400">{getOwnerName(highestScorer.owner_id)}</p>
-                <div className="text-sm text-gray-500">
+                <p className="text-muted-foreground">{getOwnerName(highestScorer.owner_id)}</p>
+                <div className="text-sm text-muted-foreground">
                   Record: {highestScorer.settings.wins}-{highestScorer.settings.losses}
                   {highestScorer.settings.ties > 0 && `-${highestScorer.settings.ties}`}
                 </div>
@@ -164,15 +164,15 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5 text-red-600" />
+                <TrendingDown className="h-5 w-5 text-destructive" />
                 Lowest Scorer
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <p className="text-2xl font-bold">{lowestScorer.settings.fpts?.toFixed(1) || "0"} pts</p>
-                <p className="text-gray-600 dark:text-gray-400">{getOwnerName(lowestScorer.owner_id)}</p>
-                <div className="text-sm text-gray-500">
+                <p className="text-muted-foreground">{getOwnerName(lowestScorer.owner_id)}</p>
+                <div className="text-sm text-muted-foreground">
                   Record: {lowestScorer.settings.wins}-{lowestScorer.settings.losses}
                   {lowestScorer.settings.ties > 0 && `-${lowestScorer.settings.ties}`}
                 </div>

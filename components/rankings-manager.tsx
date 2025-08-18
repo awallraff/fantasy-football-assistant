@@ -23,7 +23,6 @@ export function RankingsManager({
   selectedSystem,
   onSelectSystem,
   onDeleteSystem,
-  onUpdateSystem,
 }: RankingsManagerProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [positionFilter, setPositionFilter] = useState<string>("all")
@@ -156,7 +155,7 @@ export function RankingsManager({
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+              <Select value={sortBy} onValueChange={(value: "rank" | "name" | "position" | "team") => setSortBy(value)}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>

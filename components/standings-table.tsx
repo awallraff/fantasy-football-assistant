@@ -28,11 +28,11 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="h-4 w-4 text-yellow-500" />
+        return <Trophy className="h-4 w-4 text-primary" />
       case 2:
-        return <Medal className="h-4 w-4 text-gray-400" />
+        return <Medal className="h-4 w-4 text-muted-foreground" />
       case 3:
-        return <Award className="h-4 w-4 text-amber-600" />
+        return <Award className="h-4 w-4 text-primary" />
       default:
         return <span className="w-4 text-center text-sm font-medium">{rank}</span>
     }
@@ -63,7 +63,7 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
       <CardContent>
         <div className="space-y-2">
           {/* Header */}
-          <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-600 dark:text-gray-400 pb-2 border-b">
+          <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground pb-2 border-b border-border">
             <div className="col-span-1">Rank</div>
             <div className="col-span-4">Team</div>
             <div className="col-span-2">Record</div>
@@ -83,14 +83,14 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
             return (
               <div
                 key={roster.roster_id}
-                className="grid grid-cols-12 gap-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg px-2"
+                className="grid grid-cols-12 gap-4 py-3 text-sm hover:bg-accent rounded-lg px-2"
               >
                 <div className="col-span-1 flex items-center">{getRankIcon(rank)}</div>
 
                 <div className="col-span-4 flex items-center">
                   <div>
                     <p className="font-medium">{getOwnerName(roster.owner_id)}</p>
-                    <p className="text-xs text-gray-500">{winPercentage.toFixed(1)}% win rate</p>
+                    <p className="text-xs text-muted-foreground">{winPercentage.toFixed(1)}% win rate</p>
                   </div>
                 </div>
 
@@ -118,7 +118,7 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
         {/* Playoff Line Indicator */}
         {league.settings.playoff_teams && (
           <div className="mt-4 pt-4 border-t">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Top {league.settings.playoff_teams} teams make playoffs
             </p>
           </div>

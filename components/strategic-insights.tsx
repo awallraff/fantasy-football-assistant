@@ -31,7 +31,7 @@ interface StrategicAnalysis {
   riskFactors: string[]
 }
 
-export function StrategicInsights({ league, userId }: StrategicInsightsProps) {
+export function StrategicInsights({}: StrategicInsightsProps) {
   // Mock strategic analysis - in real app, this would use AI/ML algorithms
   const insights: Insight[] = [
     {

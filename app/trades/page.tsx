@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRightLeft, TrendingUp, Users, Target } from "lucide-react"
+import Link from "next/link"
 import { TradeHistory } from "@/components/trade-history"
 import { TradeEvaluator } from "@/components/trade-evaluator"
 import { MarketTrends } from "@/components/market-trends"
@@ -16,32 +18,53 @@ export default function TradesPage() {
   const [user, setUser] = useState<SleeperUser | null>(null)
   const [leagues, setLeagues] = useState<SleeperLeague[]>([])
   const [selectedLeague, setSelectedLeague] = useState<SleeperLeague | null>(null)
+  const { getItem, isClient } = useSafeLocalStorage()
 
   // Load data from localStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem("sleeper_user")
-    const savedLeagues = localStorage.getItem("sleeper_leagues")
+    if (!isClient) return
+
+    const savedUser = getItem("sleeper_user")
+    const savedLeagues = getItem("sleeper_leagues")
 
     if (savedUser && savedLeagues) {
-      setUser(JSON.parse(savedUser))
-      const leagueData = JSON.parse(savedLeagues)
-      setLeagues(leagueData)
-      if (leagueData.length > 0) {
-        setSelectedLeague(leagueData[0])
+      try {
+        setUser(JSON.parse(savedUser))
+        const leagueData = JSON.parse(savedLeagues)
+        setLeagues(leagueData)
+        if (leagueData.length > 0) {
+          setSelectedLeague(leagueData[0])
+        }
+      } catch (e) {
+        console.error("Failed to load trade data:", e)
       }
     }
-  }, [])
+  }, [isClient, getItem])
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!user || leagues.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6">
               <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No leagues connected</p>
+                <p className="text-muted-foreground mb-4">No leagues connected</p>
                 <Button asChild>
-                  <a href="/">Connect Account</a>
+                  <Link href="/">Connect Account</Link>
                 </Button>
               </div>
             </CardContent>
@@ -148,7 +171,7 @@ export default function TradesPage() {
             </TabsList>
 
             <TabsContent value="history">
-              <TradeHistory leagueId={selectedLeague.league_id} />
+              <TradeHistory leagueId={selectedLeague.league_id} userId={user.user_id} />
             </TabsContent>
 
             <TabsContent value="evaluator">

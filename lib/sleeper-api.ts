@@ -25,7 +25,7 @@ export interface SleeperLeague {
     playoff_teams?: number
     squads?: number
     divisions?: number
-    [key: string]: any
+    [key: string]: unknown
   }
   scoring_settings: {
     [key: string]: number
@@ -112,6 +112,16 @@ class SleeperAPI {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
+    // Merge signals if one already exists
+    const existingSignal = options.signal
+    if (existingSignal) {
+      if (existingSignal.aborted) {
+        clearTimeout(timeoutId)
+        throw new Error("Request already aborted")
+      }
+      existingSignal.addEventListener('abort', () => controller.abort())
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -119,15 +129,26 @@ class SleeperAPI {
         headers: {
           Accept: "application/json",
           "User-Agent": "Fantasy-Analytics-App",
+          "Cache-Control": "public, max-age=300", // 5 minute cache
           ...options.headers,
         },
       })
       clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       return response
     } catch (error) {
       clearTimeout(timeoutId)
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("Request timed out")
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          throw new Error("Request timed out")
+        }
+        if (error.message.includes("Failed to fetch")) {
+          throw new Error("Network error - please check your connection")
+        }
       }
       throw error
     }
@@ -203,10 +224,12 @@ class SleeperAPI {
     }
   }
 
-  async getLeagueRosters(leagueId: string): Promise<SleeperRoster[]> {
+  async getLeagueRosters(leagueId: string, options: RequestInit = {}): Promise<SleeperRoster[]> {
     try {
-      const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/rosters`)
-      if (!response.ok) return []
+      if (!leagueId?.trim()) {
+        throw new Error("Invalid league ID")
+      }
+      const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/rosters`, options)
       return await response.json()
     } catch (error) {
       console.error("Error fetching league rosters:", error)
@@ -214,10 +237,12 @@ class SleeperAPI {
     }
   }
 
-  async getLeagueUsers(leagueId: string): Promise<SleeperUser[]> {
+  async getLeagueUsers(leagueId: string, options: RequestInit = {}): Promise<SleeperUser[]> {
     try {
-      const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/users`)
-      if (!response.ok) return []
+      if (!leagueId?.trim()) {
+        throw new Error("Invalid league ID")
+      }
+      const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/users`, options)
       return await response.json()
     } catch (error) {
       console.error("Error fetching league users:", error)
@@ -280,7 +305,7 @@ class SleeperAPI {
     }
   }
 
-  async getTradedPicks(leagueId: string): Promise<any[]> {
+  async getTradedPicks(leagueId: string): Promise<unknown[]> {
     try {
       const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/traded_picks`)
       if (!response.ok) return []
@@ -349,17 +374,30 @@ class SleeperAPI {
   }
 
   // Utility methods
-  async getLeagueWithDetails(leagueId: string) {
-    const [league, rosters, users] = await Promise.all([
-      this.getLeague(leagueId),
-      this.getLeagueRosters(leagueId),
-      this.getLeagueUsers(leagueId),
-    ])
+  async getLeagueWithDetails(leagueId: string, options: RequestInit = {}): Promise<{
+    league: SleeperLeague | null;
+    rosters: SleeperRoster[];
+    users: SleeperUser[];
+  }> {
+    try {
+      const [league, rosters, users] = await Promise.all([
+        this.getLeague(leagueId),
+        this.getLeagueRosters(leagueId, options),
+        this.getLeagueUsers(leagueId, options),
+      ])
 
-    return {
-      league,
-      rosters,
-      users,
+      return {
+        league,
+        rosters,
+        users,
+      }
+    } catch (error) {
+      console.error("Error fetching league details:", error)
+      return {
+        league: null,
+        rosters: [],
+        users: [],
+      }
     }
   }
 
@@ -378,7 +416,7 @@ class SleeperAPI {
     }
   }
 
-  async getTradeHistoryBySeason(leagueId: string, season: string): Promise<SleeperTransaction[]> {
+  async getTradeHistoryBySeason(leagueId: string): Promise<SleeperTransaction[]> {
     try {
       // Get all transactions for the league (no specific week)
       const transactions = await this.getTransactions(leagueId)

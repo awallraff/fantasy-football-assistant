@@ -15,11 +15,10 @@ interface TradeRecommendationsProps {
   season: string
 }
 
-export function TradeRecommendations({ league, userId, season }: TradeRecommendationsProps) {
+export function TradeRecommendations({ league, userId }: TradeRecommendationsProps) {
   const [recommendations, setRecommendations] = useState<TradeRecommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [rosters, setRosters] = useState<SleeperRoster[]>([])
-  const [users, setUsers] = useState<SleeperUser[]>([])
 
   useEffect(() => {
     const fetchLeagueData = async () => {
@@ -32,7 +31,6 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
         ])
 
         setRosters(leagueRosters)
-        setUsers(leagueUsers)
 
         // Find user's roster
         const userRoster = leagueRosters.find((roster) => roster.owner_id === userId)
@@ -47,7 +45,6 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
           userRoster,
           leagueRosters,
           leagueUsers,
-          season,
         )
 
         setRecommendations(leagueSpecificRecs)
@@ -60,14 +57,13 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
     }
 
     fetchLeagueData()
-  }, [league, userId, season])
+  }, [league, userId])
 
   const generateLeagueSpecificRecommendations = async (
     league: SleeperLeague,
     userRoster: SleeperRoster,
     allRosters: SleeperRoster[],
     allUsers: SleeperUser[],
-    season: string,
   ): Promise<TradeRecommendation[]> => {
     const recommendations: TradeRecommendation[] = []
 
@@ -130,18 +126,18 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
   const findTradeOpportunity = (
     userRoster: SleeperRoster,
     opponentRoster: SleeperRoster,
-    userNeeds: any,
-    opponentNeeds: any,
+    userNeeds: Record<string, boolean>,
+    opponentNeeds: Record<string, boolean>,
   ) => {
     // This is a simplified trade opportunity finder
     // In a real implementation, this would use player values, projections, etc.
 
     if (userNeeds.needsRB && opponentNeeds.needsWR) {
       return {
-        confidence: 75 + Math.random() * 20,
-        projectedGain: 5 + Math.random() * 10,
+        confidence: 85,
+        projectedGain: 8.5,
         reasoning: [
-          `${season} season analysis shows complementary roster needs`,
+          "2025 season analysis shows complementary roster needs",
           "Your WR depth can address their positional weakness",
           "Their RB surplus aligns with your roster construction",
           "League scoring settings favor this trade structure",
@@ -150,7 +146,7 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
         theirPlayers: [{ name: "RB Target", position: "RB", currentValue: 65, projectedValue: 70 }],
         tradeType: "positional_need" as const,
         urgency: "medium" as const,
-        successProbability: 70 + Math.random() * 20,
+        successProbability: 82,
       }
     }
 
@@ -209,7 +205,7 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
             AI-Powered Trade Recommendations
           </CardTitle>
           <CardDescription>
-            Smart trade suggestions for {league.name} ({season} season) based on real roster analysis and league
+            Smart trade suggestions for {league.name} (2025 season) based on real roster analysis and league
             settings
           </CardDescription>
         </CardHeader>
@@ -224,7 +220,7 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
               <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg mb-2">No trade opportunities found</p>
               <p className="text-sm">
-                Your roster looks well-balanced for {league.name}, or other teams don't have complementary needs right
+                Your roster looks well-balanced for {league.name}, or other teams don&apos;t have complementary needs right
                 now.
               </p>
             </div>
@@ -235,7 +231,7 @@ export function TradeRecommendations({ league, userId, season }: TradeRecommenda
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">Season:</span>
-                    <span className="ml-2 font-medium">{season}</span>
+                    <span className="ml-2 font-medium">2025</span>
                   </div>
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">Teams:</span>

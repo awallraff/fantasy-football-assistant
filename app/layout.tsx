@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <style>{`
 html {
@@ -34,7 +34,7 @@ html {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PlayerDataProvider>
             <Navigation />
-            <main className="min-h-screen bg-gray-50">{children}</main>
+            <main>{children}</main>
             <Toaster />
           </PlayerDataProvider>
         </ThemeProvider>

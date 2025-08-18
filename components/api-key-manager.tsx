@@ -80,7 +80,7 @@ export function APIKeyManager() {
 
         setConnections((prev) => prev.map((conn) => (conn.name === connection.name ? { ...conn, status } : conn)))
       }
-    } catch (error) {
+    } catch {
       setConnections((prev) =>
         prev.map((conn) => (conn.name === connection.name ? { ...conn, status: "disconnected" } : conn)),
       )

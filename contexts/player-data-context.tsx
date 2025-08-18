@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from "react"
 import type { SleeperPlayer } from "@/lib/sleeper-api"
 import sleeperAPI from "@/lib/sleeper-api"
 import { formatPlayerName, normalizePosition } from "@/lib/player-utils"
@@ -29,7 +29,7 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadPlayerData = async () => {
+  const loadPlayerData = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -46,44 +46,44 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadPlayerData()
-  }, [])
+  }, [loadPlayerData])
 
-  const getPlayerName = (playerId: string): string => {
+  const getPlayerName = useCallback((playerId: string): string => {
     const player = players[playerId]
     if (!player) {
       return `Player ${playerId}`
     }
     return formatPlayerName(player)
-  }
+  }, [players])
 
-  const getPlayer = (playerId: string): SleeperPlayer | null => {
+  const getPlayer = useCallback((playerId: string): SleeperPlayer | null => {
     return players[playerId] || null
-  }
+  }, [players])
 
-  const getPlayerPosition = (playerId: string): string => {
+  const getPlayerPosition = useCallback((playerId: string): string => {
     const player = players[playerId]
     if (!player) {
       return "UNKNOWN"
     }
     return normalizePosition(player.position)
-  }
+  }, [players])
 
-  const getPlayersByPosition = (position: string): SleeperPlayer[] => {
+  const getPlayersByPosition = useCallback((position: string): SleeperPlayer[] => {
     const normalizedPosition = normalizePosition(position)
     return Object.values(players)
       .filter((player) => normalizePosition(player.position) === normalizedPosition)
       .sort((a, b) => formatPlayerName(a).localeCompare(formatPlayerName(b)))
-  }
+  }, [players])
 
-  const refreshPlayerData = async () => {
+  const refreshPlayerData = useCallback(async () => {
     await loadPlayerData()
-  }
+  }, [loadPlayerData])
 
-  const value: PlayerDataContextType = {
+  const value: PlayerDataContextType = useMemo(() => ({
     players,
     isLoading,
     error,
@@ -92,7 +92,7 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
     getPlayerPosition,
     getPlayersByPosition,
     refreshPlayerData,
-  }
+  }), [players, isLoading, error, getPlayerName, getPlayer, getPlayerPosition, getPlayersByPosition, refreshPlayerData])
 
   return <PlayerDataContext.Provider value={value}>{children}</PlayerDataContext.Provider>
 }

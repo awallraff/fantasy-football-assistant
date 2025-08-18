@@ -18,6 +18,7 @@ export interface RankingSystem {
   source: string
   createdAt: string
   updatedAt: string
+  lastUpdated: string
   season: string
   scoringFormat: "standard" | "ppr" | "half-ppr" | "superflex"
   positions: string[]

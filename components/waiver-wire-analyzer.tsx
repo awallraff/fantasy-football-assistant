@@ -34,7 +34,7 @@ interface WaiverTarget {
 
 export function WaiverWireAnalyzer({ league }: WaiverWireAnalyzerProps) {
   const [targets, setTargets] = useState<WaiverTarget[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
 
   // Mock waiver targets
   useEffect(() => {

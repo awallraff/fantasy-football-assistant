@@ -1,16 +1,24 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Users, Trophy } from "lucide-react"
 import { LeagueConnector } from "@/components/league-connector"
+import { useSafeLocalStorage } from "@/hooks/use-local-storage"
+import type { SleeperUser, SleeperLeague } from "@/lib/sleeper-api"
 
 export default function HomePage() {
-  const handleLeaguesConnected = (user: any, leagues: any[]) => {
+  const { setItem, isClient } = useSafeLocalStorage()
+  
+  const handleLeaguesConnected = (user: SleeperUser, leagues: SleeperLeague[]) => {
     try {
       // Save to localStorage for dashboard access
-      localStorage.setItem("sleeper_user", JSON.stringify(user))
-      localStorage.setItem("sleeper_leagues", JSON.stringify(leagues))
+      setItem("sleeper_user", JSON.stringify(user))
+      setItem("sleeper_leagues", JSON.stringify(leagues))
 
       // Redirect to dashboard
-      window.location.href = "/dashboard"
+      if (isClient) {
+        window.location.href = "/dashboard"
+      }
     } catch (error) {
       console.error("Error saving league data:", error)
     }

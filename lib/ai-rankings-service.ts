@@ -81,7 +81,7 @@ export class AIRankingsService {
     // Generate AI-infused combined rankings
     const combinedRankings: PlayerRanking[] = []
 
-    allPlayers.forEach((playerRankings, playerId) => {
+    allPlayers.forEach((playerRankings) => {
       const basePlayer = playerRankings[0]
       const aiRank = this.calculateAIRank(playerRankings, config)
       const aiTier = this.calculateTier(aiRank, basePlayer.position)
@@ -90,8 +90,8 @@ export class AIRankingsService {
         ...basePlayer,
         rank: aiRank,
         tier: aiTier,
-        projectedPoints: this.calculateProjectedPoints(playerRankings, config),
-        notes: this.generateAIInsights(playerRankings, config),
+        projectedPoints: this.calculateProjectedPoints(playerRankings),
+        notes: this.generateAIInsights(playerRankings),
       })
     })
 
@@ -105,6 +105,7 @@ export class AIRankingsService {
       source: "AI Analysis",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
       season: "2025",
       scoringFormat: config.leagueSettings?.scoringFormat || "ppr",
       positions: [...new Set(combinedRankings.map((r) => r.position))],
@@ -161,7 +162,7 @@ export class AIRankingsService {
     return Object.keys(tiers).length + 1
   }
 
-  private calculateProjectedPoints(playerRankings: PlayerRanking[], config: AIRankingConfig): number {
+  private calculateProjectedPoints(playerRankings: PlayerRanking[]): number {
     const projections = playerRankings.filter((r) => r.projectedPoints).map((r) => r.projectedPoints!)
 
     if (projections.length === 0) return 0
@@ -169,7 +170,7 @@ export class AIRankingsService {
     return Math.round(projections.reduce((sum, points) => sum + points, 0) / projections.length)
   }
 
-  private generateAIInsights(playerRankings: PlayerRanking[], config: AIRankingConfig): string {
+  private generateAIInsights(playerRankings: PlayerRanking[]): string {
     const variance = this.calculateVariance(playerRankings.map((r) => r.rank))
     const avgRank = playerRankings.reduce((sum, r) => sum + r.rank, 0) / playerRankings.length
 
@@ -232,8 +233,9 @@ export class AIRankingsService {
       source: source.name,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
       season: "2025",
-      scoringFormat: scoringFormat as any,
+      scoringFormat: scoringFormat as "standard" | "ppr" | "half-ppr" | "superflex",
       positions,
       rankings,
       metadata: {

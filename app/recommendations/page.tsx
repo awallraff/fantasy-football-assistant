@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Brain, Target, TrendingUp, Users } from "lucide-react"
+import Link from "next/link"
 import { TradeRecommendations } from "@/components/trade-recommendations"
 import { LineupOptimizer } from "@/components/lineup-optimizer"
 import { WaiverWireAnalyzer } from "@/components/waiver-wire-analyzer"
@@ -19,20 +21,27 @@ export default function RecommendationsPage() {
   const [leagues, setLeagues] = useState<SleeperLeague[]>([])
   const [selectedLeague, setSelectedLeague] = useState<SleeperLeague | null>(null)
   const [selectedSeason, setSelectedSeason] = useState<string>("2025")
+  const { getItem, setItem, isClient } = useSafeLocalStorage()
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("sleeper_user")
-    const savedLeagues = localStorage.getItem("sleeper_leagues")
+    if (!isClient) return
+
+    const savedUser = getItem("sleeper_user")
+    const savedLeagues = getItem("sleeper_leagues")
 
     if (savedUser && savedLeagues) {
-      setUser(JSON.parse(savedUser))
-      const leagueData = JSON.parse(savedLeagues)
-      setLeagues(leagueData)
-      if (leagueData.length > 0) {
-        setSelectedLeague(leagueData[0])
+      try {
+        setUser(JSON.parse(savedUser))
+        const leagueData = JSON.parse(savedLeagues)
+        setLeagues(leagueData)
+        if (leagueData.length > 0) {
+          setSelectedLeague(leagueData[0])
+        }
+      } catch (e) {
+        console.error("Failed to load recommendations data:", e)
       }
     }
-  }, [])
+  }, [isClient, getItem])
 
   const refreshLeaguesForSeason = async (season: string) => {
     if (!user) return
@@ -45,7 +54,7 @@ export default function RecommendationsPage() {
       } else {
         setSelectedLeague(null)
       }
-      localStorage.setItem("sleeper_leagues", JSON.stringify(seasonLeagues))
+      setItem("sleeper_leagues", JSON.stringify(seasonLeagues))
     } catch (error) {
       console.error("Error fetching leagues for season:", error)
     }
@@ -56,14 +65,28 @@ export default function RecommendationsPage() {
     refreshLeaguesForSeason(season)
   }
 
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!user || leagues.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6">
               <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No leagues connected for {selectedSeason} season</p>
+                <p className="text-muted-foreground mb-4">No leagues connected for {selectedSeason} season</p>
                 <div className="space-y-4">
                   <Select value={selectedSeason} onValueChange={handleSeasonChange}>
                     <SelectTrigger>
@@ -75,7 +98,7 @@ export default function RecommendationsPage() {
                     </SelectContent>
                   </Select>
                   <Button asChild>
-                    <a href="/">Connect Account</a>
+                    <Link href="/">Connect Account</Link>
                   </Button>
                 </div>
               </div>
@@ -197,19 +220,19 @@ export default function RecommendationsPage() {
             </TabsContent>
 
             <TabsContent value="lineup">
-              <LineupOptimizer league={selectedLeague} userId={user.user_id} season={selectedSeason} />
+              <LineupOptimizer league={selectedLeague} userId={user.user_id} />
             </TabsContent>
 
             <TabsContent value="waiver">
-              <WaiverWireAnalyzer league={selectedLeague} season={selectedSeason} />
+              <WaiverWireAnalyzer league={selectedLeague} />
             </TabsContent>
 
             <TabsContent value="startsit">
-              <StartSitAdvisor league={selectedLeague} userId={user.user_id} season={selectedSeason} />
+              <StartSitAdvisor league={selectedLeague} userId={user.user_id} />
             </TabsContent>
 
             <TabsContent value="insights">
-              <StrategicInsights league={selectedLeague} userId={user.user_id} season={selectedSeason} />
+              <StrategicInsights league={selectedLeague} userId={user.user_id} />
             </TabsContent>
           </Tabs>
         )}

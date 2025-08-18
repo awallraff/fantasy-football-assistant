@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,8 +26,19 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<SleeperUser | null>(null)
-  const [leagues, setLeagues] = useState<SleeperLeague[]>([])
   const [groupedLeagues, setGroupedLeagues] = useState<GroupedLeague[]>([])
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const { setItem, removeItem } = useSafeLocalStorage()
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      const controller = abortControllerRef.current
+      if (controller) {
+        controller.abort()
+      }
+    }
+  }, [])
 
   const groupLeaguesByName = (leagues: SleeperLeague[]): GroupedLeague[] => {
     const grouped = leagues.reduce((acc, league) => {
@@ -93,13 +105,12 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
       clearTimeout(timeoutId)
 
       setUser(userData)
-      setLeagues(userLeagues)
       const grouped = groupLeaguesByName(userLeagues)
       setGroupedLeagues(grouped)
 
-      localStorage.setItem("sleeper_user", JSON.stringify(userData))
-      localStorage.setItem("sleeper_leagues", JSON.stringify(userLeagues))
-      localStorage.setItem("sleeper_connection_time", new Date().toISOString())
+      setItem("sleeper_user", JSON.stringify(userData))
+      setItem("sleeper_leagues", JSON.stringify(userLeagues))
+      setItem("sleeper_connection_time", new Date().toISOString())
       console.log(`Saved user data and ${userLeagues.length} leagues to localStorage`)
 
       if (onLeaguesConnected) {
@@ -111,10 +122,11 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
           "User found but no leagues discovered. This might be because:\n• You don't have any leagues in recent seasons (2022-2025)\n• Your leagues are private\n• There's an API issue\n• Dynasty league data might still be updating",
         )
       }
-    } catch (err: any) {
-      if (err.name === "AbortError") {
+    } catch (err: unknown) {
+      const error = err as Error
+      if (error.name === "AbortError") {
         setError("Request timed out. Please try again.")
-      } else if (err.message?.includes("Load failed")) {
+      } else if (error.message?.includes("Load failed")) {
         setError("Network error. Please check your connection and try again.")
       } else {
         setError("Failed to connect to Sleeper. Please try again.")
@@ -133,13 +145,12 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
 
   const handleReset = () => {
     setUser(null)
-    setLeagues([])
     setGroupedLeagues([])
     setUsername("")
     setError(null)
-    localStorage.removeItem("sleeper_user")
-    localStorage.removeItem("sleeper_leagues")
-    localStorage.removeItem("sleeper_connection_time")
+    removeItem("sleeper_user")
+    removeItem("sleeper_leagues")
+    removeItem("sleeper_connection_time")
   }
 
   if (user && groupedLeagues.length > 0) {

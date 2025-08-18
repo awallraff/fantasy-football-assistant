@@ -52,17 +52,14 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
 
   const actualPlayer = player.playerId ? getPlayer(player.playerId) : null
   const displayName = actualPlayer
-    ? actualPlayer.full_name || `${actualPlayer.first_name} ${actualPlayer.last_name}` || getPlayerName(player.playerId)
+    ? actualPlayer.full_name || `${actualPlayer.first_name} ${actualPlayer.last_name}` || (player.playerId ? getPlayerName(player.playerId) : "Unknown Player")
     : player.realPlayerName || player.playerName || "Unknown Player"
   const displayPosition = actualPlayer ? actualPlayer.position : player.realPosition || player.position || "UNKNOWN"
   const displayTeam = actualPlayer ? actualPlayer.team : player.realTeam || player.team || "FA"
   const displayInjuryStatus = actualPlayer ? actualPlayer.injury_status : player.injuryStatus || "Healthy"
 
   useEffect(() => {
-    loadPlayerData()
-  }, [player.playerId, displayName])
-
-  const loadPlayerData = async () => {
+    const loadPlayerData = async () => {
     setIsLoading(true)
     try {
       const uniqueNews = await generatePlayerSpecificNews(displayName, displayPosition, displayTeam)
@@ -74,15 +71,15 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
           gamesPlayed: 12,
           fantasyPoints: player.projectedPoints ? player.projectedPoints * 12 : getPositionBasedPoints(displayPosition),
           avgPoints: player.projectedPoints || getPositionBasedAverage(displayPosition),
-          consistency: Math.floor(Math.random() * 30) + 70,
-          trend: Math.random() > 0.5 ? "up" : Math.random() > 0.5 ? "down" : "stable",
+          consistency: 85,
+          trend: "stable" as const,
         },
         {
           season: "2023",
           gamesPlayed: 17,
           fantasyPoints: getPositionBasedPoints(displayPosition, true),
           avgPoints: getPositionBasedAverage(displayPosition, true),
-          consistency: Math.floor(Math.random() * 25) + 65,
+          consistency: 78,
           trend: "stable",
         },
       ]
@@ -93,7 +90,10 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+    }
+    
+    loadPlayerData()
+  }, [player.playerId, displayName])
 
   const generatePlayerSpecificNews = async (
     playerName: string,

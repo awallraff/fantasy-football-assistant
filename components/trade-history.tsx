@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,7 +36,7 @@ interface OwnerBehavior {
   seasonalPatterns: { [season: string]: number }
 }
 
-export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
+export function TradeHistory({ leagueId }: TradeHistoryProps) {
   const [trades, setTrades] = useState<ProcessedTrade[]>([])
   const [users, setUsers] = useState<SleeperUser[]>([])
   const [ownerBehaviors, setOwnerBehaviors] = useState<OwnerBehavior[]>([])
@@ -47,7 +47,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
 
   const availableSeasons = ["2024", "2023", "2022", "2021", "2020"]
 
-  const loadTradeHistory = async () => {
+  const loadTradeHistory = useCallback(async () => {
     setLoading(true)
     try {
       console.log("Loading trade history for league:", leagueId)
@@ -62,7 +62,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
       let allTrades = transactions
       if (!transactions || transactions.length === 0) {
         console.log("No real trades found, using mock data for demonstration")
-        allTrades = generateMockTrades(leagueUsers)
+        allTrades = generateMockTrades()
       }
 
       // Process trades with season information
@@ -90,7 +90,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
 
       try {
         const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
-        const mockTrades = generateMockTrades(leagueUsers)
+        const mockTrades = generateMockTrades()
         const processedTrades: ProcessedTrade[] = mockTrades.map((trade, index) => ({
           transaction: trade,
           participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
@@ -110,10 +110,24 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [leagueId])
 
   const analyzeOwnerBehavior = (allTrades: ProcessedTrade[], leagueUsers: SleeperUser[]) => {
-    const ownerStats: { [userId: string]: any } = {}
+    const ownerStats: Record<string, {
+      userId: string
+      username: string
+      totalTrades: number
+      tradesAsGiver: number
+      tradesAsReceiver: number
+      preferredPositions: Record<string, number>
+      tradeTypes: Record<string, number>
+      tradeTiming: Record<string, number>
+      successfulTrades: number
+      seasonsActive: Set<string>
+      playersTraded: number
+      tradingPartners: Set<string>
+      seasonalPatterns: Record<string, number>
+    }> = {}
 
     // Initialize stats for each user
     leagueUsers.forEach((user) => {
@@ -121,6 +135,11 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
         userId: user.user_id,
         username: user.display_name || user.username,
         totalTrades: 0,
+        tradesAsGiver: 0,
+        tradesAsReceiver: 0,
+        preferredPositions: {},
+        tradeTiming: {},
+        successfulTrades: 0,
         seasonsActive: new Set(),
         playersTraded: 0,
         tradingPartners: new Set(),
@@ -161,7 +180,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
     })
 
     // Convert to final format
-    const behaviors: OwnerBehavior[] = Object.values(ownerStats).map((stats: any) => ({
+    const behaviors: OwnerBehavior[] = Object.values(ownerStats).map((stats) => ({
       userId: stats.userId,
       username: stats.username,
       totalTrades: stats.totalTrades,
@@ -169,14 +188,14 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
       avgPlayersPerTrade: stats.totalTrades > 0 ? stats.playersTraded / stats.totalTrades : 0,
       preferredTradeTypes: getPreferredTradeTypes(stats.tradeTypes),
       tradingFrequency: getTradingFrequency(stats.totalTrades),
-      commonPartners: Array.from(stats.tradingPartners).slice(0, 3),
+      commonPartners: Array.from(stats.tradingPartners).slice(0, 3) as string[],
       seasonalPatterns: stats.seasonalPatterns,
     }))
 
     setOwnerBehaviors(behaviors.filter((b) => b.totalTrades > 0))
   }
 
-  const getPreferredTradeTypes = (types: any) => {
+  const getPreferredTradeTypes = (types: Record<string, number>) => {
     const preferences = []
     if (types.multi > 0) preferences.push("Multi-team trades")
     if (types.picks > types.players) preferences.push("Draft pick trades")
@@ -223,7 +242,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
 
   useEffect(() => {
     loadTradeHistory()
-  }, [leagueId])
+  }, [leagueId, loadTradeHistory])
 
   const getTradeTypeColor = (trade: ProcessedTrade) => {
     if (trade.participants.length > 2) return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
@@ -238,7 +257,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
     return parts.join(" + ") || "Unknown trade"
   }
 
-  const generateMockTrades = (users: SleeperUser[]): SleeperTransaction[] => {
+  const generateMockTrades = (): SleeperTransaction[] => {
     const mockTrades: SleeperTransaction[] = [
       {
         transaction_id: "mock_1",
@@ -249,8 +268,6 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
         adds: { "4017": 2, "4018": 1 },
         drops: { "4019": 1, "4020": 2 },
         draft_picks: [],
-        settings: null,
-        metadata: null,
         waiver_budget: [],
       },
       {
@@ -270,8 +287,6 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
             owner_id: 4,
           },
         ],
-        settings: null,
-        metadata: null,
         waiver_budget: [],
       },
       {
@@ -283,8 +298,6 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
         adds: { "4025": 3, "4026": 5, "4027": 1 },
         drops: { "4028": 1, "4029": 3, "4030": 5 },
         draft_picks: [],
-        settings: null,
-        metadata: null,
         waiver_budget: [],
       },
     ]
@@ -353,7 +366,7 @@ export function TradeHistory({ leagueId, userId }: TradeHistoryProps) {
                   </Select>
                 </div>
 
-                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <Select value={sortBy} onValueChange={(value: "date" | "players" | "teams") => setSortBy(value)}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>

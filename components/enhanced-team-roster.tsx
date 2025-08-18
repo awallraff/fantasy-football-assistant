@@ -1,19 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, X } from "lucide-react"
+import { ChevronDown, ChevronUp, X } from "lucide-react"
 import type { SleeperRoster, SleeperUser } from "@/lib/sleeper-api"
 import { usePlayerData } from "@/contexts/player-data-context"
 
 interface EnhancedTeamRosterProps {
   roster: SleeperRoster
   user: SleeperUser
-  leagueId: string
   isCurrentUser?: boolean
 }
 
@@ -25,16 +24,6 @@ interface DisplayPlayer {
   injury_status?: string
 }
 
-const getTrendIcon = (trend: "up" | "down" | "stable") => {
-  switch (trend) {
-    case "up":
-      return <TrendingUp className="h-4 w-4 text-green-500" />
-    case "down":
-      return <TrendingDown className="h-4 w-4 text-red-500" />
-    default:
-      return <Minus className="h-4 w-4 text-gray-500" />
-  }
-}
 
 const getInjuryBadgeColor = (status?: string) => {
   if (!status) return "default"
@@ -50,50 +39,50 @@ const getInjuryBadgeColor = (status?: string) => {
   }
 }
 
-export function EnhancedTeamRoster({ roster, user, leagueId, isCurrentUser = false }: EnhancedTeamRosterProps) {
+export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: EnhancedTeamRosterProps) {
   const [players, setPlayers] = useState<DisplayPlayer[]>([])
   const [selectedPlayer, setSelectedPlayer] = useState<DisplayPlayer | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(true)
 
   const { getPlayer, getPlayerName, isLoading: playersLoading } = usePlayerData()
 
-  useEffect(() => {
-    const loadPlayers = () => {
-      try {
-        const allPlayerIds = [...(roster.players || []), ...(roster.starters || [])]
-        const uniquePlayerIds = [...new Set(allPlayerIds)]
+  const loadPlayers = useCallback(() => {
+    try {
+      const allPlayerIds = [...(roster.players || []), ...(roster.starters || [])]
+      const uniquePlayerIds = [...new Set(allPlayerIds)]
 
-        const displayPlayers: DisplayPlayer[] = uniquePlayerIds
-          .map((id) => {
-            const player = getPlayer(id)
-            if (!player) {
-              return {
-                player_id: id,
-                full_name: getPlayerName(id),
-                position: "UNKNOWN",
-                team: "UNKNOWN",
-              }
-            }
+      const displayPlayers: DisplayPlayer[] = uniquePlayerIds
+        .map((id) => {
+          const player = getPlayer(id)
+          if (!player) {
             return {
-              player_id: player.player_id,
-              full_name: player.full_name || `${player.first_name} ${player.last_name}`,
-              position: player.position,
-              team: player.team,
-              injury_status: player.injury_status,
+              player_id: id,
+              full_name: getPlayerName(id),
+              position: "UNKNOWN",
+              team: "UNKNOWN",
             }
-          })
-          .filter(Boolean)
+          }
+          return {
+            player_id: player.player_id,
+            full_name: player.full_name || `${player.first_name} ${player.last_name}`,
+            position: player.position,
+            team: player.team,
+            injury_status: player.injury_status,
+          }
+        })
+        .filter(Boolean)
 
-        setPlayers(displayPlayers)
-      } catch (error) {
-        console.error("Error loading players:", error)
-      }
+      setPlayers(displayPlayers)
+    } catch (error) {
+      console.error("Error loading players:", error)
     }
+  }, [roster, getPlayer, getPlayerName])
 
+  useEffect(() => {
     if (!playersLoading) {
       loadPlayers()
     }
-  }, [roster, leagueId, getPlayer, getPlayerName, playersLoading])
+  }, [playersLoading, loadPlayers])
 
   const starters = players.filter((p) => roster.starters?.includes(p.player_id))
   const bench = players.filter((p) => roster.players?.includes(p.player_id) && !roster.starters?.includes(p.player_id))

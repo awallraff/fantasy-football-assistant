@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -39,38 +40,38 @@ export default function RankingsPage() {
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<RankingSource>("all")
   const [isLoading, setIsLoading] = useState(false)
-  const [filteredRankings, setFilteredRankings] = useState<SimplePlayerRanking[]>([])
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<SimplePlayerRanking | null>(null)
   const [apiKeys, setApiKeys] = useState<{ [key: string]: string }>({})
 
   const { players, getPlayer, isLoading: playersLoading } = usePlayerData()
+  const { getItem, setItem, isClient } = useSafeLocalStorage()
 
   useEffect(() => {
+    if (!isClient) return
+    
     // Load user imported rankings from localStorage
-    const saved = localStorage.getItem("ranking_systems")
+    const saved = getItem("ranking_systems")
     if (saved) {
-      const systems = JSON.parse(saved)
-      setUserRankingSystems(systems)
+      try {
+        const systems = JSON.parse(saved)
+        setUserRankingSystems(systems)
+      } catch (e) {
+        console.error("Failed to load rankings:", e)
+      }
     }
 
     // Load API keys
-    const savedKeys = localStorage.getItem("fantasy_api_keys")
+    const savedKeys = getItem("fantasy_api_keys")
     if (savedKeys) {
-      setApiKeys(JSON.parse(savedKeys))
+      try {
+        setApiKeys(JSON.parse(savedKeys))
+      } catch (e) {
+        console.error("Failed to load API keys:", e)
+      }
     }
-  }, [])
+  }, [isClient, getItem])
 
-  useEffect(() => {
-    if (Object.keys(players).length > 0 && apiKeys["Fantasy Nerds"]) {
-      loadFantasyNerdsRankings()
-    }
-  }, [players, apiKeys])
-
-  useEffect(() => {
-    updateFilteredRankings()
-  }, [selectedSystem, selectedPosition, selectedSource, userRankingSystems, fantasyNerdsRankings])
-
-  const loadFantasyNerdsRankings = async () => {
+  const loadFantasyNerdsRankings = useCallback(async () => {
     if (!apiKeys["Fantasy Nerds"]) return
 
     setIsLoading(true)
@@ -110,10 +111,14 @@ export default function RankingsPage() {
             systems.push({
               id: `fantasy-nerds-${position.toLowerCase()}`,
               name: `Fantasy Nerds ${position} Rankings`,
+              description: `${position} rankings from Fantasy Nerds`,
               source: "Fantasy Nerds",
+              season: "2025",
+              scoringFormat: "ppr" as const,
               positions: [position],
               rankings: playerRankings,
               createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
               lastUpdated: new Date().toISOString(),
             })
           }
@@ -133,12 +138,11 @@ export default function RankingsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [apiKeys, players, setItem])
 
-  const updateFilteredRankings = () => {
+  const filteredRankings = useMemo(() => {
     if (!selectedSystem) {
-      setFilteredRankings([])
-      return
+      return []
     }
 
     let rankings = selectedSystem.rankings
@@ -149,7 +153,7 @@ export default function RankingsPage() {
     }
 
     // Convert to SimplePlayerRanking format with real player data
-    const simpleRankings: SimplePlayerRanking[] = rankings
+    return rankings
       .map((ranking) => {
         const player = getPlayer(ranking.playerId)
 
@@ -168,9 +172,13 @@ export default function RankingsPage() {
         }
       })
       .sort((a, b) => a.rank - b.rank) // Ensure proper ranking order
+  }, [selectedSystem, selectedPosition, getPlayer])
 
-    setFilteredRankings(simpleRankings)
-  }
+  useEffect(() => {
+    if (Object.keys(players).length > 0 && apiKeys["Fantasy Nerds"]) {
+      loadFantasyNerdsRankings()
+    }
+  }, [players, apiKeys, loadFantasyNerdsRankings])
 
   const getAllSystems = (): RankingSystem[] => {
     switch (selectedSource) {
@@ -199,14 +207,14 @@ export default function RankingsPage() {
   const handleImportComplete = (newSystem: RankingSystem) => {
     const updatedSystems = [...userRankingSystems, newSystem]
     setUserRankingSystems(updatedSystems)
-    localStorage.setItem("ranking_systems", JSON.stringify(updatedSystems))
+    setItem("ranking_systems", JSON.stringify(updatedSystems))
     setSelectedSystem(newSystem)
   }
 
   const handleDeleteSystem = (systemId: string) => {
     const updatedSystems = userRankingSystems.filter((s) => s.id !== systemId)
     setUserRankingSystems(updatedSystems)
-    localStorage.setItem("ranking_systems", JSON.stringify(updatedSystems))
+    setItem("ranking_systems", JSON.stringify(updatedSystems))
     if (selectedSystem?.id === systemId) {
       setSelectedSystem(getAllSystems()[0] || null)
     }
@@ -215,7 +223,7 @@ export default function RankingsPage() {
   const handleUpdateSystem = (updatedSystem: RankingSystem) => {
     const updatedSystems = userRankingSystems.map((s) => (s.id === updatedSystem.id ? updatedSystem : s))
     setUserRankingSystems(updatedSystems)
-    localStorage.setItem("ranking_systems", JSON.stringify(updatedSystems))
+    setItem("ranking_systems", JSON.stringify(updatedSystems))
     if (selectedSystem?.id === updatedSystem.id) {
       setSelectedSystem(updatedSystem)
     }
@@ -229,13 +237,32 @@ export default function RankingsPage() {
 
   const hasNoDataSources = !apiKeys["Fantasy Nerds"] && userRankingSystems.length === 0
 
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-32 bg-muted rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Player Rankings</h1>
-            <p className="text-gray-600 dark:text-gray-300">Real rankings from Fantasy Nerds and user-imported data</p>
+            <h1 className="text-3xl font-bold text-foreground">Player Rankings</h1>
+            <p className="text-muted-foreground">Real rankings from Fantasy Nerds and user-imported data</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={refreshRankings} disabled={isLoading}>
@@ -249,13 +276,13 @@ export default function RankingsPage() {
         </div>
 
         {hasNoDataSources && (
-          <Card className="mb-6 border-orange-200 bg-orange-50 dark:bg-orange-900/20">
+          <Card className="mb-6 border-destructive/50 bg-destructive/10">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-orange-900 dark:text-orange-100">No Data Sources Connected</h3>
-                  <p className="text-sm text-orange-700 dark:text-orange-200 mt-1">
+                  <h3 className="font-medium text-foreground">No Data Sources Connected</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Connect to Fantasy Nerds or import your own rankings to see player data. This application only uses
                     real data from external sources.
                   </p>
@@ -385,7 +412,7 @@ export default function RankingsPage() {
                 </div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredRankings.map((player, index) => (
+                  {filteredRankings.map((player) => (
                     <div
                       key={player.playerId}
                       className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"

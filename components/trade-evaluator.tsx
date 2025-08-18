@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,7 +38,7 @@ interface TradeProposal {
   valueDifference: number
 }
 
-export function TradeEvaluator({ league }: TradeEvaluatorProps) {
+export function TradeEvaluator({}: TradeEvaluatorProps) {
   const [proposal, setProposal] = useState<TradeProposal>({
     teamA: { name: "Your Team", players: [], totalValue: 0 },
     teamB: { name: "Their Team", players: [], totalValue: 0 },
@@ -55,12 +55,13 @@ export function TradeEvaluator({ league }: TradeEvaluatorProps) {
   })
 
   const [selectedTeam, setSelectedTeam] = useState<"A" | "B">("A")
+  const playerIdCounter = useRef(0)
 
   const addPlayer = () => {
     if (!newPlayer.name.trim()) return
 
     const player: TradePlayer = {
-      id: Date.now().toString(),
+      id: `player_${++playerIdCounter.current}`,
       name: newPlayer.name,
       position: newPlayer.position,
       team: newPlayer.team,
