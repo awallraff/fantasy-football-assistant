@@ -92,7 +92,7 @@ class PlayerService {
     }
 
     try {
-      // In production, this would integrate with SportsDataIO, RotoBaller, or RapidAPI
+      // In production, this would integrate with news APIs
       const player = await this.getPlayer(playerId)
       if (!player) return []
 

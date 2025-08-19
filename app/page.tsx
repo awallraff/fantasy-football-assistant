@@ -25,12 +25,12 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Fantasy Football Analytics</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-foreground mb-4">Fantasy Football Analytics</h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Deep analytics for your Sleeper fantasy football teams. Import rankings, analyze trades, and get AI-powered
             recommendations.
           </p>
@@ -45,9 +45,9 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="text-center">
             <CardContent className="pt-6">
-              <BarChart3 className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+              <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">Deep Analytics</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Advanced metrics and performance insights for your teams
               </p>
             </CardContent>
@@ -55,9 +55,9 @@ export default function HomePage() {
 
           <Card className="text-center">
             <CardContent className="pt-6">
-              <TrendingUp className="h-12 w-12 text-green-600 mx-auto mb-4" />
+              <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">Trade Analysis</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Track opponent trade patterns and market trends
               </p>
             </CardContent>
@@ -65,9 +65,9 @@ export default function HomePage() {
 
           <Card className="text-center">
             <CardContent className="pt-6">
-              <Users className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+              <Users className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">Custom Rankings</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Import and manage your own player ranking systems
               </p>
             </CardContent>
@@ -75,9 +75,9 @@ export default function HomePage() {
 
           <Card className="text-center">
             <CardContent className="pt-6">
-              <Trophy className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+              <Trophy className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">AI Recommendations</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Smart trade and lineup suggestions based on league rules
               </p>
             </CardContent>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, RefreshCw, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { sleeperAPI, type SleeperLeague, type SleeperUser, type SleeperRoster } from "@/lib/sleeper-api"
@@ -17,10 +18,13 @@ import { RecentActivity } from "@/components/recent-activity"
 export default function DashboardPage() {
   const [user, setUser] = useState<SleeperUser | null>(null)
   const [leagues, setLeagues] = useState<SleeperLeague[]>([])
+  const [leaguesByYear, setLeaguesByYear] = useState<{[year: string]: SleeperLeague[]}>({})
   const [selectedLeague, setSelectedLeague] = useState<SleeperLeague | null>(null)
+  const [selectedYear, setSelectedYear] = useState<string>("2025")
   const [rosters, setRosters] = useState<SleeperRoster[]>([])
   const [leagueUsers, setLeagueUsers] = useState<SleeperUser[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingYears, setLoadingYears] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>("")
   const [retrying, setRetrying] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -51,7 +55,27 @@ export default function DashboardPage() {
       try {
         const leaguesData = JSON.parse(savedLeagues)
         setLeagues(leaguesData)
+        
+        // Organize leagues by year and set initial year
+        const leaguesByYearData: {[year: string]: SleeperLeague[]} = {}
+        leaguesData.forEach((league: SleeperLeague) => {
+          const year = league.season
+          if (!leaguesByYearData[year]) {
+            leaguesByYearData[year] = []
+          }
+          leaguesByYearData[year].push(league)
+        })
+        
+        setLeaguesByYear(leaguesByYearData)
+        
+        // Set the initial year to the most recent year with leagues
+        const years = Object.keys(leaguesByYearData).sort().reverse()
+        if (years.length > 0) {
+          setSelectedYear(years[0])
+        }
+        
         debug += `Leagues count: ${leaguesData.length}\n`
+        debug += `Years with leagues: ${years.join(", ")}\n`
       } catch (e) {
         debug += `Leagues data parse error: ${e}\n`
       }
@@ -59,6 +83,28 @@ export default function DashboardPage() {
 
     setDebugInfo(debug)
   }, [isClient, getItem])
+
+  const loadLeaguesForYear = useCallback(async (year: string) => {
+    if (!user) return []
+    
+    setLoadingYears(true)
+    try {
+      const userLeagues = await sleeperAPI.getUserLeagues(user.user_id, "nfl", year)
+      console.log(`Loaded ${userLeagues.length} leagues for ${year}`)
+      
+      setLeaguesByYear(prev => ({
+        ...prev,
+        [year]: userLeagues
+      }))
+      
+      return userLeagues
+    } catch (error) {
+      console.error(`Error loading leagues for ${year}:`, error)
+      return []
+    } finally {
+      setLoadingYears(false)
+    }
+  }, [user])
 
   const loadLeagueDetails = useCallback(async (league: SleeperLeague) => {
     setLoading(true)
@@ -106,6 +152,24 @@ export default function DashboardPage() {
     setLeagueUsers([])
   }, [])
 
+  const handleYearChange = useCallback(async (year: string) => {
+    setSelectedYear(year)
+    
+    // Load leagues for this year if not already loaded
+    if (!leaguesByYear[year]) {
+      await loadLeaguesForYear(year)
+    }
+  }, [leaguesByYear, loadLeaguesForYear])
+
+  const handleLeagueChange = useCallback(async (leagueId: string) => {
+    const currentYearLeagues = leaguesByYear[selectedYear] || []
+    const league = currentYearLeagues.find(l => l.league_id === leagueId)
+    
+    if (league) {
+      await loadLeagueDetails(league)
+    }
+  }, [leaguesByYear, selectedYear, loadLeagueDetails])
+
   // Memoize sorted rosters for performance
   const sortedRosters = useMemo(() => {
     return [...rosters].sort((a, b) => {
@@ -141,20 +205,20 @@ export default function DashboardPage() {
         debug += `User ID: ${userData.user_id}\n`
         debug += `Username: ${userData.username}\n\n`
 
-        const seasons = ["2024", "2023", "2022"]
+        const seasons = ["2025", "2024", "2023"]
         let allLeagues: SleeperLeague[] = []
+        const leaguesByYearData: {[year: string]: SleeperLeague[]} = {}
 
         for (const season of seasons) {
           try {
             debug += `Checking ${season} season...\n`
-            const userLeagues = await sleeperAPI.getUserLeagues(userData.user_id, season)
+            const userLeagues = await sleeperAPI.getUserLeagues(userData.user_id, "nfl", season)
             debug += `${season} leagues found: ${userLeagues?.length || 0}\n`
 
             if (userLeagues && userLeagues.length > 0) {
               debug += `${season} league names: ${userLeagues.map((l) => l.name).join(", ")}\n`
-              if (season === "2024") {
-                allLeagues = userLeagues
-              }
+              allLeagues = allLeagues.concat(userLeagues)
+              leaguesByYearData[season] = userLeagues
             }
             debug += "\n"
           } catch (seasonError) {
@@ -164,8 +228,16 @@ export default function DashboardPage() {
 
         if (allLeagues.length > 0) {
           setLeagues(allLeagues)
+          setLeaguesByYear(leaguesByYearData)
           setItem("sleeper_leagues", JSON.stringify(allLeagues))
-          debug += `✅ Successfully loaded ${allLeagues.length} leagues from 2024 season`
+          
+          // Set the initial year to the most recent year with leagues
+          const years = Object.keys(leaguesByYearData).sort().reverse()
+          if (years.length > 0) {
+            setSelectedYear(years[0])
+          }
+          
+          debug += `✅ Successfully loaded ${allLeagues.length} leagues across ${Object.keys(leaguesByYearData).length} seasons`
         } else {
           debug += `❌ No leagues found in any season. This could mean:\n`
           debug += `- You don't have any fantasy leagues on Sleeper\n`
@@ -257,6 +329,9 @@ export default function DashboardPage() {
   }
 
   if (selectedLeague) {
+    const currentYearLeagues = leaguesByYear[selectedYear] || []
+    const availableLeagueYears = Object.keys(leaguesByYear).sort().reverse()
+    
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
@@ -274,10 +349,44 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => loadLeagueDetails(selectedLeague)} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
+            
+            <div className="flex items-center gap-3">
+              {/* League/Year Switcher */}
+              <div className="flex items-center gap-2">
+                <Select value={selectedYear} onValueChange={handleYearChange}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLeagueYears.map(year => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={selectedLeague.league_id} onValueChange={handleLeagueChange}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentYearLeagues.map(league => (
+                      <SelectItem key={league.league_id} value={league.league_id}>
+                        {league.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="h-6 w-px bg-border"></div>
+              
+              <Button variant="outline" onClick={() => loadLeagueDetails(selectedLeague)} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
@@ -325,6 +434,9 @@ export default function DashboardPage() {
     )
   }
 
+  const currentYearLeagues = leaguesByYear[selectedYear] || []
+  const availableLeagueYears = Object.keys(leaguesByYear).sort().reverse()
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -334,11 +446,37 @@ export default function DashboardPage() {
             Welcome back, {user.display_name || user.username}!
           </h1>
           <p className="text-muted-foreground">Select a league to view detailed analytics and insights</p>
+          
+          {/* Year Selector */}
+          {availableLeagueYears.length > 1 && (
+            <div className="flex justify-center mt-4">
+              <Select value={selectedYear} onValueChange={handleYearChange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLeagueYears.map(year => (
+                    <SelectItem key={year} value={year}>
+                      {year} Season
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
+
+        {/* Loading State */}
+        {loadingYears && (
+          <div className="text-center py-8">
+            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+            <p className="text-muted-foreground">Loading leagues for {selectedYear}...</p>
+          </div>
+        )}
 
         {/* Leagues Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {leagues.map((league) => (
+          {currentYearLeagues.map((league) => (
             <Card key={league.league_id} className="cursor-pointer hover:shadow-lg transition-shadow border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -379,6 +517,20 @@ export default function DashboardPage() {
             </Card>
           ))}
         </div>
+        
+        {/* No Leagues Message */}
+        {!loadingYears && currentYearLeagues.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg mb-4">
+              No leagues found for {selectedYear} season
+            </p>
+            {availableLeagueYears.length > 1 && (
+              <p className="text-sm text-muted-foreground">
+                Try selecting a different year above
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -158,14 +158,14 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+            <CheckCircle className="h-5 w-5 text-primary" />
             Connected Successfully
           </CardTitle>
           <CardDescription>
             Found {groupedLeagues.length} unique league{groupedLeagues.length !== 1 ? "s" : ""} for{" "}
             {user.display_name || user.username}
             <br />
-            <span className="text-sm text-blue-600">Defaulting to 2025 season where available</span>
+            <span className="text-sm text-primary">Defaulting to 2025 season where available</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -178,10 +178,10 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h4 className="font-medium text-lg">{group.name}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         {selectedLeague.total_rosters} teams • {selectedLeague.status}
                         {selectedLeague.settings.max_keepers && selectedLeague.settings.max_keepers > 0 && (
-                          <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                          <span className="ml-2 px-2 py-1 bg-primary/10 text-primary text-xs rounded">
                             {selectedLeague.settings.max_keepers === selectedLeague.settings.num_teams
                               ? "Dynasty"
                               : "Keeper"}
@@ -190,7 +190,7 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
                       <Select
                         value={group.selectedSeason}
                         onValueChange={(value) => handleSeasonChange(group.name, value)}
@@ -210,7 +210,7 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
                   </div>
 
                   {group.seasons.length > 1 && (
-                    <div className="text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                    <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
                       Available seasons: {group.seasons.map((l) => l.season).join(", ")}
                     </div>
                   )}
@@ -233,7 +233,7 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
         <CardDescription>
           Enter your Sleeper username to import your fantasy football leagues
           <br />
-          <span className="text-sm text-green-600 font-medium">Now checking 2025 season data first!</span>
+          <span className="text-sm text-primary font-medium">Now checking 2025 season data first!</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

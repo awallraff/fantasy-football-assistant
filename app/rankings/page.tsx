@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { BarChart3, Users, Brain, TrendingUp, AlertCircle } from "lucide-react"
+import { BarChart3, Brain, TrendingUp, AlertCircle } from "lucide-react"
 import { RankingsImporter } from "@/components/rankings-importer"
 import { RankingsManager } from "@/components/rankings-manager"
 import { RankingsComparison } from "@/components/rankings-comparison"
@@ -17,9 +17,10 @@ import { APIKeyManager } from "@/components/api-key-manager"
 import type { RankingSystem, PlayerRanking } from "@/lib/rankings-types"
 import { usePlayerData } from "@/contexts/player-data-context"
 import { normalizePosition } from "@/lib/player-utils"
-import { FantasyNerdsAPI } from "@/lib/fantasy-nerds-api"
+import { EspnAPI } from "@/lib/espn-api"
+import { AIRankingsService } from "@/lib/ai-rankings-service"
 
-type RankingSource = "all" | "user" | "fantasy-nerds"
+type RankingSource = "all" | "user" | "espn" | "ai"
 
 interface SimplePlayerRanking {
   rank: number
@@ -35,10 +36,13 @@ interface SimplePlayerRanking {
 
 export default function RankingsPage() {
   const [userRankingSystems, setUserRankingSystems] = useState<RankingSystem[]>([])
-  const [fantasyNerdsRankings, setFantasyNerdsRankings] = useState<RankingSystem[]>([])
+  const [espnRankings, setEspnRankings] = useState<RankingSystem[]>([])
+  const [aiRankingSystem, setAiRankingSystem] = useState<RankingSystem | null>(null)
   const [selectedSystem, setSelectedSystem] = useState<RankingSystem | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<RankingSource>("all")
+  const [sortBy, setSortBy] = useState<"rank" | "name" | "position" | "team" | "projectedPoints">("rank")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<SimplePlayerRanking | null>(null)
   const [apiKeys, setApiKeys] = useState<{ [key: string]: string }>({})
@@ -55,6 +59,7 @@ export default function RankingsPage() {
       try {
         const systems = JSON.parse(saved)
         setUserRankingSystems(systems)
+        console.log("Loaded from localStorage:", systems);
       } catch (e) {
         console.error("Failed to load rankings:", e)
       }
@@ -64,81 +69,107 @@ export default function RankingsPage() {
     const savedKeys = getItem("fantasy_api_keys")
     if (savedKeys) {
       try {
-        setApiKeys(JSON.parse(savedKeys))
+        const keys = JSON.parse(savedKeys)
+        setApiKeys(keys)
+        console.log('Loaded API keys from localStorage:', Object.keys(keys))
+        
       } catch (e) {
         console.error("Failed to load API keys:", e)
       }
     }
   }, [isClient, getItem])
 
-  const loadFantasyNerdsRankings = useCallback(async () => {
-    if (!apiKeys["Fantasy Nerds"]) return
-
-    setIsLoading(true)
-    try {
-      const fantasyNerdsAPI = new FantasyNerdsAPI(apiKeys["Fantasy Nerds"])
-      const positions = ["QB", "RB", "WR", "TE", "K", "DEF"]
-      const systems: RankingSystem[] = []
-
-      for (const position of positions) {
+  // Listen for API key changes from other components
+  useEffect(() => {
+    if (!isClient) return
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'fantasy_api_keys' && e.newValue) {
         try {
-          const rankings = await fantasyNerdsAPI.getDraftRankings(position)
-          const projections = await fantasyNerdsAPI.getDraftProjections(position)
-
-          if (rankings.length > 0) {
-            const playerRankings: PlayerRanking[] = rankings.map((fnPlayer) => {
-              // Try to match with Sleeper player data
-              const sleeperPlayer = Object.values(players).find(
-                (p) =>
-                  p.full_name?.toLowerCase().includes(fnPlayer.player.toLowerCase()) ||
-                  `${p.first_name} ${p.last_name}`.toLowerCase().includes(fnPlayer.player.toLowerCase()),
-              )
-
-              const projection = projections.find((p) => p.player === fnPlayer.player)
-
-              return {
-                rank: fnPlayer.rank,
-                playerId: sleeperPlayer?.player_id || `fn-${fnPlayer.playerId}`,
-                playerName: sleeperPlayer?.full_name || fnPlayer.player,
-                position: normalizePosition(fnPlayer.position),
-                team: sleeperPlayer?.team || fnPlayer.team,
-                projectedPoints: projection?.projectedPoints || fnPlayer.projectedPoints,
-                tier: fnPlayer.tier,
-                notes: `Fantasy Nerds ${position} Ranking`,
-              }
-            })
-
-            systems.push({
-              id: `fantasy-nerds-${position.toLowerCase()}`,
-              name: `Fantasy Nerds ${position} Rankings`,
-              description: `${position} rankings from Fantasy Nerds`,
-              source: "Fantasy Nerds",
-              season: "2025",
-              scoringFormat: "ppr" as const,
-              positions: [position],
-              rankings: playerRankings,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              lastUpdated: new Date().toISOString(),
-            })
-          }
-        } catch (error) {
-          console.error(`Error loading Fantasy Nerds ${position} rankings:`, error)
+          const keys = JSON.parse(e.newValue)
+          setApiKeys(keys)
+          console.log('API keys updated from storage event:', Object.keys(keys))
+        } catch (e) {
+          console.error("Failed to parse updated API keys:", e)
         }
       }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [isClient])
 
-      setFantasyNerdsRankings(systems)
+  const getAllSystems = (): RankingSystem[] => {
+    switch (selectedSource) {
+      case "user":
+        return userRankingSystems
+      case "espn":
+        return espnRankings
+      case "ai":
+        return aiRankingSystem ? [aiRankingSystem] : []
+      default:
+        return [...userRankingSystems, ...espnRankings]
+    }
+  }
 
-      // Set default selection if no system selected
-      if (!selectedSystem && systems.length > 0) {
-        setSelectedSystem(systems[0])
+
+
+  const loadEspnRankings = useCallback(async () => {
+    try {
+      const espnAPI = new EspnAPI()
+      const rankings = await espnAPI.getDraftRankings()
+
+      if (rankings && rankings.length > 0) {
+        const playerRankings: PlayerRanking[] = rankings.map((p, index) => ({
+          rank: index + 1,
+          playerId: `espn-${p.id}`,
+                    playerName: p.player?.fullName || `Player ${p.id}`,
+          position: "N/A", // Position information is not directly available in this endpoint
+          team: "N/A", // Team information is not directly available in this endpoint
+        }))
+
+        const system: RankingSystem = {
+          id: `espn-draft`,
+          name: `ESPN Draft Rankings`,
+          description: `Draft rankings from ESPN (${rankings.length} players)`,
+          source: "ESPN",
+          season: "2025",
+          scoringFormat: "ppr" as const,
+          positions: ["all"],
+          rankings: playerRankings,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+        }
+
+        setEspnRankings([system])
+        console.info(`Successfully loaded ${rankings.length} ESPN rankings`)
+      } else {
+        console.info("ESPN rankings not available - API may be blocked by CORS policy")
+        setEspnRankings([])
       }
     } catch (error) {
-      console.error("Error loading Fantasy Nerds rankings:", error)
-    } finally {
-      setIsLoading(false)
+      console.warn("ESPN rankings could not be loaded:", error instanceof Error ? error.message : error)
+      setEspnRankings([])
     }
-  }, [apiKeys, players, setItem])
+  }, [])
+
+
+  const generateAiRankings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const allRankings = getAllSystems();
+      const aiService = new AIRankingsService();
+      const aiSystem = await aiService.generateAIRankings(allRankings);
+      setAiRankingSystem(aiSystem);
+      setSelectedSource("ai");
+      setSelectedSystem(aiSystem);
+    } catch (error) {
+      console.error("Error generating AI rankings:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const filteredRankings = useMemo(() => {
     if (!selectedSystem) {
@@ -171,43 +202,95 @@ export default function RankingsPage() {
           injuryStatus: player?.injury_status || "Healthy",
         }
       })
-      .sort((a, b) => a.rank - b.rank) // Ensure proper ranking order
-  }, [selectedSystem, selectedPosition, getPlayer])
+      .sort((a, b) => {
+        // Custom sorting logic
+        let compareValue = 0
+        
+        switch (sortBy) {
+          case "rank":
+            compareValue = a.rank - b.rank
+            break
+          case "name":
+            compareValue = a.playerName.localeCompare(b.playerName)
+            break
+          case "position":
+            compareValue = a.position.localeCompare(b.position)
+            break
+          case "team":
+            compareValue = a.team.localeCompare(b.team)
+            break
+          case "projectedPoints":
+            compareValue = (b.projectedPoints || 0) - (a.projectedPoints || 0) // Higher points first by default
+            break
+          default:
+            compareValue = a.rank - b.rank
+        }
+        
+        return sortDirection === "desc" ? -compareValue : compareValue
+      })
+  }, [selectedSystem, selectedPosition, getPlayer, sortBy, sortDirection])
 
   useEffect(() => {
-    if (Object.keys(players).length > 0 && apiKeys["Fantasy Nerds"]) {
-      loadFantasyNerdsRankings()
+    // Prevent multiple API calls in development mode (React StrictMode)
+    if (Object.keys(players).length === 0) return;
+    
+    let cancelled = false;
+    
+    const loadAllRankings = async () => {
+      if (cancelled) return;
+      
+      console.info("Loading rankings from external APIs...")
+      setIsLoading(true)
+      
+      try {
+        await Promise.allSettled([
+          loadEspnRankings(),
+        ])
+        // After all initial rankings are loaded, generate AI rankings
+        if (!cancelled) {
+          await generateAiRankings();
+          setSelectedSource("ai");
+          setSelectedSystem(aiRankingSystem);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Some ranking APIs failed to load:", error)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      }
     }
-  }, [players, apiKeys, loadFantasyNerdsRankings])
-
-  const getAllSystems = (): RankingSystem[] => {
-    switch (selectedSource) {
-      case "user":
-        return userRankingSystems
-      case "fantasy-nerds":
-        return fantasyNerdsRankings
-      default:
-        return [...userRankingSystems, ...fantasyNerdsRankings]
+    
+    // Debounce API calls to prevent rapid successive calls
+    const timeoutId = setTimeout(loadAllRankings, 500)
+    
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
     }
-  }
+  }, [players, apiKeys, loadEspnRankings, generateAiRankings])
 
   const getAllPositions = (): string[] => {
     const positions = new Set<string>()
     getAllSystems().forEach((system) => {
       system.positions.forEach((pos) => {
         // Only add valid, non-empty positions
-        if (pos && pos.trim() && pos !== "UNKNOWN") {
+        if (pos && typeof pos === 'string' && pos.trim() && pos.trim() !== "UNKNOWN" && pos.trim() !== "all") {
           positions.add(pos.trim())
         }
       })
     })
-    return Array.from(positions).sort()
+    return Array.from(positions).filter(pos => pos && pos.trim() && pos.trim().length > 0).sort()
   }
 
-  const handleImportComplete = (newSystem: RankingSystem) => {
+    const handleImportComplete = (newSystem: RankingSystem) => {
+    console.log("Import complete, new system:", newSystem);
     const updatedSystems = [...userRankingSystems, newSystem]
     setUserRankingSystems(updatedSystems)
     setItem("ranking_systems", JSON.stringify(updatedSystems))
+    console.log("Saved to localStorage:", JSON.stringify(updatedSystems));
     setSelectedSystem(newSystem)
   }
 
@@ -230,12 +313,35 @@ export default function RankingsPage() {
   }
 
   const refreshRankings = async () => {
-    if (apiKeys["Fantasy Nerds"]) {
-      await loadFantasyNerdsRankings()
+    console.log('Refresh Rankings called, current API keys:', Object.keys(apiKeys))
+    
+    // Also try to reload API keys in case they were updated
+    const savedKeys = localStorage.getItem("fantasy_api_keys")
+    if (savedKeys) {
+      try {
+        const keys = JSON.parse(savedKeys)
+        setApiKeys(keys)
+        console.log('Reloaded API keys during refresh:', Object.keys(keys))
+        
+      } catch (e) {
+        console.error("Failed to reload API keys:", e)
+      }
     }
   }
 
-  const hasNoDataSources = !apiKeys["Fantasy Nerds"] && userRankingSystems.length === 0
+  const getTierColor = (tier?: number) => {
+    if (!tier) return "bg-gray-500";
+    switch (tier) {
+      case 1: return "bg-red-500";
+      case 2: return "bg-orange-500";
+      case 3: return "bg-yellow-500";
+      case 4: return "bg-green-500";
+      case 5: return "bg-blue-500";
+      default: return "bg-purple-500";
+    }
+  };
+
+  const hasNoDataSources = userRankingSystems.length === 0
 
   // Show loading state during hydration
   if (!isClient) {
@@ -262,12 +368,28 @@ export default function RankingsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Player Rankings</h1>
-            <p className="text-muted-foreground">Real rankings from Fantasy Nerds and user-imported data</p>
+            <p className="text-muted-foreground">User-imported rankings and ESPN data</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={refreshRankings} disabled={isLoading}>
               <TrendingUp className="h-4 w-4 mr-2" />
               {isLoading ? "Loading..." : "Refresh Rankings"}
+            </Button>
+            <Button onClick={generateAiRankings} disabled={isLoading}>
+              <Brain className="h-4 w-4 mr-2" />
+              {isLoading ? "Analyzing..." : "Generate AI Rankings"}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                console.log('=== DEBUG INFO ===')
+                console.log('Current API Keys state:', apiKeys)
+                console.log('localStorage content:', localStorage.getItem("fantasy_api_keys"))
+                console.log('All systems count:', getAllSystems().length)
+                console.log('================')
+              }}
+            >
+              Debug Info
             </Button>
             <Button asChild variant="outline">
               <a href="/dashboard">Back to Dashboard</a>
@@ -283,7 +405,7 @@ export default function RankingsPage() {
                 <div>
                   <h3 className="font-medium text-foreground">No Data Sources Connected</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Connect to Fantasy Nerds or import your own rankings to see player data. This application only uses
+                    Import your own rankings to see player data. This application uses
                     real data from external sources.
                   </p>
                 </div>
@@ -292,12 +414,65 @@ export default function RankingsPage() {
           </Card>
         )}
 
+        {!hasNoDataSources && getAllSystems().length === 0 && !isLoading && (
+          <Card className="mb-6 border-yellow-500/50 bg-yellow-50 dark:bg-yellow-900/20">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-foreground">External APIs Not Available</h3>
+                  <p className="text-sm text-muted-foreground mt-1 mb-3">
+                    ESPN API is currently unavailable. Please:
+                  </p>
+                  <ul className="text-sm text-muted-foreground mb-3 list-disc list-inside space-y-1">
+                    <li>Enter it in the &quot;API Keys&quot; tab below</li>
+                    <li>Or use the demo data to test functionality</li>
+                  </ul>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Create demo data to show functionality
+                      const demoSystem: RankingSystem = {
+                        id: 'demo-rankings',
+                        name: 'Demo Rankings (Sample Data)',
+                        description: 'Sample fantasy football rankings to demonstrate functionality',
+                        source: 'Demo',
+                        season: '2025',
+                        scoringFormat: 'ppr',
+                        positions: ['QB', 'RB', 'WR', 'TE'],
+                        rankings: [
+                          { rank: 1, playerId: 'demo-1', playerName: 'Josh Allen', position: 'QB', team: 'BUF', projectedPoints: 382.5 },
+                          { rank: 2, playerId: 'demo-2', playerName: 'Christian McCaffrey', position: 'RB', team: 'SF', projectedPoints: 345.2 },
+                          { rank: 3, playerId: 'demo-3', playerName: 'Justin Jefferson', position: 'WR', team: 'MIN', projectedPoints: 298.7 },
+                          { rank: 4, playerId: 'demo-4', playerName: 'Travis Kelce', position: 'TE', team: 'KC', projectedPoints: 267.3 },
+                          { rank: 5, playerId: 'demo-5', playerName: 'Tyreek Hill', position: 'WR', team: 'MIA', projectedPoints: 289.1 },
+                          { rank: 6, playerId: 'demo-6', playerName: 'Saquon Barkley', position: 'RB', team: 'PHI', projectedPoints: 312.8 },
+                          { rank: 7, playerId: 'demo-7', playerName: 'CeeDee Lamb', position: 'WR', team: 'DAL', projectedPoints: 276.4 },
+                          { rank: 8, playerId: 'demo-8', playerName: 'Lamar Jackson', position: 'QB', team: 'BAL', projectedPoints: 358.9 },
+                        ],
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        lastUpdated: new Date().toISOString(),
+                      }
+                      setUserRankingSystems([demoSystem])
+                      setSelectedSystem(demoSystem)
+                    }}
+                  >
+                    Load Demo Data
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Ranking Filters</CardTitle>
+            <CardTitle>Ranking Filters & Sorting</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Ranking Source</label>
                 <Select value={selectedSource} onValueChange={(value: RankingSource) => setSelectedSource(value)}>
@@ -307,7 +482,8 @@ export default function RankingsPage() {
                   <SelectContent>
                     <SelectItem value="all">All Sources</SelectItem>
                     <SelectItem value="user">User Imported</SelectItem>
-                    <SelectItem value="fantasy-nerds">Fantasy Nerds</SelectItem>
+                    <SelectItem value="espn">ESPN</SelectItem>
+                    <SelectItem value="ai">AI Generated</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -350,19 +526,68 @@ export default function RankingsPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Sort By</label>
+                <Select value={sortBy} onValueChange={(value: "rank" | "name" | "position" | "team" | "projectedPoints") => setSortBy(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rank">Rank</SelectItem>
+                    <SelectItem value="name">Player Name</SelectItem>
+                    <SelectItem value="position">Position</SelectItem>
+                    <SelectItem value="team">Team</SelectItem>
+                    <SelectItem value="projectedPoints">Projected Points</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Sort Direction</label>
+                <Select value={sortDirection} onValueChange={(value: "asc" | "desc") => setSortDirection(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">Ascending</SelectItem>
+                    <SelectItem value="desc">Descending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-2xl font-bold">{userRankingSystems.length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">User Imported</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{userRankingSystems.length}</p>
+                    <p className="text-sm text-muted-foreground">User Imported</p>
+                  </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{espnRankings.length}</p>
+                    <p className="text-sm text-muted-foreground">External APIs</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {isLoading ? "Loading..." : "Available"}
+                </Badge>
               </div>
             </CardContent>
           </Card>
@@ -370,22 +595,10 @@ export default function RankingsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-2xl font-bold">{fantasyNerdsRankings.length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Fantasy Nerds</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-purple-600" />
+                <Brain className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-2xl font-bold">{filteredRankings.length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Filtered Players</p>
+                  <p className="text-sm text-muted-foreground">Filtered Players</p>
                 </div>
               </div>
             </CardContent>
@@ -407,7 +620,7 @@ export default function RankingsPage() {
                 <div className="flex items-center justify-center p-8">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Loading player data...</p>
+                    <p className="text-sm text-muted-foreground">Loading player data...</p>
                   </div>
                 </div>
               ) : (
@@ -415,16 +628,16 @@ export default function RankingsPage() {
                   {filteredRankings.map((player) => (
                     <div
                       key={player.playerId}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                       onClick={() => setSelectedPlayerForModal(player)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
                           {player.rank}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{player.playerName}</p>
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <p className="font-medium text-foreground">{player.playerName}</p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span className="font-medium">{player.position}</span>
                             <span>•</span>
                             <span>{player.team}</span>
@@ -447,7 +660,7 @@ export default function RankingsPage() {
                       </div>
                       <div className="text-right">
                         {player.projectedPoints && (
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          <p className="text-sm font-medium text-foreground">
                             {player.projectedPoints.toFixed(1)} pts
                           </p>
                         )}
@@ -493,6 +706,16 @@ export default function RankingsPage() {
 
           <TabsContent value="api-keys">
             <APIKeyManager />
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">After Setting API Keys:</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-200 mb-3">
+                Once you&apos;ve entered and tested your API keys, click &quot;Refresh Rankings&quot; above to load data.
+              </p>
+              <Button onClick={refreshRankings} disabled={isLoading} className="w-full">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                {isLoading ? "Loading..." : "Refresh Rankings Now"}
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
