@@ -21,6 +21,7 @@ export function NFLDataManager() {
   const [nflData, setNflData] = useState<NFLDataResponse | null>(null)
   const [selectedYears, setSelectedYears] = useState<string[]>(["2024"])
   const [selectedPositions, setSelectedPositions] = useState<string[]>(["QB", "RB", "WR", "TE"])
+  const [selectedPositionFilter, setSelectedPositionFilter] = useState<string>("ALL")
   const [selectedWeek, setSelectedWeek] = useState<string>("all")
   const [searchPlayerName, setSearchPlayerName] = useState<string>("")
   const [selectedTeam, setSelectedTeam] = useState<string>("all")
@@ -36,15 +37,15 @@ export function NFLDataManager() {
   const [error, setError] = useState<string | null>(null)
 
   const currentYear = new Date().getFullYear()
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i)
-  const availablePositions = ["QB", "RB", "WR", "TE"]
-  const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1)
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i) || []
+  const availablePositions = ["ALL", "QB", "RB", "WR", "TE"] || []
+  const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1) || []
   const nflTeams = [
     "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN",
     "DET", "GB", "HOU", "IND", "JAX", "KC", "LV", "LAC", "LAR", "MIA",
     "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SF", "SEA", "TB",
     "TEN", "WAS"
-  ]
+  ] || []
 
   const togglePlayerExpansion = (playerId: string) => {
     const newExpanded = new Set(expandedPlayers)
@@ -66,35 +67,47 @@ export function NFLDataManager() {
   }
 
   const sortData = (data: any[]) => {
+    if (!data || data.length === 0) return []
+    
     return [...data].sort((a, b) => {
-      let aVal = a[sortField]
-      let bVal = b[sortField]
+      let aVal = a?.[sortField]
+      let bVal = b?.[sortField]
+      
+      // Handle undefined/null values
+      if (aVal === undefined || aVal === null) aVal = ""
+      if (bVal === undefined || bVal === null) bVal = ""
       
       // Handle string columns (player_name, position, team, etc.)
       if (sortField === "player_name" || sortField === "position" || sortField === "team") {
-        const aStr = String(aVal || "").toLowerCase()
-        const bStr = String(bVal || "").toLowerCase()
-        return sortDirection === "asc" 
-          ? aStr.localeCompare(bStr)
-          : bStr.localeCompare(aStr)
+        const aStr = String(aVal).toLowerCase().trim()
+        const bStr = String(bVal).toLowerCase().trim()
+        
+        if (sortDirection === "asc") {
+          return aStr.localeCompare(bStr)
+        } else {
+          return bStr.localeCompare(aStr)
+        }
       }
       
       // Handle numeric columns
-      const aNum = typeof aVal === "number" ? aVal : parseFloat(aVal) || 0
-      const bNum = typeof bVal === "number" ? bVal : parseFloat(bVal) || 0
+      const aNum = Number(aVal) || 0
+      const bNum = Number(bVal) || 0
       
-      // For descending sort, put 0 values at the bottom
+      // For descending sort
       if (sortDirection === "desc") {
-        if (aNum === 0 && bNum !== 0) return 1  // a goes after b
-        if (bNum === 0 && aNum !== 0) return -1 // a goes before b
-        if (aNum === 0 && bNum === 0) return 0  // equal
-        return bNum - aNum // normal descending sort for non-zero values
+        // Put 0 values at the bottom for fantasy points and stats
+        if (sortField.includes("fantasy") || sortField.includes("points") || sortField.includes("yards") || sortField.includes("tds")) {
+          if (aNum === 0 && bNum !== 0) return 1
+          if (bNum === 0 && aNum !== 0) return -1
+        }
+        return bNum - aNum
       } else {
-        // For ascending sort, put 0 values at the bottom too (since 0 is typically "no data")
-        if (aNum === 0 && bNum !== 0) return 1  // a goes after b
-        if (bNum === 0 && aNum !== 0) return -1 // a goes before b
-        if (aNum === 0 && bNum === 0) return 0  // equal
-        return aNum - bNum // normal ascending sort for non-zero values
+        // For ascending sort
+        if (sortField.includes("fantasy") || sortField.includes("points") || sortField.includes("yards") || sortField.includes("tds")) {
+          if (aNum === 0 && bNum !== 0) return 1
+          if (bNum === 0 && aNum !== 0) return -1
+        }
+        return aNum - bNum
       }
     })
   }
@@ -295,12 +308,16 @@ export function NFLDataManager() {
       // Only auto-load if no data is currently loaded
       if (!nflData && !loading) {
         console.log("Auto-loading 2024 NFL data...")
-        await extractNFLData()
+        try {
+          await extractNFLData()
+        } catch (error) {
+          console.error("Failed to auto-load data:", error)
+        }
       }
     }
     
     autoLoadData()
-  }, [nflData, loading, extractNFLData]) // Include dependencies
+  }, []) // Remove dependencies to prevent infinite loop
 
   return (
     <div className="space-y-6">
@@ -358,7 +375,7 @@ export function NFLDataManager() {
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableYears.map(year => (
+                    {(availableYears || []).map(year => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
                       </SelectItem>
@@ -370,14 +387,21 @@ export function NFLDataManager() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Positions</label>
                 <Select
-                  value={selectedPositions.length === 1 ? selectedPositions[0] : ""}
-                  onValueChange={(value) => setSelectedPositions([value])}
+                  value={selectedPositionFilter}
+                  onValueChange={(value) => {
+                    setSelectedPositionFilter(value)
+                    if (value === "ALL") {
+                      setSelectedPositions(["QB", "RB", "WR", "TE"])
+                    } else {
+                      setSelectedPositions([value])
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select positions" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availablePositions.map(position => (
+                    {(availablePositions || []).map(position => (
                       <SelectItem key={position} value={position}>
                         {position}
                       </SelectItem>
@@ -394,7 +418,7 @@ export function NFLDataManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All weeks</SelectItem>
-                    {availableWeeks.map(week => (
+                    {(availableWeeks || []).map(week => (
                       <SelectItem key={week} value={week.toString()}>
                         Week {week}
                       </SelectItem>
@@ -411,7 +435,7 @@ export function NFLDataManager() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All teams</SelectItem>
-                    {nflTeams.map(team => (
+                    {(nflTeams || []).map(team => (
                       <SelectItem key={team} value={team}>
                         {team}
                       </SelectItem>
@@ -437,8 +461,8 @@ export function NFLDataManager() {
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium">Display Columns:</label>
                 <Select value="" onValueChange={(field) => {
-                  if (!selectedColumns.includes(field)) {
-                    setSelectedColumns([...selectedColumns, field])
+                  if (!(selectedColumns || []).includes(field)) {
+                    setSelectedColumns([...(selectedColumns || []), field])
                   }
                 }}>
                   <SelectTrigger className="w-48">
@@ -446,7 +470,7 @@ export function NFLDataManager() {
                   </SelectTrigger>
                   <SelectContent>
                     {availableDataFields
-                      .filter(field => !selectedColumns.includes(field.key))
+                      .filter(field => !(selectedColumns || []).includes(field.key))
                       .map(field => (
                         <SelectItem key={field.key} value={field.key}>
                           {field.label}
@@ -535,11 +559,11 @@ export function NFLDataManager() {
                   {/* Column Management */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium">Active Columns:</span>
-                    {selectedColumns.map(col => {
-                      const field = availableDataFields.find(f => f.key === col)
+                    {(selectedColumns || []).map(col => {
+                      const field = (availableDataFields || []).find(f => f.key === col)
                       return field ? (
                         <Badge key={col} variant="secondary" className="cursor-pointer" onClick={() => {
-                          setSelectedColumns(selectedColumns.filter(c => c !== col))
+                          setSelectedColumns((selectedColumns || []).filter(c => c !== col))
                         }}>
                           {field.label} ×
                         </Badge>
@@ -564,8 +588,8 @@ export function NFLDataManager() {
                                 )}
                               </div>
                             </th>
-                            {selectedColumns.map(col => {
-                              const field = availableDataFields.find(f => f.key === col)
+                            {(selectedColumns || []).map(col => {
+                              const field = (availableDataFields || []).find(f => f.key === col)
                               if (!field) return null
                               
                               return (
@@ -586,34 +610,41 @@ export function NFLDataManager() {
                         </thead>
                         <tbody>
                           {sortData(
-                            nflData.weekly_stats
+                            (nflData.weekly_stats || [])
                               .filter(stat => {
+                                if (!stat) return false
                                 if (selectedTeam !== "all" && stat.team !== selectedTeam) return false
+                                if (selectedPositionFilter !== "ALL" && stat.position !== selectedPositionFilter) return false
                                 if (minFantasyPoints && (stat.fantasy_points_ppr || stat.fantasy_points || 0) < parseFloat(minFantasyPoints)) return false
                                 return true
                               })
-                          ).slice(0, 100).map((stat, index) => (
-                            <tr key={`${stat.player_id}_${stat.week}_${stat.season}`} className="border-b hover:bg-muted/30 transition-colors">
+                          ).slice(0, 100).filter(stat => stat && typeof stat === 'object').map((stat, index) => (
+                            <tr key={`${stat?.player_id || index}_${stat?.week || 'unknown'}_${stat?.season || 'unknown'}`} className="border-b hover:bg-muted/30 transition-colors">
                               <td className="p-2">
-                                Week {stat.week}
+                                Week {stat?.week || 'N/A'}
                               </td>
-                              {selectedColumns.map(col => {
-                                const field = availableDataFields.find(f => f.key === col)
+                              {(selectedColumns || []).map(col => {
+                                const field = (availableDataFields || []).find(f => f.key === col)
                                 if (!field) return null
                                 
-                                let value = stat[col]
+                                let value = stat?.[col]
+                                
+                                // Handle undefined/null values
+                                if (value === undefined || value === null) {
+                                  value = 0
+                                }
                                 
                                 // Format different data types
-                                if (col.includes("rate") && typeof value === "number") {
-                                  value = `${value.toFixed(1)}%`
-                                } else if (typeof value === "number" && col.includes("per_game")) {
-                                  value = value.toFixed(1)
-                                } else if (typeof value === "number" && col.includes("points")) {
-                                  value = value.toFixed(1)
-                                } else if (typeof value === "number" && col.includes("yards_per")) {
-                                  value = value.toFixed(1)
-                                } else if (typeof value === "number") {
-                                  value = Math.round(value)
+                                if (typeof value === "number") {
+                                  if (col.includes("rate") || col.includes("share") || col.includes("percentage")) {
+                                    value = `${value.toFixed(1)}%`
+                                  } else if (col.includes("per_game") || col.includes("yards_per") || col.includes("epa")) {
+                                    value = value.toFixed(1)
+                                  } else if (col.includes("points")) {
+                                    value = value.toFixed(1)
+                                  } else {
+                                    value = Math.round(value)
+                                  }
                                 }
                                 
                                 return (
@@ -645,11 +676,11 @@ export function NFLDataManager() {
                   {/* Column Management */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium">Active Columns:</span>
-                    {selectedColumns.map(col => {
-                      const field = availableDataFields.find(f => f.key === col)
+                    {(selectedColumns || []).map(col => {
+                      const field = (availableDataFields || []).find(f => f.key === col)
                       return field ? (
                         <Badge key={col} variant="secondary" className="cursor-pointer" onClick={() => {
-                          setSelectedColumns(selectedColumns.filter(c => c !== col))
+                          setSelectedColumns((selectedColumns || []).filter(c => c !== col))
                         }}>
                           {field.label} ×
                         </Badge>
@@ -663,8 +694,8 @@ export function NFLDataManager() {
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50 border-b sticky top-0">
                           <tr>
-                            {selectedColumns.map(col => {
-                              const field = availableDataFields.find(f => f.key === col)
+                            {(selectedColumns || []).map(col => {
+                              const field = (availableDataFields || []).find(f => f.key === col)
                               if (!field) return null
                               
                               return (
@@ -687,29 +718,36 @@ export function NFLDataManager() {
                           {sortData(
                             (nflData.aggregated_season_stats || [])
                               .filter(stat => {
+                                if (!stat) return false
                                 if (selectedTeam !== "all" && stat.team !== selectedTeam) return false
+                                if (selectedPositionFilter !== "ALL" && stat.position !== selectedPositionFilter) return false
                                 if (minFantasyPoints && (stat.fantasy_points_ppr || stat.fantasy_points || 0) < parseFloat(minFantasyPoints)) return false
                                 return true
                               })
-                          ).slice(0, 100).map((stat, index) => (
-                            <tr key={`${stat.player_id}_${stat.season}`} className="border-b hover:bg-muted/30 transition-colors">
-                              {selectedColumns.map(col => {
-                                const field = availableDataFields.find(f => f.key === col)
+                          ).slice(0, 100).filter(stat => stat && typeof stat === 'object').map((stat, index) => (
+                            <tr key={`${stat?.player_id || index}_${stat?.season || 'unknown'}`} className="border-b hover:bg-muted/30 transition-colors">
+                              {(selectedColumns || []).map(col => {
+                                const field = (availableDataFields || []).find(f => f.key === col)
                                 if (!field) return null
                                 
-                                let value = stat[col]
+                                let value = stat?.[col]
+                                
+                                // Handle undefined/null values
+                                if (value === undefined || value === null) {
+                                  value = 0
+                                }
                                 
                                 // Format different data types
-                                if (col.includes("rate") && typeof value === "number") {
-                                  value = `${value.toFixed(1)}%`
-                                } else if (typeof value === "number" && col.includes("per_game")) {
-                                  value = value.toFixed(1)
-                                } else if (typeof value === "number" && col.includes("points")) {
-                                  value = value.toFixed(1)
-                                } else if (typeof value === "number" && col.includes("yards_per")) {
-                                  value = value.toFixed(1)
-                                } else if (typeof value === "number") {
-                                  value = Math.round(value)
+                                if (typeof value === "number") {
+                                  if (col.includes("rate") || col.includes("share") || col.includes("percentage")) {
+                                    value = `${value.toFixed(1)}%`
+                                  } else if (col.includes("per_game") || col.includes("yards_per") || col.includes("epa")) {
+                                    value = value.toFixed(1)
+                                  } else if (col.includes("points")) {
+                                    value = value.toFixed(1)
+                                  } else {
+                                    value = Math.round(value)
+                                  }
                                 }
                                 
                                 return (
@@ -738,20 +776,20 @@ export function NFLDataManager() {
               <TabsContent value="players">
                 <div className="h-96 w-full border rounded-md p-4 overflow-y-auto">
                   <div className="space-y-2">
-                    {nflData.player_info.slice(0, 50).map((player, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                    {(nflData.player_info || []).slice(0, 50).filter(player => player && typeof player === 'object').map((player, index) => (
+                      <div key={`player-${player?.player_id || index}`} className="flex items-center justify-between p-2 bg-muted rounded">
                         <div>
-                          <span className="font-medium">{player.player_name}</span>
+                          <span className="font-medium">{player?.player_name || 'Unknown Player'}</span>
                           <span className="text-sm text-muted-foreground ml-2">
-                            {player.position} - {player.team}
+                            {player?.position || 'N/A'} - {player?.team || 'N/A'}
                           </span>
                         </div>
                         <div className="text-right">
                           <div className="text-sm">
-                            #{player.jersey_number || 'N/A'}
+                            #{player?.jersey_number || 'N/A'}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {player.college || 'N/A'}
+                            {player?.college || 'N/A'}
                           </div>
                         </div>
                       </div>
@@ -768,32 +806,32 @@ export function NFLDataManager() {
               <TabsContent value="teams">
                 <div className="h-96 w-full border rounded-md p-4 overflow-y-auto">
                   <div className="space-y-2">
-                    {nflData.team_analytics.slice(0, 32).map((team, index) => (
-                      <div key={index} className="p-4 bg-muted rounded-lg">
+                    {(nflData.team_analytics || []).slice(0, 32).filter(team => team && typeof team === 'object').map((team, index) => (
+                      <div key={`team-${team?.team || index}`} className="p-4 bg-muted rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">
-                              {team.team}
+                              {team?.team || 'N/A'}
                             </div>
                             <div>
-                              <span className="font-medium">{team.team} Offense</span>
+                              <span className="font-medium">{team?.team || 'Unknown'} Offense</span>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Badge variant={
-                                  team.offensive_identity === 'Pass-Heavy' ? 'default' :
-                                  team.offensive_identity === 'Run-Heavy' ? 'secondary' : 'outline'
+                                  team?.offensive_identity === 'Pass-Heavy' ? 'default' :
+                                  team?.offensive_identity === 'Run-Heavy' ? 'secondary' : 'outline'
                                 }>
-                                  {team.offensive_identity}
+                                  {team?.offensive_identity || 'Unknown'}
                                 </Badge>
-                                <span>{team.passing_percentage.toFixed(1)}% Pass</span>
+                                <span>{(team?.passing_percentage || 0).toFixed(1)}% Pass</span>
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm font-medium">
-                              {team.total_fantasy_points_ppr.toFixed(1)} Total PPR
+                              {(team?.total_fantasy_points_ppr || 0).toFixed(1)} Total PPR
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {team.passing_yards + team.rushing_yards} Total Yards
+                              {(team?.passing_yards || 0) + (team?.rushing_yards || 0)} Total Yards
                             </div>
                           </div>
                         </div>
@@ -801,35 +839,35 @@ export function NFLDataManager() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-border">
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">QB PPR</div>
-                              <div className="font-medium">{team.qb_fantasy_points.toFixed(1)}</div>
+                              <div className="font-medium">{(team?.qb_fantasy_points || 0).toFixed(1)}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">RB PPR</div>
-                              <div className="font-medium">{team.rb_fantasy_points.toFixed(1)}</div>
+                              <div className="font-medium">{(team?.rb_fantasy_points || 0).toFixed(1)}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">WR PPR</div>
-                              <div className="font-medium">{team.wr_fantasy_points.toFixed(1)}</div>
+                              <div className="font-medium">{(team?.wr_fantasy_points || 0).toFixed(1)}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">TE PPR</div>
-                              <div className="font-medium">{team.te_fantasy_points.toFixed(1)}</div>
+                              <div className="font-medium">{(team?.te_fantasy_points || 0).toFixed(1)}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">RB Touches</div>
-                              <div className="font-medium">{team.rb_touches}</div>
+                              <div className="font-medium">{team?.rb_touches || 0}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">WR Targets</div>
-                              <div className="font-medium">{team.wr_targets}</div>
+                              <div className="font-medium">{team?.wr_targets || 0}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">TE Targets</div>
-                              <div className="font-medium">{team.te_targets}</div>
+                              <div className="font-medium">{team?.te_targets || 0}</div>
                             </div>
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">YPC</div>
-                              <div className="font-medium">{team.yards_per_carry.toFixed(1)}</div>
+                              <div className="font-medium">{(team?.yards_per_carry || 0).toFixed(1)}</div>
                             </div>
                           </div>
                       </div>

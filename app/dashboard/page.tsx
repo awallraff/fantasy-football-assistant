@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, RefreshCw, BarChart3 } from "lucide-react"
+import { ArrowLeft, RefreshCw, BarChart3, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { sleeperAPI, type SleeperLeague, type SleeperUser, type SleeperRoster } from "@/lib/sleeper-api"
 import { LeagueOverview } from "@/components/league-overview"
@@ -263,10 +263,52 @@ export default function DashboardPage() {
     window.location.href = "/"
   }
 
+  const removeLeague = useCallback((leagueId: string, leagueName?: string) => {
+    // Add confirmation dialog
+    const league = leagues.find(l => l.league_id === leagueId)
+    const displayName = leagueName || league?.name || "this league"
+    
+    if (!confirm(`Are you sure you want to remove "${displayName}"? This action cannot be undone.`)) {
+      return
+    }
+    
+    try {
+      // Filter out the league from current leagues array
+      const filteredLeagues = leagues.filter(league => league.league_id !== leagueId)
+      
+      // Update state
+      setLeagues(filteredLeagues)
+      
+      // Reorganize leagues by year
+      const leaguesByYearData: {[year: string]: SleeperLeague[]} = {}
+      filteredLeagues.forEach((league: SleeperLeague) => {
+        const year = league.season
+        if (!leaguesByYearData[year]) {
+          leaguesByYearData[year] = []
+        }
+        leaguesByYearData[year].push(league)
+      })
+      
+      setLeaguesByYear(leaguesByYearData)
+      
+      // Update localStorage
+      setItem("sleeper_leagues", JSON.stringify(filteredLeagues))
+      
+      // If the removed league was the currently selected one, clear selection
+      if (selectedLeague?.league_id === leagueId) {
+        handleBackToLeagues()
+      }
+      
+      console.log(`Removed league ${leagueId}. Remaining leagues: ${filteredLeagues.length}`)
+    } catch (error) {
+      console.error("Error removing league:", error)
+    }
+  }, [leagues, selectedLeague, setItem, handleBackToLeagues])
+
   // Show loading state during hydration
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-muted rounded w-1/4"></div>
@@ -284,7 +326,7 @@ export default function DashboardPage() {
 
   if (!user || leagues.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-lg mx-auto shadow-lg">
             <CardHeader>
@@ -333,7 +375,7 @@ export default function DashboardPage() {
     const availableLeagueYears = Object.keys(leaguesByYear).sort().reverse()
     
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -438,7 +480,7 @@ export default function DashboardPage() {
   const availableLeagueYears = Object.keys(leaguesByYear).sort().reverse()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -477,19 +519,33 @@ export default function DashboardPage() {
         {/* Leagues Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {currentYearLeagues.map((league) => (
-            <Card key={league.league_id} className="cursor-pointer hover:shadow-lg transition-shadow border-border">
+            <Card key={league.league_id} className="hover:shadow-lg transition-shadow border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg text-card-foreground">{league.name}</CardTitle>
-                  <Badge variant={league.status === "in_season" ? "default" : "secondary"}>
-                    {league.status.replace("_", " ")}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={league.status === "in_season" ? "default" : "secondary"}>
+                      {league.status.replace("_", " ")}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeLeague(league.league_id, `${league.name} (${league.season})`)
+                      }}
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      title={`Remove "${league.name}" from your leagues`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <CardDescription>
                   {league.total_rosters} teams • {league.season} season
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="cursor-pointer" onClick={() => loadLeagueDetails(league)}>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Sport</span>
@@ -499,7 +555,10 @@ export default function DashboardPage() {
                     <span className="text-muted-foreground">Season Type</span>
                     <span className="font-medium text-foreground">{league.season_type}</span>
                   </div>
-                  <Button className="w-full mt-4" onClick={() => loadLeagueDetails(league)} disabled={loading}>
+                  <Button className="w-full mt-4" disabled={loading} onClick={(e) => {
+                    e.stopPropagation()
+                    loadLeagueDetails(league)
+                  }}>
                     {loading ? (
                       <>
                         <RefreshCw className="h-4 w-4 mr-2 animate-spin" />

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { BarChart3, Brain, TrendingUp, AlertCircle } from "lucide-react"
+import { BarChart3, Brain, TrendingUp, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { RankingsImporter } from "@/components/rankings-importer"
 import { RankingsManager } from "@/components/rankings-manager"
 import { RankingsComparison } from "@/components/rankings-comparison"
@@ -40,12 +40,16 @@ export default function RankingsPage() {
   const [aiRankingSystem, setAiRankingSystem] = useState<RankingSystem | null>(null)
   const [selectedSystem, setSelectedSystem] = useState<RankingSystem | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
-  const [selectedSource, setSelectedSource] = useState<RankingSource>("all")
+  const [selectedSource, setSelectedSource] = useState<RankingSource>("ai")
   const [sortBy, setSortBy] = useState<"rank" | "name" | "position" | "team" | "projectedPoints">("rank")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<SimplePlayerRanking | null>(null)
   const [apiKeys, setApiKeys] = useState<{ [key: string]: string }>({})
+  const [selectedYear, setSelectedYear] = useState<number>(2024)
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
+  const [tableSortField, setTableSortField] = useState<string>("rank")
+  const [tableSortDirection, setTableSortDirection] = useState<"asc" | "desc">("asc")
 
   const { players, getPlayer, isLoading: playersLoading } = usePlayerData()
   const { getItem, setItem, isClient } = useSafeLocalStorage()
@@ -158,9 +162,14 @@ export default function RankingsPage() {
   const generateAiRankings = useCallback(async () => {
     setIsLoading(true);
     try {
+      console.log(`Generating AI rankings with historical data for ${selectedYear}${selectedWeek ? ` week ${selectedWeek}` : ''}`);
       const allRankings = getAllSystems();
       const aiService = new AIRankingsService();
-      const aiSystem = await aiService.generateAIRankings(allRankings);
+      const aiSystem = await aiService.generateAIRankings(allRankings, {
+        year: selectedYear,
+        week: selectedWeek || undefined,
+        useHistoricalData: true
+      });
       setAiRankingSystem(aiSystem);
       setSelectedSource("ai");
       setSelectedSystem(aiSystem);
@@ -169,7 +178,7 @@ export default function RankingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedYear, selectedWeek]);
 
   const filteredRankings = useMemo(() => {
     if (!selectedSystem) {
@@ -341,12 +350,185 @@ export default function RankingsPage() {
     }
   };
 
+  const handleTableSort = (field: string) => {
+    if (tableSortField === field) {
+      setTableSortDirection(tableSortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setTableSortField(field)
+      setTableSortDirection("asc")
+    }
+  };
+
+  const sortTableData = (data: SimplePlayerRanking[]) => {
+    return [...data].sort((a, b) => {
+      let compareValue = 0;
+      
+      switch (tableSortField) {
+        case "rank":
+          compareValue = a.rank - b.rank;
+          break;
+        case "playerName":
+          compareValue = a.playerName.localeCompare(b.playerName);
+          break;
+        case "position":
+          compareValue = a.position.localeCompare(b.position);
+          break;
+        case "team":
+          compareValue = a.team.localeCompare(b.team);
+          break;
+        case "projectedPoints":
+          compareValue = (b.projectedPoints || 0) - (a.projectedPoints || 0);
+          break;
+        case "tier":
+          compareValue = (a.tier || 999) - (b.tier || 999);
+          break;
+        default:
+          compareValue = a.rank - b.rank;
+      }
+      
+      return tableSortDirection === "desc" ? -compareValue : compareValue;
+    });
+  };
+
+  const renderRankingsTable = (rankings: SimplePlayerRanking[]) => {
+    const sortedData = sortTableData(rankings);
+    
+    return (
+      <div className="border rounded-md overflow-hidden">
+        <div className="overflow-x-auto max-h-96">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b sticky top-0">
+              <tr>
+                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTableSort("rank")}>
+                  <div className="flex items-center gap-1">
+                    Rank
+                    {tableSortField === "rank" ? (
+                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTableSort("playerName")}>
+                  <div className="flex items-center gap-1">
+                    Player
+                    {tableSortField === "playerName" ? (
+                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTableSort("position")}>
+                  <div className="flex items-center gap-1">
+                    Position
+                    {tableSortField === "position" ? (
+                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTableSort("team")}>
+                  <div className="flex items-center gap-1">
+                    Team
+                    {tableSortField === "team" ? (
+                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTableSort("projectedPoints")}>
+                  <div className="flex items-center gap-1">
+                    Projected Points
+                    {tableSortField === "projectedPoints" ? (
+                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => handleTableSort("tier")}>
+                  <div className="flex items-center gap-1">
+                    Tier
+                    {tableSortField === "tier" ? (
+                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left p-2 font-medium">
+                  Status
+                </th>
+                <th className="text-left p-2 font-medium">
+                  Notes
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedData.map((player, index) => (
+                <tr key={player.playerId} 
+                    className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => setSelectedPlayerForModal(player)}>
+                  <td className="p-2">
+                    <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
+                      {player.rank}
+                    </div>
+                  </td>
+                  <td className="p-2 font-medium">
+                    {player.playerName}
+                  </td>
+                  <td className="p-2">
+                    <Badge variant="outline" className="text-xs">
+                      {player.position}
+                    </Badge>
+                  </td>
+                  <td className="p-2">
+                    {player.team}
+                  </td>
+                  <td className="p-2 font-medium">
+                    {player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}
+                  </td>
+                  <td className="p-2">
+                    {player.tier ? `Tier ${player.tier}` : '-'}
+                  </td>
+                  <td className="p-2">
+                    {player.injuryStatus && player.injuryStatus !== "Healthy" ? (
+                      <Badge variant="destructive" className="text-xs">
+                        {player.injuryStatus}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Healthy
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="p-2 text-xs text-muted-foreground">
+                    {player.notes ? player.notes.slice(0, 50) + (player.notes.length > 50 ? '...' : '') : '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const hasNoDataSources = userRankingSystems.length === 0
 
   // Show loading state during hydration
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-muted rounded w-1/4"></div>
@@ -363,21 +545,17 @@ export default function RankingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Player Rankings</h1>
-            <p className="text-muted-foreground">User-imported rankings and ESPN data</p>
+            <p className="text-muted-foreground">AI-generated rankings with historical NFL data, plus user imports and external sources</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={refreshRankings} disabled={isLoading}>
               <TrendingUp className="h-4 w-4 mr-2" />
               {isLoading ? "Loading..." : "Refresh Rankings"}
-            </Button>
-            <Button onClick={generateAiRankings} disabled={isLoading}>
-              <Brain className="h-4 w-4 mr-2" />
-              {isLoading ? "Analyzing..." : "Generate AI Rankings"}
             </Button>
             <Button 
               variant="outline"
@@ -559,6 +737,65 @@ export default function RankingsPage() {
           </CardContent>
         </Card>
 
+        {/* AI Historical Data Controls */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              AI Rankings Historical Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Historical Year</label>
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2024">2024 Season</SelectItem>
+                    <SelectItem value="2023">2023 Season</SelectItem>
+                    <SelectItem value="2022">2022 Season</SelectItem>
+                    <SelectItem value="2021">2021 Season</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Week (Optional)</label>
+                <Select 
+                  value={selectedWeek?.toString() || "all"} 
+                  onValueChange={(value) => setSelectedWeek(value === "all" ? null : parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All weeks" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Weeks (Season)</SelectItem>
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map(week => (
+                      <SelectItem key={week} value={week.toString()}>
+                        Week {week}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                <Button onClick={generateAiRankings} disabled={isLoading} className="w-full">
+                  <Brain className="h-4 w-4 mr-2" />
+                  {isLoading ? "Analyzing..." : "Generate AI Rankings"}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+              <p><strong>Historical Data Integration:</strong> AI rankings now use real NFL performance data from the selected year/week to provide context alongside your imported rankings. This helps identify players with strong historical performance that might be undervalued in current rankings.</p>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
@@ -605,70 +842,81 @@ export default function RankingsPage() {
           </Card>
         </div>
 
-        {selectedSystem && filteredRankings.length > 0 && (
+        {/* Rankings Data Display */}
+        {selectedSystem && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>
-                  {selectedSystem.name} - {selectedPosition === "all" ? "All Positions" : selectedPosition}
-                </span>
-                <Badge variant="outline">{selectedSystem.source}</Badge>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Player Rankings Results
+                </CardTitle>
+                <Badge variant="outline">
+                  {selectedSystem.source} • {filteredRankings.length} players
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
-              {playersLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Loading player data...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredRankings.map((player) => (
-                    <div
-                      key={player.playerId}
-                      className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => setSelectedPlayerForModal(player)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
-                          {player.rank}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">{player.playerName}</p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span className="font-medium">{player.position}</span>
-                            <span>•</span>
-                            <span>{player.team}</span>
-                            {player.tier && (
-                              <>
-                                <span>•</span>
-                                <span>Tier {player.tier}</span>
-                              </>
-                            )}
-                            {player.injuryStatus && player.injuryStatus !== "Healthy" && (
-                              <>
-                                <span>•</span>
-                                <Badge variant="destructive" className="text-xs">
-                                  {player.injuryStatus}
-                                </Badge>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        {player.projectedPoints && (
-                          <p className="text-sm font-medium text-foreground">
-                            {player.projectedPoints.toFixed(1)} pts
-                          </p>
-                        )}
-                      </div>
+              {/* Summary Stats */}
+              <div className="grid md:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{filteredRankings.length}</div>
+                    <p className="text-sm text-muted-foreground">Total Players</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {selectedSystem.source === 'AI' && selectedYear ? selectedYear : selectedSystem.season}
                     </div>
-                  ))}
+                    <p className="text-sm text-muted-foreground">Season/Year</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{selectedSystem.scoringFormat.toUpperCase()}</div>
+                    <p className="text-sm text-muted-foreground">Scoring Format</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{selectedPosition === "all" ? "All" : selectedPosition}</div>
+                    <p className="text-sm text-muted-foreground">Position Filter</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Rankings Table */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">
+                    {selectedSystem.name} - {selectedPosition === "all" ? "All Positions" : selectedPosition}
+                  </h3>
+                  {selectedSystem.source === 'AI' && (
+                    <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded">
+                      ✨ Enhanced with NFL historical data
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {playersLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading player data...</p>
+                    </div>
+                  </div>
+                ) : filteredRankings.length > 0 ? (
+                  renderRankingsTable(filteredRankings)
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      No rankings found for the selected filters.
+                    </p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}

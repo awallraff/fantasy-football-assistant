@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Database, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { NFLDataManager } from "@/components/nfl-data-manager"
+import { NFLDataManagerFixed } from "@/components/nfl-data-manager-fixed"
 
 export default function NFLDataPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -64,7 +64,7 @@ export default function NFLDataPage() {
         </Card>
 
         {/* NFL Data Manager */}
-        <NFLDataManager />
+        <NFLDataManagerFixed />
       </div>
     </div>
   )

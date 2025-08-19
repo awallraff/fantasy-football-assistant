@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, CheckCircle, AlertCircle, Calendar } from "lucide-react"
+import { Loader2, CheckCircle, AlertCircle, Calendar, X, Trash2 } from "lucide-react"
 import { sleeperAPI, type SleeperUser, type SleeperLeague } from "@/lib/sleeper-api"
 
 interface LeagueConnectorProps {
@@ -28,7 +28,7 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
   const [user, setUser] = useState<SleeperUser | null>(null)
   const [groupedLeagues, setGroupedLeagues] = useState<GroupedLeague[]>([])
   const abortControllerRef = useRef<AbortController | null>(null)
-  const { setItem, removeItem } = useSafeLocalStorage()
+  const { setItem, removeItem, getItem } = useSafeLocalStorage()
 
   // Cleanup on unmount
   useEffect(() => {
@@ -153,6 +153,73 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
     removeItem("sleeper_connection_time")
   }
 
+  const removeLeague = (leagueId: string, leagueName?: string) => {
+    // Add confirmation dialog
+    const leagueInfo = leagueName ? `"${leagueName}"` : "this league"
+    if (!confirm(`Are you sure you want to remove ${leagueInfo}? This action cannot be undone.`)) {
+      return
+    }
+    
+    try {
+      // Get current leagues from localStorage
+      const savedLeagues = getItem("sleeper_leagues")
+      if (savedLeagues) {
+        const allLeagues = JSON.parse(savedLeagues) as SleeperLeague[]
+        const filteredLeagues = allLeagues.filter(league => league.league_id !== leagueId)
+        
+        // Update localStorage
+        setItem("sleeper_leagues", JSON.stringify(filteredLeagues))
+        
+        // Update local state
+        const newGroupedLeagues = groupLeaguesByName(filteredLeagues)
+        setGroupedLeagues(newGroupedLeagues)
+        
+        // Notify parent component if callback exists
+        if (onLeaguesConnected && user) {
+          onLeaguesConnected(user, filteredLeagues)
+        }
+        
+        console.log(`Removed league ${leagueId}. Remaining leagues: ${filteredLeagues.length}`)
+      }
+    } catch (error) {
+      console.error("Error removing league:", error)
+      setError("Failed to remove league. Please try again.")
+    }
+  }
+
+  const removeEntireLeagueGroup = (leagueName: string) => {
+    // Add confirmation dialog
+    if (!confirm(`Are you sure you want to remove all seasons of "${leagueName}"? This action cannot be undone.`)) {
+      return
+    }
+    
+    try {
+      // Get current leagues from localStorage
+      const savedLeagues = getItem("sleeper_leagues")
+      if (savedLeagues) {
+        const allLeagues = JSON.parse(savedLeagues) as SleeperLeague[]
+        const filteredLeagues = allLeagues.filter(league => league.name !== leagueName)
+        
+        // Update localStorage
+        setItem("sleeper_leagues", JSON.stringify(filteredLeagues))
+        
+        // Update local state
+        const newGroupedLeagues = groupLeaguesByName(filteredLeagues)
+        setGroupedLeagues(newGroupedLeagues)
+        
+        // Notify parent component if callback exists
+        if (onLeaguesConnected && user) {
+          onLeaguesConnected(user, filteredLeagues)
+        }
+        
+        console.log(`Removed league group "${leagueName}". Remaining leagues: ${filteredLeagues.length}`)
+      }
+    } catch (error) {
+      console.error("Error removing league group:", error)
+      setError("Failed to remove league group. Please try again.")
+    }
+  }
+
   if (user && groupedLeagues.length > 0) {
     return (
       <Card>
@@ -206,12 +273,39 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
                           ))}
                         </SelectContent>
                       </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeEntireLeagueGroup(group.name)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title={`Remove all seasons of "${group.name}"`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
                   {group.seasons.length > 1 && (
-                    <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                      Available seasons: {group.seasons.map((l) => l.season).join(", ")}
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">
+                        Multiple seasons available - you can remove individual seasons:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {group.seasons.map((league) => (
+                          <div key={league.league_id} className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs">
+                            <span>{league.season}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeLeague(league.league_id, `${group.name} (${league.season})`)}
+                              className="h-4 w-4 p-0 text-muted-foreground hover:text-destructive"
+                              title={`Remove ${league.season} season`}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

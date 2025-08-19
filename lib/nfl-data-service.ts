@@ -234,7 +234,7 @@ class NFLDataService {
 
   private runPythonScript(args: string[], timeout: number): Promise<NFLDataResponse> {
     return new Promise((resolve, reject) => {
-      const python = spawn('python', [this.scriptPath, ...args], {
+      const python = spawn('python3', [this.scriptPath, ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: true
       })
