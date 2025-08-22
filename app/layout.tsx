@@ -7,6 +7,7 @@ import { Navigation } from "@/components/navigation"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { PlayerDataProvider } from "@/contexts/player-data-context"
+import { ProjectionsProvider } from "@/contexts/projections-context"
 
 export const metadata: Metadata = {
   title: "Fantasy Football Analytics",
@@ -33,9 +34,11 @@ html {
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PlayerDataProvider>
-            <Navigation />
-            <main>{children}</main>
-            <Toaster />
+            <ProjectionsProvider>
+              <Navigation />
+              <main>{children}</main>
+              <Toaster />
+            </ProjectionsProvider>
           </PlayerDataProvider>
         </ThemeProvider>
       </body>

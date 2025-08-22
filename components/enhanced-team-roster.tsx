@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ChevronDown, ChevronUp, X } from "lucide-react"
+import { ChevronDown, ChevronUp, X, TrendingUp } from "lucide-react"
 import type { SleeperRoster, SleeperUser } from "@/lib/sleeper-api"
 import { usePlayerData } from "@/contexts/player-data-context"
+import { useProjections } from "@/contexts/projections-context"
 
 interface EnhancedTeamRosterProps {
   roster: SleeperRoster
@@ -22,6 +23,9 @@ interface DisplayPlayer {
   position: string
   team: string
   injury_status?: string
+  projectedPoints?: number
+  tier?: number
+  weeklyProjection?: number
 }
 
 
@@ -45,8 +49,13 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
   const [isCollapsed, setIsCollapsed] = useState(true)
 
   const { getPlayer, getPlayerName, isLoading: playersLoading } = usePlayerData()
+  const { getProjection, loadProjectionsForPlayers, isLoading: projectionsLoading } = useProjections()
 
+
+  // Memoize player loading to prevent infinite re-renders
   const loadPlayers = useCallback(() => {
+    if (playersLoading) return
+
     try {
       const allPlayerIds = [...(roster.players || []), ...(roster.starters || [])]
       const uniquePlayerIds = [...new Set(allPlayerIds)]
@@ -54,20 +63,29 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
       const displayPlayers: DisplayPlayer[] = uniquePlayerIds
         .map((id) => {
           const player = getPlayer(id)
+          const playerName = player?.full_name || `${player?.first_name || ''} ${player?.last_name || ''}`.trim() || getPlayerName(id)
+          
+          // Get projections from context
+          const projection = getProjection(id, playerName)
+          
           if (!player) {
             return {
               player_id: id,
-              full_name: getPlayerName(id),
+              full_name: playerName,
               position: "UNKNOWN",
               team: "UNKNOWN",
+              weeklyProjection: projection?.weeklyProjection,
+              tier: projection?.tier,
             }
           }
           return {
             player_id: player.player_id,
-            full_name: player.full_name || `${player.first_name} ${player.last_name}`,
+            full_name: playerName,
             position: player.position,
             team: player.team,
             injury_status: player.injury_status,
+            weeklyProjection: projection?.weeklyProjection,
+            tier: projection?.tier,
           }
         })
         .filter(Boolean)
@@ -76,13 +94,33 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
     } catch (error) {
       console.error("Error loading players:", error)
     }
-  }, [roster, getPlayer, getPlayerName])
+  }, [playersLoading, roster.players, roster.starters, getPlayer, getPlayerName, getProjection])
 
+  // Load projections when roster changes
   useEffect(() => {
-    if (!playersLoading) {
-      loadPlayers()
+    const allPlayerIds = [...(roster.players || []), ...(roster.starters || [])]
+    const uniquePlayerIds = [...new Set(allPlayerIds)]
+    
+    if (uniquePlayerIds.length > 0 && !playersLoading) {
+      // Create player names map
+      const playerNames = new Map<string, string>()
+      uniquePlayerIds.forEach(id => {
+        const player = getPlayer(id)
+        const playerName = player?.full_name || `${player?.first_name || ''} ${player?.last_name || ''}`.trim() || getPlayerName(id)
+        if (playerName) {
+          playerNames.set(id, playerName)
+        }
+      })
+      
+      // Load projections for these players
+      loadProjectionsForPlayers(uniquePlayerIds, playerNames)
     }
-  }, [playersLoading, loadPlayers])
+  }, [roster.players, roster.starters, playersLoading, getPlayer, getPlayerName, loadProjectionsForPlayers])
+
+  // Load players when data changes
+  useEffect(() => {
+    loadPlayers()
+  }, [loadPlayers])
 
   const starters = players.filter((p) => roster.starters?.includes(p.player_id))
   const bench = players.filter((p) => roster.players?.includes(p.player_id) && !roster.starters?.includes(p.player_id))
@@ -143,6 +181,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
                     player={player}
                     isStarter={true}
                     onClick={() => setSelectedPlayer(player)}
+                    projectionsLoading={projectionsLoading}
                   />
                 ))}
               </TabsContent>
@@ -154,6 +193,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
                     player={player}
                     isStarter={false}
                     onClick={() => setSelectedPlayer(player)}
+                    projectionsLoading={projectionsLoading}
                   />
                 ))}
               </TabsContent>
@@ -171,10 +211,12 @@ function PlayerCard({
   player,
   isStarter,
   onClick,
+  projectionsLoading,
 }: {
   player: DisplayPlayer
   isStarter: boolean
   onClick: () => void
+  projectionsLoading?: boolean
 }) {
   return (
     <div
@@ -204,6 +246,24 @@ function PlayerCard({
 
       <div className="flex items-center gap-2">
         <div className="text-right">
+          {projectionsLoading ? (
+            <div className="flex items-center gap-1 mb-1">
+              <div className="h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" />
+              <span className="text-sm text-muted-foreground">Loading...</span>
+            </div>
+          ) : player.weeklyProjection ? (
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className="h-3 w-3 text-blue-500" />
+              <span className="text-sm font-medium text-blue-600">
+                {player.weeklyProjection.toFixed(1)} pts
+              </span>
+              {player.tier && (
+                <Badge variant="outline" className="text-xs">
+                  T{player.tier}
+                </Badge>
+              )}
+            </div>
+          ) : null}
           <div className="text-sm font-medium">{isStarter ? "Starter" : "Bench"}</div>
         </div>
       </div>

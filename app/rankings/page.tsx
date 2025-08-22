@@ -46,8 +46,9 @@ export default function RankingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<SimplePlayerRanking | null>(null)
   const [apiKeys, setApiKeys] = useState<{ [key: string]: string }>({})
-  const [selectedYear, setSelectedYear] = useState<number>(2024)
+  const [selectedYear, setSelectedYear] = useState<number>(2025)
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
+  const [projectionType, setProjectionType] = useState<"season" | "weekly">("weekly")
   const [tableSortField, setTableSortField] = useState<string>("rank")
   const [tableSortDirection, setTableSortDirection] = useState<"asc" | "desc">("asc")
 
@@ -116,6 +117,39 @@ export default function RankingsPage() {
     }
   }
 
+  const getAllSystemsForSource = (source: RankingSource): RankingSystem[] => {
+    switch (source) {
+      case "user":
+        return userRankingSystems
+      case "espn":
+        return espnRankings
+      case "ai":
+        return aiRankingSystem ? [aiRankingSystem] : []
+      default:
+        return [...userRankingSystems, ...espnRankings]
+    }
+  }
+
+  // Auto-select system when switching sources and systems are available
+  useEffect(() => {
+    const availableSystems = getAllSystems();
+    
+    // If no system is selected but systems are available for the current source, auto-select the most recent
+    if (!selectedSystem && availableSystems.length > 0) {
+      const mostRecentSystem = availableSystems.reduce((latest, current) => {
+        const latestTime = new Date(latest.updatedAt || latest.createdAt || 0).getTime();
+        const currentTime = new Date(current.updatedAt || current.createdAt || 0).getTime();
+        return currentTime > latestTime ? current : latest;
+      });
+      setSelectedSystem(mostRecentSystem);
+    }
+    
+    // If selected system doesn't belong to current source, clear selection
+    if (selectedSystem && !availableSystems.some(sys => sys.id === selectedSystem.id)) {
+      setSelectedSystem(null);
+    }
+  }, [selectedSource, userRankingSystems, espnRankings, aiRankingSystem, selectedSystem])
+
 
 
   const loadEspnRankings = useCallback(async () => {
@@ -159,26 +193,96 @@ export default function RankingsPage() {
   }, [])
 
 
-  const generateAiRankings = useCallback(async () => {
+  // Function to determine the next upcoming week dynamically
+  const getNextUpcomingWeek = useCallback(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+    const currentDay = now.getDate();
+    
+    // NFL season typically runs from early September to early January
+    // Week 1 usually starts around the second Thursday of September
+    // For simplicity, let's assume:
+    // - Preseason: August 1 - September 10 (prep for Week 1)
+    // - Regular season: September 11 - January 8 (Weeks 1-18)
+    // - Playoffs: January 9 - February 15
+    // - Offseason: February 16 - July 31 (prep for next season)
+    
+    let targetYear = currentYear;
+    let targetWeek = 1;
+    
+    if (currentMonth >= 9 && currentDay >= 11) {
+      // We're in the current NFL season (Sep 11 - Dec 31)
+      targetYear = currentYear;
+      // Estimate current week based on date
+      const seasonStart = new Date(currentYear, 8, 11); // September 11
+      const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      targetWeek = Math.min(Math.max(weeksSinceStart + 1, 1), 18);
+    } else if (currentMonth >= 1 && currentMonth <= 2) {
+      // We're in playoffs/early offseason (Jan 1 - Feb 15)
+      // Target next season's Week 1
+      targetYear = currentYear;
+      targetWeek = 1;
+    } else {
+      // We're in offseason/preseason (Feb 16 - Sep 10)
+      // Target upcoming season's Week 1
+      if (currentMonth >= 2) {
+        targetYear = currentYear; // Same year for March-August
+      } else {
+        targetYear = currentYear; // January-February is still current season year
+      }
+      targetWeek = 1;
+    }
+    
+    // For 2025, since we're in preseason, target Week 1
+    if (currentYear === 2024) {
+      targetYear = 2025;
+      targetWeek = 1;
+    }
+    
+    return { year: targetYear, week: targetWeek };
+  }, []);
+
+  const generateAiRankings = useCallback(async (customYear?: number, customWeek?: number, forceProjectionType?: "season" | "weekly") => {
+    const { year: nextYear, week: nextWeek } = getNextUpcomingWeek();
+    const targetYear = customYear || nextYear;
+    const currentProjectionType = forceProjectionType || projectionType;
+    
+    // For season projections, don't specify a week
+    const targetWeek = currentProjectionType === "season" ? undefined : (customWeek || nextWeek);
+    
     setIsLoading(true);
     try {
-      console.log(`Generating AI rankings with historical data for ${selectedYear}${selectedWeek ? ` week ${selectedWeek}` : ''}`);
+      const projectionDesc = currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`;
+      console.log(`Generating AI rankings predictions for ${projectionDesc}`);
       const allRankings = getAllSystems();
       const aiService = new AIRankingsService();
       const aiSystem = await aiService.generateAIRankings(allRankings, {
-        year: selectedYear,
-        week: selectedWeek || undefined,
-        useHistoricalData: true
+        year: targetYear,
+        week: targetWeek,
+        useHistoricalData: true // Use historical data to inform future predictions
       });
       setAiRankingSystem(aiSystem);
       setSelectedSource("ai");
       setSelectedSystem(aiSystem);
+      
+      // Update the state to reflect what we generated
+      setSelectedYear(targetYear);
+      setSelectedWeek(targetWeek || null);
     } catch (error) {
       console.error("Error generating AI rankings:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedYear, selectedWeek]);
+  }, [getNextUpcomingWeek, projectionType]);
+
+  const handleProjectionTypeChange = useCallback(async (newType: "season" | "weekly") => {
+    setProjectionType(newType);
+    // Regenerate AI rankings with the new projection type
+    if (selectedSource === "ai" || aiRankingSystem) {
+      await generateAiRankings(selectedYear, selectedWeek, newType);
+    }
+  }, [selectedSource, aiRankingSystem, selectedYear, selectedWeek, generateAiRankings]);
 
   const filteredRankings = useMemo(() => {
     if (!selectedSystem) {
@@ -211,33 +315,8 @@ export default function RankingsPage() {
           injuryStatus: player?.injury_status || "Healthy",
         }
       })
-      .sort((a, b) => {
-        // Custom sorting logic
-        let compareValue = 0
-        
-        switch (sortBy) {
-          case "rank":
-            compareValue = a.rank - b.rank
-            break
-          case "name":
-            compareValue = a.playerName.localeCompare(b.playerName)
-            break
-          case "position":
-            compareValue = a.position.localeCompare(b.position)
-            break
-          case "team":
-            compareValue = a.team.localeCompare(b.team)
-            break
-          case "projectedPoints":
-            compareValue = (b.projectedPoints || 0) - (a.projectedPoints || 0) // Higher points first by default
-            break
-          default:
-            compareValue = a.rank - b.rank
-        }
-        
-        return sortDirection === "desc" ? -compareValue : compareValue
-      })
-  }, [selectedSystem, selectedPosition, getPlayer, sortBy, sortDirection])
+      // Remove the duplicate sorting here - let the table handle all sorting
+  }, [selectedSystem, selectedPosition, getPlayer])
 
   useEffect(() => {
     // Prevent multiple API calls in development mode (React StrictMode)
@@ -255,11 +334,9 @@ export default function RankingsPage() {
         await Promise.allSettled([
           loadEspnRankings(),
         ])
-        // After all initial rankings are loaded, generate AI rankings
+        // After all initial rankings are loaded, automatically generate AI rankings for next upcoming week
         if (!cancelled) {
-          await generateAiRankings();
-          setSelectedSource("ai");
-          setSelectedSystem(aiRankingSystem);
+          await generateAiRankings(); // This will automatically determine the next upcoming week
         }
       } catch (error) {
         if (!cancelled) {
@@ -377,11 +454,32 @@ export default function RankingsPage() {
           compareValue = a.team.localeCompare(b.team);
           break;
         case "projectedPoints":
-          compareValue = (b.projectedPoints || 0) - (a.projectedPoints || 0);
-          break;
+          const aPoints = a.projectedPoints || 0;
+          const bPoints = b.projectedPoints || 0;
+          
+          // For descending sort (default for points), put 0 values at bottom
+          if (tableSortDirection === "desc") {
+            if (aPoints === 0 && bPoints !== 0) return 1;
+            if (bPoints === 0 && aPoints !== 0) return -1;
+            return bPoints - aPoints;
+          } else {
+            // For ascending sort, 0 values stay at bottom
+            if (aPoints === 0 && bPoints !== 0) return 1;
+            if (bPoints === 0 && aPoints !== 0) return -1;
+            return aPoints - bPoints;
+          }
         case "tier":
-          compareValue = (a.tier || 999) - (b.tier || 999);
-          break;
+          const aTier = a.tier || 999;
+          const bTier = b.tier || 999;
+          
+          // For descending sort, put high tier numbers (999) at bottom
+          if (tableSortDirection === "desc") {
+            if (aTier === 999 && bTier !== 999) return 1;
+            if (bTier === 999 && aTier !== 999) return -1;
+            return bTier - aTier;
+          } else {
+            return aTier - bTier;
+          }
         default:
           compareValue = a.rank - b.rank;
       }
@@ -550,7 +648,7 @@ export default function RankingsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Player Rankings</h1>
-            <p className="text-muted-foreground">AI-generated rankings with historical NFL data, plus user imports and external sources</p>
+            <p className="text-muted-foreground">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={refreshRankings} disabled={isLoading}>
@@ -650,10 +748,25 @@ export default function RankingsPage() {
             <CardTitle>Ranking Filters & Sorting</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Ranking Source</label>
-                <Select value={selectedSource} onValueChange={(value: RankingSource) => setSelectedSource(value)}>
+                <Select value={selectedSource} onValueChange={(value: RankingSource) => {
+                  setSelectedSource(value);
+                  // Auto-select the most recent/relevant system for the new source
+                  const newSourceSystems = getAllSystemsForSource(value);
+                  if (newSourceSystems.length > 0) {
+                    // Pick the most recent system from the new source
+                    const mostRecentSystem = newSourceSystems.reduce((latest, current) => {
+                      const latestTime = new Date(latest.updatedAt || latest.createdAt || 0).getTime();
+                      const currentTime = new Date(current.updatedAt || current.createdAt || 0).getTime();
+                      return currentTime > latestTime ? current : latest;
+                    });
+                    setSelectedSystem(mostRecentSystem);
+                  } else {
+                    setSelectedSystem(null);
+                  }
+                }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -693,14 +806,40 @@ export default function RankingsPage() {
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select system" />
+                    <SelectValue placeholder={getAllSystems().length > 0 ? "Select system" : "No systems available"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {getAllSystems().map((system) => (
-                      <SelectItem key={system.id} value={system.id}>
-                        {system.name}
+                    {getAllSystems().length > 0 ? (
+                      getAllSystems().map((system) => (
+                        <SelectItem key={system.id} value={system.id}>
+                          {system.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        {selectedSource === "ai" ? "Generate AI rankings first" : 
+                         selectedSource === "espn" ? "Load ESPN rankings first" :
+                         selectedSource === "user" ? "Import user rankings first" :
+                         "No rankings available"}
                       </SelectItem>
-                    ))}
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">AI Projection Type</label>
+                <Select 
+                  value={projectionType} 
+                  onValueChange={(value: "season" | "weekly") => handleProjectionTypeChange(value)}
+                  disabled={selectedSource !== "ai" || isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly Projections</SelectItem>
+                    <SelectItem value="season">Season Projections</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -737,64 +876,6 @@ export default function RankingsPage() {
           </CardContent>
         </Card>
 
-        {/* AI Historical Data Controls */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
-              AI Rankings Historical Data
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Historical Year</label>
-                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2024">2024 Season</SelectItem>
-                    <SelectItem value="2023">2023 Season</SelectItem>
-                    <SelectItem value="2022">2022 Season</SelectItem>
-                    <SelectItem value="2021">2021 Season</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Week (Optional)</label>
-                <Select 
-                  value={selectedWeek?.toString() || "all"} 
-                  onValueChange={(value) => setSelectedWeek(value === "all" ? null : parseInt(value))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All weeks" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Weeks (Season)</SelectItem>
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map(week => (
-                      <SelectItem key={week} value={week.toString()}>
-                        Week {week}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end">
-                <Button onClick={generateAiRankings} disabled={isLoading} className="w-full">
-                  <Brain className="h-4 w-4 mr-2" />
-                  {isLoading ? "Analyzing..." : "Generate AI Rankings"}
-                </Button>
-              </div>
-            </div>
-            
-            <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
-              <p><strong>Historical Data Integration:</strong> AI rankings now use real NFL performance data from the selected year/week to provide context alongside your imported rankings. This helps identify players with strong historical performance that might be undervalued in current rankings.</p>
-            </div>
-          </CardContent>
-        </Card>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -868,9 +949,9 @@ export default function RankingsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold">
-                      {selectedSystem.source === 'AI' && selectedYear ? selectedYear : selectedSystem.season}
+                      {selectedSystem.source === 'AI' && selectedYear ? `${selectedYear}${selectedWeek ? ` W${selectedWeek}` : ''}` : selectedSystem.season}
                     </div>
-                    <p className="text-sm text-muted-foreground">Season/Year</p>
+                    <p className="text-sm text-muted-foreground">{selectedSystem.source === 'AI' ? 'Prediction Target' : 'Season/Year'}</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -895,7 +976,7 @@ export default function RankingsPage() {
                   </h3>
                   {selectedSystem.source === 'AI' && (
                     <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded">
-                      ✨ Enhanced with NFL historical data
+                      ✨ Auto-generated for {selectedYear} Week {selectedWeek || 1} using historical data
                     </div>
                   )}
                 </div>
@@ -910,10 +991,27 @@ export default function RankingsPage() {
                 ) : filteredRankings.length > 0 ? (
                   renderRankingsTable(filteredRankings)
                 ) : (
-                  <div className="text-center py-8">
+                  <div className="text-center py-8 space-y-4">
                     <p className="text-muted-foreground">
-                      No rankings found for the selected filters.
+                      {!selectedSystem ? (
+                        selectedSource === "ai" ? "Generate AI rankings to see predictions" :
+                        selectedSource === "espn" ? "Load ESPN rankings to see their data" :
+                        selectedSource === "user" ? "Import user rankings to see your data" :
+                        "Select a ranking system to view results"
+                      ) : filteredRankings.length === 0 ? (
+                        selectedPosition !== "all" ? 
+                          `No ${selectedPosition} rankings found in ${selectedSystem.name}` :
+                          `No rankings found in ${selectedSystem.name}`
+                      ) : "No rankings found for the selected filters."}
                     </p>
+                    {!selectedSystem && (
+                      <div className="text-sm text-muted-foreground">
+                        {selectedSource === "ai" && "Click 'Generate AI Rankings' above to create predictions"}
+                        {selectedSource === "espn" && "ESPN rankings will load automatically"}
+                        {selectedSource === "user" && "Use the Import tab below to upload your rankings"}
+                        {selectedSource === "all" && getAllSystems().length === 0 && "Import rankings or generate AI predictions to get started"}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

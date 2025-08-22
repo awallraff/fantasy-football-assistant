@@ -93,7 +93,7 @@ def extract_player_stats(years=None, positions=None, week=None):
         # Get player roster data for current info
         print(f"Fetching roster data for years: {years}", file=sys.stderr)
         with suppress_stdout():
-            rosters = nfl.import_seasonal_rosters(years=years)
+            rosters = nfl.import_rosters(years=years)
         if 'position' in rosters.columns:
             rosters = rosters[rosters['position'].isin(positions)]
             # Also filter out K and DEF positions
