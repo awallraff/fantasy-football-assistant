@@ -52,7 +52,8 @@ def extract_player_stats(years=None, positions=None, week=None):
     """
     if years is None:
         current_season = get_current_season()
-        years = list(range(current_season - 4, current_season + 1))
+        # Limit to current season only by default to reduce memory usage
+        years = [current_season]
     
     if positions is None:
         positions = ['QB', 'RB', 'WR', 'TE']

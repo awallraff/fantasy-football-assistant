@@ -116,7 +116,7 @@ export interface NFLDataOptions {
 
 class NFLDataService {
   private scriptPath: string
-  private defaultTimeout: number = 60000 // 60 seconds
+  private defaultTimeout: number = 120000 // 120 seconds (2 minutes)
 
   constructor() {
     this.scriptPath = path.join(process.cwd(), 'scripts', 'nfl_data_extractor.py')
@@ -234,13 +234,26 @@ class NFLDataService {
 
   private runPythonScript(args: string[], timeout: number): Promise<NFLDataResponse> {
     return new Promise((resolve, reject) => {
-      const python = spawn('python3', [this.scriptPath, ...args], {
+      // Use 'python' instead of 'python3' on Windows
+      const pythonCmd = process.platform === 'win32' ? 'python' : 'python3'
+      
+      const python = spawn(pythonCmd, [this.scriptPath, ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        shell: true
+        shell: true,
+        // Set memory limit for Windows
+        ...(process.platform === 'win32' && {
+          env: {
+            ...process.env,
+            PYTHONPATH: process.env.PYTHONPATH || '',
+            // Increase memory limit
+            NODE_OPTIONS: '--max-old-space-size=4096'
+          }
+        })
       })
 
       let stdout = ''
       let stderr = ''
+      let isResolved = false
 
       python.stdout.on('data', (data) => {
         stdout += data.toString()
@@ -251,11 +264,16 @@ class NFLDataService {
       })
 
       const timeoutId = setTimeout(() => {
-        python.kill('SIGKILL')
-        reject(new Error(`Python script timed out after ${timeout}ms`))
+        if (!isResolved) {
+          isResolved = true
+          python.kill('SIGKILL')
+          reject(new Error(`Python script timed out after ${timeout}ms`))
+        }
       }, timeout)
 
       python.on('close', (code) => {
+        if (isResolved) return
+        isResolved = true
         clearTimeout(timeoutId)
         
         if (code !== 0) {
@@ -268,16 +286,30 @@ class NFLDataService {
             console.log('Python script logs:', stderr)
           }
           
+          if (!stdout.trim()) {
+            reject(new Error('Python script returned empty output'))
+            return
+          }
+          
           const result = JSON.parse(stdout)
           resolve(result)
         } catch (parseError) {
-          reject(new Error(`Failed to parse Python script output: ${parseError}. Output: ${stdout}`))
+          reject(new Error(`Failed to parse Python script output: ${parseError}. Output: ${stdout.slice(0, 500)}...`))
         }
       })
 
       python.on('error', (error) => {
+        if (isResolved) return
+        isResolved = true
         clearTimeout(timeoutId)
         reject(new Error(`Failed to start Python script: ${error.message}`))
+      })
+
+      // Handle process exit
+      process.on('exit', () => {
+        if (!isResolved) {
+          python.kill('SIGKILL')
+        }
       })
     })
   }

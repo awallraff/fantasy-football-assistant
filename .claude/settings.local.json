@@ -20,7 +20,8 @@
       "WebFetch(domain:docs.sleeper.com)",
       "Bash(set PORT=3000)",
       "Bash(pip install:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(del test_output.json)"
     ],
     "deny": [],
     "ask": [],
