@@ -17,7 +17,8 @@ export class AIRankingsService {
       await this.fetchNFLHistoricalData(options?.year, options?.week);
     }
 
-    const prompt = this.buildPromptWithHistoricalData(allRankings, options);
+    // Build prompt with historical data context
+    this.buildPromptWithHistoricalData(allRankings, options);
 
     // In a real implementation, you would send this prompt to a large language model.
     // For now, we will simulate the response with historical data context.
@@ -170,17 +171,18 @@ export class AIRankingsService {
           // Fantasy Metrics
           const ppr = player.fantasy_points_ppr?.toFixed(1) || '0.0';
           const std = player.fantasy_points?.toFixed(1) || '0.0';
-          const games = player.games || 0;
+          const games = (player as unknown as Record<string, unknown>).games as number || 0;
           const pprPerGame = games > 0 ? (player.fantasy_points_ppr || 0) / games : 0;
           
           prompt += `   Fantasy: ${ppr} PPR (${std} STD) | ${pprPerGame.toFixed(1)} PPR/game | ${games} games\n`;
           
           // Position-specific metrics
           if (pos === 'QB') {
-            prompt += `   Passing: ${player.passing_yards || 0} yds, ${player.passing_tds || 0} TDs, ${player.interceptions || 0} INTs\n`;
-            prompt += `   Efficiency: ${((player.completions || 0) / (player.passing_attempts || 1) * 100).toFixed(1)}% comp, ${((player.passing_yards || 0) / (player.passing_attempts || 1)).toFixed(1)} Y/A\n`;
-            if (player.rushing_yards) {
-              prompt += `   Rushing: ${player.rushing_yards} yds, ${player.rushing_tds || 0} TDs\n`;
+            const p = player as unknown as Record<string, unknown>;
+            prompt += `   Passing: ${p.passing_yards || 0} yds, ${p.passing_tds || 0} TDs, ${p.interceptions || 0} INTs\n`;
+            prompt += `   Efficiency: ${(((p.completions as number) || 0) / ((p.passing_attempts as number) || 1) * 100).toFixed(1)}% comp, ${(((p.passing_yards as number) || 0) / ((p.passing_attempts as number) || 1)).toFixed(1)} Y/A\n`;
+            if (p.rushing_yards) {
+              prompt += `   Rushing: ${p.rushing_yards} yds, ${p.rushing_tds || 0} TDs\n`;
             }
           } else if (pos === 'RB') {
             prompt += `   Rushing: ${player.rushing_yards || 0} yds, ${player.rushing_tds || 0} TDs, ${player.rushing_attempts || 0} att\n`;
@@ -189,18 +191,20 @@ export class AIRankingsService {
               prompt += `   Receiving: ${player.receptions || 0}/${player.targets} tgt, ${player.receiving_yards || 0} yds, ${player.receiving_tds || 0} TDs\n`;
             }
           } else if (pos === 'WR' || pos === 'TE') {
-            prompt += `   Receiving: ${player.receptions || 0}/${player.targets || 0} tgt, ${player.receiving_yards || 0} yds, ${player.receiving_tds || 0} TDs\n`;
-            prompt += `   Efficiency: ${player.targets ? ((player.receptions || 0) / player.targets * 100).toFixed(1) : '0.0'}% catch rate, ${player.targets ? ((player.receiving_yards || 0) / player.targets).toFixed(1) : '0.0'} Y/T\n`;
-            if (player.target_share) {
-              prompt += `   Usage: ${(player.target_share * 100).toFixed(1)}% target share\n`;
+            const p = player as unknown as Record<string, unknown>;
+            prompt += `   Receiving: ${p.receptions || 0}/${p.targets || 0} tgt, ${p.receiving_yards || 0} yds, ${p.receiving_tds || 0} TDs\n`;
+            prompt += `   Efficiency: ${p.targets ? (((p.receptions as number) || 0) / (p.targets as number) * 100).toFixed(1) : '0.0'}% catch rate, ${p.targets ? (((p.receiving_yards as number) || 0) / (p.targets as number)).toFixed(1) : '0.0'} Y/T\n`;
+            if (p.target_share) {
+              prompt += `   Usage: ${((p.target_share as number) * 100).toFixed(1)}% target share\n`;
             }
           }
           
           // Advanced metrics
-          if (player.red_zone_targets || player.red_zone_carries || player.red_zone_touches) {
-            const rzTargets = player.red_zone_targets || 0;
-            const rzCarries = player.red_zone_carries || 0;
-            const rzTouches = player.red_zone_touches || 0;
+          const p = player as unknown as Record<string, unknown>;
+          if (p.red_zone_targets || p.red_zone_carries || p.red_zone_touches) {
+            const rzTargets = (p.red_zone_targets as number) || 0;
+            const rzCarries = (p.red_zone_carries as number) || 0;
+            const rzTouches = (p.red_zone_touches as number) || 0;
             prompt += `   Red Zone: ${rzTargets} tgt, ${rzCarries} car, ${rzTouches} touches\n`;
           }
           
@@ -300,8 +304,8 @@ export class AIRankingsService {
 
     // Build comprehensive player database with predictive scores
     const historicalPlayers = this.nflData.aggregated_season_stats.map(player => {
-      const predictiveScore = this.calculatePredictiveScore(player);
-      const projectedPoints = this.projectPoints(player, options?.week);
+      const predictiveScore = this.calculatePredictiveScore(player as unknown as Record<string, unknown>);
+      const projectedPoints = this.projectPoints(player as unknown as Record<string, unknown>, options?.week);
       const tier = this.calculateTier(player.position || 'N/A', projectedPoints, options?.week);
       
       return {
@@ -311,7 +315,7 @@ export class AIRankingsService {
         predictiveScore,
         projectedPoints,
         tier,
-        analysis: this.generatePredictiveAnalysis(player)
+        analysis: this.generatePredictiveAnalysis(player as unknown as Record<string, unknown>)
       };
     });
 
@@ -322,17 +326,17 @@ export class AIRankingsService {
       console.log(`Analyzing ${allPlayers.length} user rankings from ${allRankings.length} sources for AI enhancement`);
       
       // Create comprehensive user consensus analysis
-      const userPlayerAnalysis = this.analyzeUserRankings(allPlayers);
+      const userPlayerAnalysis = this.analyzeUserRankings(allPlayers as unknown as Array<Record<string, unknown>>);
       
       // Blend user rankings with historical data
       const uniqueUserPlayers = Array.from(userPlayerAnalysis.values()).map(userAnalysis => {
         // Find historical data for this user-ranked player using improved matching
-        const historicalData = this.findBestHistoricalMatch(userAnalysis.playerName, historicalPlayers);
+        const historicalData = this.findBestHistoricalMatch(userAnalysis.playerName as string, historicalPlayers);
         
         if (historicalData) {
           // Calculate enhanced predictive score incorporating user consensus
           const userBoost = this.calculateUserConsensusBoost(userAnalysis);
-          const enhancedScore = historicalData.predictiveScore + userBoost;
+          const enhancedScore = (historicalData.predictiveScore as number) + userBoost;
           
           // Enhanced analysis with user data integration
           const enhancedAnalysis = this.generateEnhancedAnalysis(historicalData, userAnalysis, options?.week);
@@ -363,14 +367,17 @@ export class AIRankingsService {
       // Override with user-enhanced players
       uniqueUserPlayers.forEach(player => {
         if (player) {
-          allRankedPlayers.set(player.name.toLowerCase(), player);
+          allRankedPlayers.set((player.name as string).toLowerCase(), player);
         }
       });
 
       playerRankings = Array.from(allRankedPlayers.values());
     } else {
-      // No user rankings - use pure historical data predictions
-      playerRankings = historicalPlayers;
+      // No user rankings - use pure historical data predictions  
+      playerRankings = historicalPlayers.map(p => ({
+        ...p,
+        sourceCount: 0
+      }));
     }
 
     // Sort by predictive score
@@ -394,33 +401,36 @@ export class AIRankingsService {
     return response;
   }
 
-  private calculatePredictiveScore(player: any): number {
+  private calculatePredictiveScore(player: Record<string, unknown>): number {
     let score = 0;
     
     // Base fantasy production (40% of score)
-    const pprPoints = player.fantasy_points_ppr || 0;
-    const games = player.games || 1;
+    const pprPoints = Number(player.fantasy_points_ppr) || 0;
+    const games = Number(player.games) || 1;
     const pprPerGame = pprPoints / games;
     score += (pprPerGame * 4); // Scale to meaningful range
     
     // Efficiency metrics (30% of score)
-    if (player.position === 'QB') {
-      const compRate = (player.completions || 0) / (player.passing_attempts || 1);
-      const passingEPA = player.passing_epa || 0;
+    const pos = String(player.position);
+    if (pos === 'QB') {
+      const compRate = (Number(player.completions) || 0) / (Number(player.passing_attempts) || 1);
+      const passingEPA = Number(player.passing_epa) || 0;
       score += (compRate * 100) + (passingEPA * 5);
-    } else if (player.position === 'RB') {
-      const ypc = (player.rushing_yards || 0) / (player.rushing_attempts || 1);
-      const catchRate = player.targets ? (player.receptions || 0) / player.targets : 0;
+    } else if (pos === 'RB') {
+      const ypc = (Number(player.rushing_yards) || 0) / (Number(player.rushing_attempts) || 1);
+      const targets = Number(player.targets) || 0;
+      const catchRate = targets > 0 ? (Number(player.receptions) || 0) / targets : 0;
       score += (ypc * 20) + (catchRate * 50);
-    } else if (player.position === 'WR' || player.position === 'TE') {
-      const catchRate = player.targets ? (player.receptions || 0) / player.targets : 0;
-      const yardsPerTarget = player.targets ? (player.receiving_yards || 0) / player.targets : 0;
-      const targetShare = player.target_share || 0;
+    } else if (pos === 'WR' || pos === 'TE') {
+      const targets = Number(player.targets) || 0;
+      const catchRate = targets > 0 ? (Number(player.receptions) || 0) / targets : 0;
+      const yardsPerTarget = targets > 0 ? (Number(player.receiving_yards) || 0) / targets : 0;
+      const targetShare = Number(player.target_share) || 0;
       score += (catchRate * 100) + (yardsPerTarget * 5) + (targetShare * 200);
     }
     
     // Usage and opportunity (20% of score)
-    const rzOpportunities = (player.red_zone_targets || 0) + (player.red_zone_carries || 0);
+    const rzOpportunities = (Number(player.red_zone_targets) || 0) + (Number(player.red_zone_carries) || 0);
     score += rzOpportunities * 2;
     
     // Consistency factor (10% of score)
@@ -430,9 +440,9 @@ export class AIRankingsService {
     return Math.max(0, score);
   }
 
-  private projectPoints(player: any, week?: number): number {
-    const currentPPR = player.fantasy_points_ppr || 0;
-    const games = player.games || 16;
+  private projectPoints(player: Record<string, unknown>, week?: number): number {
+    const currentPPR = Number(player.fantasy_points_ppr) || 0;
+    const games = Number(player.games) || 16;
     const perGameRate = currentPPR / games;
     
     // Project per-game rate with regression/progression factors
@@ -440,12 +450,12 @@ export class AIRankingsService {
     
     // Age/experience adjustments (if we had age data)
     // Young players with high efficiency get slight boost
-    if (player.position === 'RB' && (player.yards_per_carry || 0) > 4.5) {
+    if (player.position === 'RB' && (Number(player.yards_per_carry) || 0) > 4.5) {
       projectedPerGame *= 1.05; // 5% boost for efficient young RBs
     }
     
     // High target share players maintain production
-    if ((player.position === 'WR' || player.position === 'TE') && (player.target_share || 0) > 0.2) {
+    if ((player.position === 'WR' || player.position === 'TE') && (Number(player.target_share) || 0) > 0.2) {
       projectedPerGame *= 1.03; // 3% boost for high target share
     }
     
@@ -476,8 +486,8 @@ export class AIRankingsService {
     };
     
     const breakpoints = week 
-      ? (weeklyTierBreakpoints[position] || weeklyTierBreakpoints['WR'])
-      : (seasonalTierBreakpoints[position] || seasonalTierBreakpoints['WR']);
+      ? (weeklyTierBreakpoints[position as keyof typeof weeklyTierBreakpoints] || weeklyTierBreakpoints['WR'])
+      : (seasonalTierBreakpoints[position as keyof typeof seasonalTierBreakpoints] || seasonalTierBreakpoints['WR']);
     
     for (let i = 0; i < breakpoints.length; i++) {
       if (projectedPoints >= breakpoints[i]) {
@@ -488,35 +498,37 @@ export class AIRankingsService {
     return 6; // Tier 6 for lower projections
   }
 
-  private generatePredictiveAnalysis(player: any): string {
-    const ppr = player.fantasy_points_ppr || 0;
-    const games = player.games || 0;
+  private generatePredictiveAnalysis(player: Record<string, unknown>): string {
+    const ppr = Number(player.fantasy_points_ppr) || 0;
+    const games = Number(player.games) || 0;
     const pprPerGame = games > 0 ? ppr / games : 0;
     
     let analysis = `${pprPerGame.toFixed(1)} PPR/game across ${games} games. `;
     
     if (player.position === 'QB') {
-      const passingYards = player.passing_yards || 0;
-      const passingTDs = player.passing_tds || 0;
-      const rushingYards = player.rushing_yards || 0;
+      const passingYards = Number(player.passing_yards) || 0;
+      const passingTDs = Number(player.passing_tds) || 0;
+      const rushingYards = Number(player.rushing_yards) || 0;
       analysis += `${passingYards} pass yds, ${passingTDs} pass TDs`;
       if (rushingYards > 200) analysis += `, ${rushingYards} rush yds (dual-threat upside)`;
     } else if (player.position === 'RB') {
-      const rushingYards = player.rushing_yards || 0;
-      const targets = player.targets || 0;
-      const ypc = (player.rushing_attempts || 0) > 0 ? rushingYards / player.rushing_attempts : 0;
+      const rushingYards = Number(player.rushing_yards) || 0;
+      const targets = Number(player.targets) || 0;
+      const rushingAttempts = Number(player.rushing_attempts) || 0;
+      const ypc = rushingAttempts > 0 ? rushingYards / rushingAttempts : 0;
       analysis += `${rushingYards} rush yds (${ypc.toFixed(1)} YPC)`;
       if (targets > 30) analysis += `, ${targets} targets (pass-catching value)`;
     } else if (player.position === 'WR' || player.position === 'TE') {
-      const targets = player.targets || 0;
-      const catchRate = targets > 0 ? (player.receptions || 0) / targets * 100 : 0;
-      const targetShare = (player.target_share || 0) * 100;
+      const targets = Number(player.targets) || 0;
+      const receptions = Number(player.receptions) || 0;
+      const catchRate = targets > 0 ? (receptions / targets) * 100 : 0;
+      const targetShare = (Number(player.target_share) || 0) * 100;
       analysis += `${targets} targets, ${catchRate.toFixed(1)}% catch rate`;
       if (targetShare > 15) analysis += `, ${targetShare.toFixed(1)}% target share (high usage)`;
     }
     
     // Add red zone context
-    const rzOpps = (player.red_zone_targets || 0) + (player.red_zone_carries || 0);
+    const rzOpps = (Number(player.red_zone_targets) || 0) + (Number(player.red_zone_carries) || 0);
     if (rzOpps > 10) {
       analysis += `. Strong red zone usage (${rzOpps} opportunities)`;
     }
@@ -580,7 +592,7 @@ export class AIRankingsService {
   }
 
   // Helper method to get historical player data for a specific player
-  private getHistoricalPlayerData(playerName: string): any {
+  private getHistoricalPlayerData(playerName: string): Record<string, unknown> | null {
     if (!this.nflData) return null;
 
     const normalizedName = playerName.toLowerCase();
@@ -591,7 +603,7 @@ export class AIRankingsService {
       normalizedName.includes(player.player_name?.toLowerCase() || '')
     );
 
-    if (seasonData) return seasonData;
+    if (seasonData) return seasonData as unknown as Record<string, unknown>;
 
     // Search in weekly stats as fallback
     const weeklyData = this.nflData.weekly_stats.find(player => 
@@ -599,16 +611,16 @@ export class AIRankingsService {
       normalizedName.includes(player.player_name?.toLowerCase() || '')
     );
 
-    return weeklyData;
+    return weeklyData ? weeklyData as unknown as Record<string, unknown> : null;
   }
 
   // Analyze user rankings to create consensus data
-  private analyzeUserRankings(allPlayers: any[]): Map<string, any> {
+  private analyzeUserRankings(allPlayers: Array<Record<string, unknown>>): Map<string, Record<string, unknown>> {
     const playerAnalysis = new Map();
     
     // Group by player name (case-insensitive)
     allPlayers.forEach(player => {
-      const normalizedName = player.playerName.toLowerCase().trim();
+      const normalizedName = String(player.playerName || '').toLowerCase().trim();
       
       if (!playerAnalysis.has(normalizedName)) {
         playerAnalysis.set(normalizedName, {
@@ -636,7 +648,7 @@ export class AIRankingsService {
       const projections = analysis.projectedPoints;
       
       // Calculate various ranking metrics
-      analysis.averageRank = ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length;
+      analysis.averageRank = ranks.reduce((sum: number, rank: number) => sum + rank, 0) / ranks.length;
       analysis.medianRank = this.calculateMedian(ranks);
       analysis.minRank = Math.min(...ranks);
       analysis.maxRank = Math.max(...ranks);
@@ -648,7 +660,7 @@ export class AIRankingsService {
       
       // Calculate projection consensus
       if (projections.length > 0) {
-        analysis.averageProjectedPoints = projections.reduce((sum, pts) => sum + pts, 0) / projections.length;
+        analysis.averageProjectedPoints = projections.reduce((sum: number, pts: number) => sum + pts, 0) / projections.length;
         analysis.projectionStdDev = this.calculateStandardDeviation(projections);
       }
       
@@ -660,13 +672,14 @@ export class AIRankingsService {
   }
 
   // Improved player matching between user rankings and historical data
-  private findBestHistoricalMatch(playerName: string, historicalPlayers: any[]): any {
+  private findBestHistoricalMatch(playerName: string, historicalPlayers: Array<Record<string, unknown>>): Record<string, unknown> | null {
     const normalizedName = playerName.toLowerCase().trim();
     
     // Try exact name match first
-    let match = historicalPlayers.find(hp => 
-      hp.name.toLowerCase().trim() === normalizedName
-    );
+    const match = historicalPlayers.find(hp => {
+      const name = hp.name as string
+      return name.toLowerCase().trim() === normalizedName
+    });
     
     if (match) return match;
     
@@ -675,7 +688,7 @@ export class AIRankingsService {
     let bestScore = 0;
     
     historicalPlayers.forEach(hp => {
-      const historicalName = hp.name.toLowerCase().trim();
+      const historicalName = String(hp.name || '').toLowerCase().trim();
       const similarity = this.calculateNameSimilarity(normalizedName, historicalName);
       
       if (similarity > bestScore && similarity > 0.6) { // Minimum 60% similarity
@@ -688,12 +701,12 @@ export class AIRankingsService {
   }
 
   // Calculate user consensus boost to predictive score
-  private calculateUserConsensusBoost(userAnalysis: any): number {
+  private calculateUserConsensusBoost(userAnalysis: Record<string, unknown>): number {
     let boost = 0;
     
     // Base boost based on consensus rank
-    const consensusRank = userAnalysis.consensusRank || userAnalysis.averageRank;
-    if (consensusRank <= 5) {
+    const consensusRank = Number(userAnalysis.consensusRank) || Number(userAnalysis.averageRank) || 0;
+    if (consensusRank > 0 && consensusRank <= 5) {
       boost += 30; // Top 5 picks get significant boost
     } else if (consensusRank <= 12) {
       boost += 20; // Top 12 get good boost
@@ -704,8 +717,8 @@ export class AIRankingsService {
     }
     
     // Additional boost for strong consensus (multiple sources agreeing)
-    const sourceCount = userAnalysis.sourceCount;
-    const confidenceScore = userAnalysis.confidenceScore || 0;
+    const sourceCount = Number(userAnalysis.sourceCount) || 0;
+    const confidenceScore = Number(userAnalysis.confidenceScore) || 0;
     
     if (sourceCount >= 3 && confidenceScore > 0.8) {
       boost += 15; // Strong consensus bonus
@@ -714,11 +727,11 @@ export class AIRankingsService {
     }
     
     // Projection-based boost
-    if (userAnalysis.averageProjectedPoints) {
-      const projectedPoints = userAnalysis.averageProjectedPoints;
-      if (projectedPoints > 15) {
+    const averageProjectedPoints = Number(userAnalysis.averageProjectedPoints) || 0;
+    if (averageProjectedPoints > 0) {
+      if (averageProjectedPoints > 15) {
         boost += 10; // High projection bonus
-      } else if (projectedPoints > 10) {
+      } else if (averageProjectedPoints > 10) {
         boost += 5; // Moderate projection bonus
       }
     }
@@ -727,17 +740,17 @@ export class AIRankingsService {
   }
 
   // Generate enhanced analysis combining historical and user data
-  private generateEnhancedAnalysis(historicalData: any, userAnalysis: any, isWeekly?: number): string {
+  private generateEnhancedAnalysis(historicalData: Record<string, unknown>, userAnalysis: Record<string, unknown>, isWeekly?: number): string {
     let analysis = historicalData.analysis || "";
     
     // Add user consensus information
-    const consensus = userAnalysis.consensusRank || userAnalysis.averageRank;
-    const sourceCount = userAnalysis.sourceCount;
+    const consensus = (userAnalysis.consensusRank as number) || (userAnalysis.averageRank as number);
+    const sourceCount = userAnalysis.sourceCount as number;
     
     analysis += ` Expert consensus: #${Math.round(consensus)} (${sourceCount} source${sourceCount > 1 ? 's' : ''})`;
     
     // Add confidence indicator
-    const confidence = userAnalysis.confidenceScore || 0;
+    const confidence = (userAnalysis.confidenceScore as number) || 0;
     if (confidence > 0.8) {
       analysis += ", strong agreement";
     } else if (confidence > 0.6) {
@@ -749,9 +762,11 @@ export class AIRankingsService {
     // Add projection information
     if (userAnalysis.averageProjectedPoints) {
       const projType = isWeekly ? "weekly" : "season";
-      analysis += `. Expert projections: ${userAnalysis.averageProjectedPoints.toFixed(1)} pts (${projType})`;
+      const avgProjected = userAnalysis.averageProjectedPoints as number;
+      analysis += `. Expert projections: ${avgProjected.toFixed(1)} pts (${projType})`;
       
-      if (userAnalysis.projectionStdDev && userAnalysis.projectionStdDev > 2) {
+      const projStdDev = userAnalysis.projectionStdDev as number;
+      if (projStdDev && projStdDev > 2) {
         analysis += ", projection variance noted";
       }
     }
@@ -760,32 +775,34 @@ export class AIRankingsService {
   }
 
   // Create ranking entry based purely on user consensus (for players without historical data)
-  private createUserBasedRanking(userAnalysis: any, isWeekly?: number): any {
-    const consensus = userAnalysis.consensusRank || userAnalysis.averageRank;
+  private createUserBasedRanking(userAnalysis: Record<string, unknown>, isWeekly?: number): Record<string, unknown> {
+    const consensus = Number(userAnalysis.consensusRank) || Number(userAnalysis.averageRank) || 0;
     const baseScore = Math.max(100 - consensus, 10); // Base score inversely related to rank
     
     // Enhanced score for strong consensus
-    const confidenceBoost = (userAnalysis.confidenceScore || 0) * 20;
-    const sourceBoost = Math.min(userAnalysis.sourceCount * 5, 25);
+    const confidenceBoost = (Number(userAnalysis.confidenceScore) || 0) * 20;
+    const sourceBoost = Math.min((Number(userAnalysis.sourceCount) || 0) * 5, 25);
     
     const predictiveScore = baseScore + confidenceBoost + sourceBoost;
     
     // Use user projected points or estimate based on position and rank
-    let projectedPoints = userAnalysis.averageProjectedPoints;
+    let projectedPoints = Number(userAnalysis.averageProjectedPoints) || 0;
     if (!projectedPoints) {
-      const positionBaseline = {
+      const positionBaseline: Record<string, number> = {
         'QB': 18, 'RB': 12, 'WR': 10, 'TE': 8
-      }[userAnalysis.position] || 8;
+      };
+      const baseline = positionBaseline[String(userAnalysis.position)] || 8;
       
-      projectedPoints = Math.max(positionBaseline - (consensus * 0.3), 3);
+      projectedPoints = Math.max(baseline - (consensus * 0.3), 3);
       if (!isWeekly) {
         projectedPoints *= 17; // Convert to season total
       }
     }
     
-    const tier = this.calculateTier(userAnalysis.position, projectedPoints, isWeekly);
+    const tier = this.calculateTier(String(userAnalysis.position), projectedPoints, isWeekly);
     
-    const analysis = `Expert-only ranking based on ${userAnalysis.sourceCount} source${userAnalysis.sourceCount > 1 ? 's' : ''}. ` +
+    const sourceCount = Number(userAnalysis.sourceCount) || 0;
+    const analysis = `Expert-only ranking based on ${sourceCount} source${sourceCount > 1 ? 's' : ''}. ` +
       `Consensus rank: #${Math.round(consensus)}. Limited historical data available for comparison.`;
     
     return {
@@ -818,7 +835,7 @@ export class AIRankingsService {
 
   private calculateConsensusRank(ranks: number[]): number {
     // Weighted average that gives more weight to ranks that are closer together
-    const sortedRanks = [...ranks].sort((a, b) => a - b);
+    [...ranks].sort((a, b) => a - b);
     const median = this.calculateMedian(ranks);
     
     // Weight ranks based on distance from median (closer = higher weight)
@@ -842,7 +859,7 @@ export class AIRankingsService {
     const rankMean = ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length;
     
     // Confidence based on rank agreement (lower std dev = higher confidence)
-    let rankConfidence = Math.max(0, 1 - (rankStdDev / (rankMean * 0.5)));
+    const rankConfidence = Math.max(0, 1 - (rankStdDev / (rankMean * 0.5)));
     
     // Factor in projection agreement if available
     let projectionConfidence = 1;

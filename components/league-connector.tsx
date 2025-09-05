@@ -33,9 +33,8 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      const controller = abortControllerRef.current
-      if (controller) {
-        controller.abort()
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
       }
     }
   }, [])

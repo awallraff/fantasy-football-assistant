@@ -17,10 +17,9 @@ import { APIKeyManager } from "@/components/api-key-manager"
 import type { RankingSystem, PlayerRanking } from "@/lib/rankings-types"
 import { usePlayerData } from "@/contexts/player-data-context"
 import { normalizePosition } from "@/lib/player-utils"
-import { EspnAPI } from "@/lib/espn-api"
 import { AIRankingsService } from "@/lib/ai-rankings-service"
 
-type RankingSource = "all" | "user" | "espn" | "ai"
+type RankingSource = "all" | "user" | "ai"
 
 interface SimplePlayerRanking {
   rank: number
@@ -36,7 +35,6 @@ interface SimplePlayerRanking {
 
 export default function RankingsPage() {
   const [userRankingSystems, setUserRankingSystems] = useState<RankingSystem[]>([])
-  const [espnRankings, setEspnRankings] = useState<RankingSystem[]>([])
   const [aiRankingSystem, setAiRankingSystem] = useState<RankingSystem | null>(null)
   const [selectedSystem, setSelectedSystem] = useState<RankingSystem | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
@@ -104,29 +102,25 @@ export default function RankingsPage() {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [isClient])
 
-  const getAllSystems = (): RankingSystem[] => {
+  const getAllSystems = useCallback((): RankingSystem[] => {
     switch (selectedSource) {
       case "user":
         return userRankingSystems
-      case "espn":
-        return espnRankings
       case "ai":
         return aiRankingSystem ? [aiRankingSystem] : []
       default:
-        return [...userRankingSystems, ...espnRankings]
+        return [...userRankingSystems]
     }
-  }
+  }, [selectedSource, userRankingSystems, aiRankingSystem])
 
   const getAllSystemsForSource = (source: RankingSource): RankingSystem[] => {
     switch (source) {
       case "user":
         return userRankingSystems
-      case "espn":
-        return espnRankings
       case "ai":
         return aiRankingSystem ? [aiRankingSystem] : []
       default:
-        return [...userRankingSystems, ...espnRankings]
+        return [...userRankingSystems]
     }
   }
 
@@ -148,49 +142,10 @@ export default function RankingsPage() {
     if (selectedSystem && !availableSystems.some(sys => sys.id === selectedSystem.id)) {
       setSelectedSystem(null);
     }
-  }, [selectedSource, userRankingSystems, espnRankings, aiRankingSystem, selectedSystem])
+  }, [selectedSource, userRankingSystems, aiRankingSystem, selectedSystem, getAllSystems])
 
 
 
-  const loadEspnRankings = useCallback(async () => {
-    try {
-      const espnAPI = new EspnAPI()
-      const rankings = await espnAPI.getDraftRankings()
-
-      if (rankings && rankings.length > 0) {
-        const playerRankings: PlayerRanking[] = rankings.map((p, index) => ({
-          rank: index + 1,
-          playerId: `espn-${p.id}`,
-                    playerName: p.player?.fullName || `Player ${p.id}`,
-          position: "N/A", // Position information is not directly available in this endpoint
-          team: "N/A", // Team information is not directly available in this endpoint
-        }))
-
-        const system: RankingSystem = {
-          id: `espn-draft`,
-          name: `ESPN Draft Rankings`,
-          description: `Draft rankings from ESPN (${rankings.length} players)`,
-          source: "ESPN",
-          season: "2025",
-          scoringFormat: "ppr" as const,
-          positions: ["all"],
-          rankings: playerRankings,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          lastUpdated: new Date().toISOString(),
-        }
-
-        setEspnRankings([system])
-        console.info(`Successfully loaded ${rankings.length} ESPN rankings`)
-      } else {
-        console.info("ESPN rankings not available - API may be blocked by CORS policy")
-        setEspnRankings([])
-      }
-    } catch (error) {
-      console.warn("ESPN rankings could not be loaded:", error instanceof Error ? error.message : error)
-      setEspnRankings([])
-    }
-  }, [])
 
 
   // Function to determine the next upcoming week dynamically
@@ -274,13 +229,13 @@ export default function RankingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [getNextUpcomingWeek, projectionType]);
+  }, [getNextUpcomingWeek, projectionType, getAllSystems]);
 
   const handleProjectionTypeChange = useCallback(async (newType: "season" | "weekly") => {
     setProjectionType(newType);
     // Regenerate AI rankings with the new projection type
     if (selectedSource === "ai" || aiRankingSystem) {
-      await generateAiRankings(selectedYear, selectedWeek, newType);
+      await generateAiRankings(selectedYear, selectedWeek || undefined, newType);
     }
   }, [selectedSource, aiRankingSystem, selectedYear, selectedWeek, generateAiRankings]);
 
@@ -331,9 +286,6 @@ export default function RankingsPage() {
       setIsLoading(true)
       
       try {
-        await Promise.allSettled([
-          loadEspnRankings(),
-        ])
         // After all initial rankings are loaded, automatically generate AI rankings for next upcoming week
         if (!cancelled) {
           await generateAiRankings(); // This will automatically determine the next upcoming week
@@ -356,7 +308,7 @@ export default function RankingsPage() {
       cancelled = true;
       clearTimeout(timeoutId);
     }
-  }, [players, apiKeys, loadEspnRankings, generateAiRankings])
+  }, [players, apiKeys, generateAiRankings])
 
   const getAllPositions = (): string[] => {
     const positions = new Set<string>()
@@ -572,7 +524,7 @@ export default function RankingsPage() {
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((player, index) => (
+              {sortedData.map((player) => (
                 <tr key={player.playerId} 
                     className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => setSelectedPlayerForModal(player)}>
@@ -698,7 +650,7 @@ export default function RankingsPage() {
                 <div>
                   <h3 className="font-medium text-foreground">External APIs Not Available</h3>
                   <p className="text-sm text-muted-foreground mt-1 mb-3">
-                    ESPN API is currently unavailable. Please:
+                    External APIs are currently unavailable. Please:
                   </p>
                   <ul className="text-sm text-muted-foreground mb-3 list-disc list-inside space-y-1">
                     <li>Enter it in the &quot;API Keys&quot; tab below</li>
@@ -773,7 +725,6 @@ export default function RankingsPage() {
                   <SelectContent>
                     <SelectItem value="all">All Sources</SelectItem>
                     <SelectItem value="user">User Imported</SelectItem>
-                    <SelectItem value="espn">ESPN</SelectItem>
                     <SelectItem value="ai">AI Generated</SelectItem>
                   </SelectContent>
                 </Select>
@@ -818,7 +769,6 @@ export default function RankingsPage() {
                     ) : (
                       <SelectItem value="none" disabled>
                         {selectedSource === "ai" ? "Generate AI rankings first" : 
-                         selectedSource === "espn" ? "Load ESPN rankings first" :
                          selectedSource === "user" ? "Import user rankings first" :
                          "No rankings available"}
                       </SelectItem>
@@ -899,7 +849,7 @@ export default function RankingsPage() {
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-2xl font-bold">{espnRankings.length}</p>
+                    <p className="text-2xl font-bold">0</p>
                     <p className="text-sm text-muted-foreground">External APIs</p>
                   </div>
                 </div>
@@ -995,7 +945,6 @@ export default function RankingsPage() {
                     <p className="text-muted-foreground">
                       {!selectedSystem ? (
                         selectedSource === "ai" ? "Generate AI rankings to see predictions" :
-                        selectedSource === "espn" ? "Load ESPN rankings to see their data" :
                         selectedSource === "user" ? "Import user rankings to see your data" :
                         "Select a ranking system to view results"
                       ) : filteredRankings.length === 0 ? (
@@ -1007,7 +956,6 @@ export default function RankingsPage() {
                     {!selectedSystem && (
                       <div className="text-sm text-muted-foreground">
                         {selectedSource === "ai" && "Click 'Generate AI Rankings' above to create predictions"}
-                        {selectedSource === "espn" && "ESPN rankings will load automatically"}
                         {selectedSource === "user" && "Use the Import tab below to upload your rankings"}
                         {selectedSource === "all" && getAllSystems().length === 0 && "Import rankings or generate AI predictions to get started"}
                       </div>

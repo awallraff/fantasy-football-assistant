@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Download, Database, RefreshCw, CheckCircle, XCircle, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown, Info, ChevronDown, ChevronRight } from "lucide-react"
-import type { NFLDataResponse, NFLWeeklyStats, NFLSeasonalStats, NFLPlayerInfo, NFLTeamAnalytics } from "@/lib/nfl-data-service"
+import type { NFLDataResponse } from "@/lib/nfl-data-service"
 
 interface TestResult {
   success: boolean
@@ -16,18 +16,18 @@ interface TestResult {
 }
 
 // Safe data rendering utility functions
-const safeString = (value: any, fallback: string = 'N/A'): string => {
+const safeString = (value: unknown, fallback: string = 'N/A'): string => {
   if (value === null || value === undefined || value === '') return fallback
   return String(value)
 }
 
-const safeNumber = (value: any, fallback: number = 0): number => {
+const safeNumber = (value: unknown, fallback: number = 0): number => {
   if (typeof value === 'number' && !isNaN(value)) return value
-  const parsed = parseFloat(value)
+  const parsed = parseFloat(String(value))
   return isNaN(parsed) ? fallback : parsed
 }
 
-const formatValue = (value: any, field: string): string => {
+const formatValue = (value: unknown, field: string): string => {
   // Handle string fields (names, positions, teams, etc.)
   const stringFields = ["player_name", "player_id", "position", "team", "season", "week"]
   if (stringFields.includes(field)) {
@@ -58,7 +58,7 @@ const formatValue = (value: any, field: string): string => {
 }
 
 // Safe key generation
-const generateSafeKey = (...parts: any[]): string => {
+const generateSafeKey = (...parts: unknown[]): string => {
   return parts.map(part => safeString(part, 'unknown')).join('_')
 }
 
@@ -70,12 +70,12 @@ export function NFLDataManagerFixed() {
   const [selectedPositions, setSelectedPositions] = useState<string[]>(["QB", "RB", "WR", "TE"])
   const [selectedPositionFilter, setSelectedPositionFilter] = useState<string>("ALL")
   const [selectedWeek, setSelectedWeek] = useState<string>("all")
-  const [searchPlayerName, setSearchPlayerName] = useState<string>("")
+  // Removed unused searchPlayerName state
   const [selectedTeam, setSelectedTeam] = useState<string>("all")
   const [minFantasyPoints, setMinFantasyPoints] = useState<string>("")
   const [sortField, setSortField] = useState<string>("fantasy_points_ppr")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
-  const [selectedColumns, setSelectedColumns] = useState<string[]>([
+  const [selectedColumns] = useState<string[]>([
     "player_name", "position", "team", "fantasy_points_ppr", "targets", "receptions", 
     "receiving_yards", "receiving_tds", "rushing_attempts", "rushing_yards", "rushing_tds",
     "passing_yards", "passing_tds", "interceptions"
@@ -170,7 +170,7 @@ export function NFLDataManagerFixed() {
     }
   }
 
-  const sortData = (data: any[]) => {
+  const sortData = (data: Record<string, unknown>[]) => {
     if (!Array.isArray(data) || data.length === 0) return []
     
     const validData = data.filter(item => item && typeof item === 'object')
@@ -289,35 +289,35 @@ export function NFLDataManagerFixed() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [extractNFLData, loading, nflData])
 
   // Safe data filtering
-  const getFilteredWeeklyData = () => {
+  const getFilteredWeeklyData = (): Record<string, unknown>[] => {
     if (!nflData?.weekly_stats || !Array.isArray(nflData.weekly_stats)) return []
     
     return nflData.weekly_stats.filter(stat => {
       if (!stat || typeof stat !== 'object') return false
-      if (selectedTeam !== "all" && safeString(stat.team) !== selectedTeam) return false
-      if (selectedPositionFilter !== "ALL" && safeString(stat.position) !== selectedPositionFilter) return false
-      if (minFantasyPoints && safeNumber(stat.fantasy_points_ppr) < parseFloat(minFantasyPoints)) return false
+      if (selectedTeam !== "all" && safeString((stat as unknown as Record<string, unknown>).team) !== selectedTeam) return false
+      if (selectedPositionFilter !== "ALL" && safeString((stat as unknown as Record<string, unknown>).position) !== selectedPositionFilter) return false
+      if (minFantasyPoints && safeNumber((stat as unknown as Record<string, unknown>).fantasy_points_ppr) < parseFloat(minFantasyPoints)) return false
       return true
-    })
+    }) as unknown as Record<string, unknown>[]
   }
 
-  const getFilteredSeasonData = () => {
+  const getFilteredSeasonData = (): Record<string, unknown>[] => {
     if (!nflData?.aggregated_season_stats || !Array.isArray(nflData.aggregated_season_stats)) return []
     
     return nflData.aggregated_season_stats.filter(stat => {
       if (!stat || typeof stat !== 'object') return false
-      if (selectedTeam !== "all" && safeString(stat.team) !== selectedTeam) return false
-      if (selectedPositionFilter !== "ALL" && safeString(stat.position) !== selectedPositionFilter) return false
-      if (minFantasyPoints && safeNumber(stat.fantasy_points_ppr) < parseFloat(minFantasyPoints)) return false
+      if (selectedTeam !== "all" && safeString((stat as unknown as Record<string, unknown>).team) !== selectedTeam) return false
+      if (selectedPositionFilter !== "ALL" && safeString((stat as unknown as Record<string, unknown>).position) !== selectedPositionFilter) return false
+      if (minFantasyPoints && safeNumber((stat as unknown as Record<string, unknown>).fantasy_points_ppr) < parseFloat(minFantasyPoints)) return false
       return true
-    })
+    }) as unknown as Record<string, unknown>[]
   }
 
   // Safe table rendering function
-  const renderDataTable = (data: any[], showWeek: boolean = false) => {
+  const renderDataTable = (data: Record<string, unknown>[], showWeek: boolean = false) => {
     const sortedData = sortData(data).slice(0, 100)
     
     return (
@@ -674,7 +674,7 @@ export function NFLDataManagerFixed() {
                   {getFilteredSeasonData().length === 0 && (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">
-                        No aggregated season stats available. Try selecting "All weeks" to see season totals.
+                        No aggregated season stats available. Try selecting &quot;All weeks&quot; to see season totals.
                       </p>
                     </div>
                   )}

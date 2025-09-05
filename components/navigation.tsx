@@ -20,12 +20,12 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <nav className="bg-background border-b border-border sticky top-0 z-50">
+    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+              <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
                 Fantasy Analytics
               </Link>
             </div>
@@ -39,8 +39,8 @@ export function Navigation() {
                     className={cn(
                       "inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium gap-2 transition-colors",
                       pathname === item.href
-                        ? "border-primary text-foreground"
-                        : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                        ? "border-blue-500 text-gray-900 dark:text-white"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200",
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -70,7 +70,7 @@ export function Navigation() {
         
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-border">
+          <div className="sm:hidden border-t border-gray-200 dark:border-gray-800">
             <div className="pt-2 pb-3 space-y-1">
               {navigation.map((item) => {
                 const Icon = item.icon
@@ -82,8 +82,8 @@ export function Navigation() {
                     className={cn(
                       "flex items-center px-3 py-2 text-base font-medium gap-3 transition-colors",
                       pathname === item.href
-                        ? "bg-primary/10 text-primary border-r-2 border-primary"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-500"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200",
                     )}
                   >
                     <Icon className="h-5 w-5" />

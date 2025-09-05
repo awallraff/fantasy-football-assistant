@@ -45,7 +45,7 @@ export function APIKeyManager() {
           <div>
             <p className="text-sm font-medium text-green-900 dark:text-green-100">Sleeper Player Data Available</p>
             <p className="text-sm text-green-700 dark:text-green-200">
-              This application includes comprehensive player data from Sleeper API. Use the Rankings tab to import your own rankings data or view ESPN rankings when available.
+              This application includes comprehensive player data from Sleeper API. Use the Rankings tab to import your own rankings data or generate AI-powered rankings.
             </p>
           </div>
         </div>
@@ -61,7 +61,6 @@ export function APIKeyManager() {
               </p>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>• <strong>Sleeper API:</strong> Player data, league information, and statistics</p>
-                <p>• <strong>ESPN API:</strong> Rankings data (when available)</p>
                 <p>• <strong>User Imports:</strong> Upload your own rankings and projections</p>
               </div>
             </div>

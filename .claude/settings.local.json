@@ -21,7 +21,8 @@
       "Bash(set PORT=3000)",
       "Bash(pip install:*)",
       "Bash(python:*)",
-      "Bash(del test_output.json)"
+      "Bash(del test_output.json)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": [],

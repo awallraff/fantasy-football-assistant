@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, Database, RefreshCw, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
-import type { NFLDataResponse, NFLWeeklyStats, NFLSeasonalStats, NFLPlayerInfo, NFLTeamAnalytics } from "@/lib/nfl-data-service"
+import { Download, Database, RefreshCw, CheckCircle, XCircle, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import type { NFLDataResponse } from "@/lib/nfl-data-service"
 
 interface TestResult {
   success: boolean
@@ -26,7 +26,7 @@ export function NFLDataManager() {
   const [searchPlayerName, setSearchPlayerName] = useState<string>("")
   const [selectedTeam, setSelectedTeam] = useState<string>("all")
   const [minFantasyPoints, setMinFantasyPoints] = useState<string>("")
-  const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set())
+  // Removed unused expandedPlayers state
   const [sortField, setSortField] = useState<string>("fantasy_points_ppr")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
@@ -37,25 +37,17 @@ export function NFLDataManager() {
   const [error, setError] = useState<string | null>(null)
 
   const currentYear = new Date().getFullYear()
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i) || []
-  const availablePositions = ["ALL", "QB", "RB", "WR", "TE"] || []
-  const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1) || []
+  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i)
+  const availablePositions = ["ALL", "QB", "RB", "WR", "TE"]
+  const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1)
   const nflTeams = [
     "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN",
     "DET", "GB", "HOU", "IND", "JAX", "KC", "LV", "LAC", "LAR", "MIA",
     "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SF", "SEA", "TB",
     "TEN", "WAS"
-  ] || []
+  ]
 
-  const togglePlayerExpansion = (playerId: string) => {
-    const newExpanded = new Set(expandedPlayers)
-    if (newExpanded.has(playerId)) {
-      newExpanded.delete(playerId)
-    } else {
-      newExpanded.add(playerId)
-    }
-    setExpandedPlayers(newExpanded)
-  }
+  // Removed unused togglePlayerExpansion function
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -66,7 +58,7 @@ export function NFLDataManager() {
     }
   }
 
-  const sortData = (data: any[]) => {
+  const sortData = (data: Record<string, unknown>[]) => {
     if (!data || data.length === 0) return []
     
     return [...data].sort((a, b) => {
@@ -263,18 +255,22 @@ export function NFLDataManager() {
       const playerName = searchPlayerName.trim().toLowerCase()
       const filteredData = {
         ...data,
-        weekly_stats: data.weekly_stats.filter((stat: any) => 
-          stat.player_name?.toLowerCase().includes(playerName)
-        ),
-        seasonal_stats: data.seasonal_stats.filter((stat: any) => 
-          stat.player_name?.toLowerCase().includes(playerName)
-        ),
-        aggregated_season_stats: data.aggregated_season_stats?.filter((stat: any) => 
-          stat.player_name?.toLowerCase().includes(playerName)
-        ) || [],
-        player_info: data.player_info.filter((player: any) => 
-          player.player_name?.toLowerCase().includes(playerName)
-        )
+        weekly_stats: data.weekly_stats.filter((stat: Record<string, unknown>) => {
+          const playerName = stat.player_name as string
+          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+        }),
+        seasonal_stats: data.seasonal_stats.filter((stat: Record<string, unknown>) => {
+          const playerName = stat.player_name as string
+          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+        }),
+        aggregated_season_stats: data.aggregated_season_stats?.filter((stat: Record<string, unknown>) => {
+          const playerName = stat.player_name as string
+          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+        }) || [],
+        player_info: data.player_info.filter((player: Record<string, unknown>) => {
+          const playerName = player.player_name as string
+          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+        })
       }
       
       setNflData(filteredData)
@@ -317,7 +313,7 @@ export function NFLDataManager() {
     }
     
     autoLoadData()
-  }, []) // Remove dependencies to prevent infinite loop
+  }, [extractNFLData, loading, nflData])
 
   return (
     <div className="space-y-6">
@@ -610,18 +606,18 @@ export function NFLDataManager() {
                         </thead>
                         <tbody>
                           {sortData(
-                            (nflData.weekly_stats || [])
+                            ((nflData.weekly_stats as unknown as Record<string, unknown>[]) || [])
                               .filter(stat => {
                                 if (!stat) return false
                                 if (selectedTeam !== "all" && stat.team !== selectedTeam) return false
                                 if (selectedPositionFilter !== "ALL" && stat.position !== selectedPositionFilter) return false
-                                if (minFantasyPoints && (stat.fantasy_points_ppr || stat.fantasy_points || 0) < parseFloat(minFantasyPoints)) return false
+                                if (minFantasyPoints && ((stat.fantasy_points_ppr as number) || (stat.fantasy_points as number) || 0) < parseFloat(minFantasyPoints)) return false
                                 return true
                               })
                           ).slice(0, 100).filter(stat => stat && typeof stat === 'object').map((stat, index) => (
                             <tr key={`${stat?.player_id || index}_${stat?.week || 'unknown'}_${stat?.season || 'unknown'}`} className="border-b hover:bg-muted/30 transition-colors">
                               <td className="p-2">
-                                Week {stat?.week || 'N/A'}
+                                Week {String((stat as unknown as Record<string, unknown>)?.week || 'N/A')}
                               </td>
                               {(selectedColumns || []).map(col => {
                                 const field = (availableDataFields || []).find(f => f.key === col)
@@ -649,7 +645,7 @@ export function NFLDataManager() {
                                 
                                 return (
                                   <td key={col} className="p-2">
-                                    {value || 0}
+                                    {String(value || 0)}
                                   </td>
                                 )
                               })}
@@ -716,12 +712,12 @@ export function NFLDataManager() {
                         </thead>
                         <tbody>
                           {sortData(
-                            (nflData.aggregated_season_stats || [])
+                            ((nflData.aggregated_season_stats as unknown as Record<string, unknown>[]) || [])
                               .filter(stat => {
                                 if (!stat) return false
                                 if (selectedTeam !== "all" && stat.team !== selectedTeam) return false
                                 if (selectedPositionFilter !== "ALL" && stat.position !== selectedPositionFilter) return false
-                                if (minFantasyPoints && (stat.fantasy_points_ppr || stat.fantasy_points || 0) < parseFloat(minFantasyPoints)) return false
+                                if (minFantasyPoints && (Number((stat as unknown as Record<string, unknown>).fantasy_points_ppr) || Number((stat as unknown as Record<string, unknown>).fantasy_points) || 0) < parseFloat(minFantasyPoints)) return false
                                 return true
                               })
                           ).slice(0, 100).filter(stat => stat && typeof stat === 'object').map((stat, index) => (
@@ -752,7 +748,7 @@ export function NFLDataManager() {
                                 
                                 return (
                                   <td key={col} className="p-2">
-                                    {value || 0}
+                                    {String(value || 0)}
                                   </td>
                                 )
                               })}
@@ -766,7 +762,7 @@ export function NFLDataManager() {
                   {(!nflData.aggregated_season_stats || nflData.aggregated_season_stats.length === 0) && (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">
-                        No aggregated season stats available. Try selecting "All weeks" to see season totals.
+                        No aggregated season stats available. Try selecting &quot;All weeks&quot; to see season totals.
                       </p>
                     </div>
                   )}
