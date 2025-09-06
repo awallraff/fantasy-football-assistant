@@ -1,46 +1,47 @@
 import { spawn } from 'child_process'
 import path from 'path'
 
-export interface NFLWeeklyStats {
-  player_id: string
-  player_name: string
-  position: string
-  team: string
-  season: number
-  week: number
-  fantasy_points?: number
-  fantasy_points_ppr?: number
-  passing_yards?: number
-  passing_tds?: number
-  interceptions?: number
-  rushing_yards?: number
-  rushing_tds?: number
-  rushing_attempts?: number
-  receiving_yards?: number
-  receiving_tds?: number
-  receptions?: number
-  targets?: number
+export interface NFLPlayerStats {
+  position: string;
+  fantasy_points_ppr?: number;
 }
 
-export interface NFLSeasonalStats {
-  player_id: string
-  player_name: string
-  position: string
-  team: string
-  season: number
-  games?: number
-  fantasy_points?: number
-  fantasy_points_ppr?: number
-  passing_yards?: number
-  passing_tds?: number
-  interceptions?: number
-  rushing_yards?: number
-  rushing_tds?: number
-  rushing_attempts?: number
-  receiving_yards?: number
-  receiving_tds?: number
-  receptions?: number
-  targets?: number
+export interface NFLWeeklyStats extends NFLPlayerStats {
+  player_id: string;
+  player_name: string;
+  team: string;
+  season: number;
+  week: number;
+  fantasy_points?: number;
+  passing_yards?: number;
+  passing_tds?: number;
+  interceptions?: number;
+  rushing_yards?: number;
+  rushing_tds?: number;
+  rushing_attempts?: number;
+  receiving_yards?: number;
+  receiving_tds?: number;
+  receptions?: number;
+  targets?: number;
+}
+
+export interface NFLSeasonalStats extends NFLPlayerStats {
+  player_id: string;
+  player_name: string;
+  team: string;
+  season: number;
+  games?: number;
+  fantasy_points?: number;
+  passing_yards?: number;
+  passing_tds?: number;
+  interceptions?: number;
+  rushing_yards?: number;
+  rushing_tds?: number;
+  rushing_attempts?: number;
+  receiving_yards?: number;
+  receiving_tds?: number;
+  receptions?: number;
+  targets?: number;
 }
 
 export interface NFLPlayerInfo {
