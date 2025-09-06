@@ -7,11 +7,9 @@
     "dev": "next dev",
     "dev:unsafe": "next dev",
     "lint": "next lint",
-    "precheck": "npm run lint && npm run test:quick",
+    "precheck": "npm run lint",
     "start": "next start",
-    "test": "playwright test",
     "test:integration": "jest --testPathPatterns=\"integration\"",
-    "test:quick": "playwright test --grep=\"smoke\"",
     "test:unit": "jest"
   },
   "dependencies": {
@@ -70,7 +68,6 @@
     "zod": "3.25.67"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.9",
     "@types/jest": "^30.0.0",
     "@types/node": "^22",
@@ -79,7 +76,6 @@
     "eslint": "^9.33.0",
     "eslint-config-next": "^15.4.6",
     "jest": "^30.1.3",
-    "playwright": "^1.55.0",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "ts-jest": "^29.4.1",

@@ -28,7 +28,9 @@
       "Bash(npm run test:quick:*)",
       "Bash(netstat:*)",
       "Bash(npx next:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": [],
