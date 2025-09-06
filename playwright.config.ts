@@ -19,9 +19,11 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'npm run build && npm start',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
+  // webServer configuration commented out to avoid conflicts with npm run dev
+  // For manual testing, start the dev server separately with: npm run dev
+  // webServer: {
+  //   command: 'npm run build && npm start',
+  //   port: 3000,
+  //   reuseExistingServer: !process.env.CI,
+  // },
 })
