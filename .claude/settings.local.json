@@ -30,7 +30,9 @@
       "Bash(npx next:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm run:*)"
     ],
     "deny": [],
     "ask": [],
