@@ -32,12 +32,13 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
 
   // Cleanup on unmount
   useEffect(() => {
+    const controller = abortControllerRef.current;
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
+      if (controller) {
+        controller.abort();
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const groupLeaguesByName = (leagues: SleeperLeague[]): GroupedLeague[] => {
     const grouped = leagues.reduce((acc, league) => {

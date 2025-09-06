@@ -22,7 +22,13 @@
       "Bash(pip install:*)",
       "Bash(python:*)",
       "Bash(del test_output.json)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run test:integration:*)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npm run test:quick:*)",
+      "Bash(netstat:*)",
+      "Bash(npx next:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": [],

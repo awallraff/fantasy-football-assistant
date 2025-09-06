@@ -47,72 +47,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
 
   const availableSeasons = ["2024", "2023", "2022", "2021", "2020"]
 
-  const loadTradeHistory = useCallback(async () => {
-    setLoading(true)
-    try {
-      console.log("Loading trade history for league:", leagueId)
-
-      const transactions = await sleeperAPI.getTradeHistory(leagueId)
-      console.log("Raw transactions:", transactions)
-
-      const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
-      console.log("League users:", leagueUsers)
-      setUsers(leagueUsers)
-
-      let allTrades = transactions
-      if (!transactions || transactions.length === 0) {
-        console.log("No real trades found, using mock data for demonstration")
-        allTrades = generateMockTrades()
-      }
-
-      // Process trades with season information
-      const processedTrades: ProcessedTrade[] = allTrades.map((trade, index) => {
-        const playersTraded = Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length
-        const picksTraded = trade.draft_picks?.length || 0
-
-        return {
-          transaction: trade,
-          participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
-          playersTraded,
-          picksTraded,
-          date: new Date(trade.created || Date.now()).toLocaleDateString(),
-          week: getWeekFromTimestamp(trade.created || Date.now()),
-          season: selectedSeason,
-        }
-      })
-
-      console.log("Processed trades:", processedTrades)
-      setTrades(processedTrades)
-
-      analyzeOwnerBehavior(processedTrades, leagueUsers)
-    } catch (error) {
-      console.error("Error loading trade history:", error)
-
-      try {
-        const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
-        const mockTrades = generateMockTrades()
-        const processedTrades: ProcessedTrade[] = mockTrades.map((trade, index) => ({
-          transaction: trade,
-          participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
-          playersTraded: Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length,
-          picksTraded: trade.draft_picks?.length || 0,
-          date: new Date(trade.created || Date.now()).toLocaleDateString(),
-          week: getWeekFromTimestamp(trade.created || Date.now()),
-          season: selectedSeason,
-        }))
-
-        setTrades(processedTrades)
-        setUsers(leagueUsers)
-        analyzeOwnerBehavior(processedTrades, leagueUsers)
-      } catch (fallbackError) {
-        console.error("Fallback error:", fallbackError)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [leagueId])
-
-  const analyzeOwnerBehavior = (allTrades: ProcessedTrade[], leagueUsers: SleeperUser[]) => {
+  const analyzeOwnerBehavior = useCallback((allTrades: ProcessedTrade[], leagueUsers: SleeperUser[]) => {
     const ownerStats: Record<string, {
       userId: string
       username: string
@@ -188,12 +123,77 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
       avgPlayersPerTrade: stats.totalTrades > 0 ? stats.playersTraded / stats.totalTrades : 0,
       preferredTradeTypes: getPreferredTradeTypes(stats.tradeTypes),
       tradingFrequency: getTradingFrequency(stats.totalTrades),
-      commonPartners: Array.from(stats.tradingPartners).slice(0, 3) as string[],
+      commonPartners: Array.from(stats.tradingPartners).slice(0, 3),
       seasonalPatterns: stats.seasonalPatterns,
     }))
 
     setOwnerBehaviors(behaviors.filter((b) => b.totalTrades > 0))
-  }
+  }, [])
+
+  const loadTradeHistory = useCallback(async () => {
+    setLoading(true)
+    try {
+      console.log("Loading trade history for league:", leagueId)
+
+      const transactions = await sleeperAPI.getTradeHistory(leagueId)
+      console.log("Raw transactions:", transactions)
+
+      const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
+      console.log("League users:", leagueUsers)
+      setUsers(leagueUsers)
+
+      let allTrades = transactions
+      if (!transactions || transactions.length === 0) {
+        console.log("No real trades found, using mock data for demonstration")
+        allTrades = generateMockTrades()
+      }
+
+      // Process trades with season information
+      const processedTrades: ProcessedTrade[] = allTrades.map((trade, index) => {
+        const playersTraded = Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length
+        const picksTraded = trade.draft_picks?.length || 0
+
+        return {
+          transaction: trade,
+          participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
+          playersTraded,
+          picksTraded,
+          date: new Date(trade.created || Date.now()).toLocaleDateString(),
+          week: getWeekFromTimestamp(trade.created || Date.now()),
+          season: selectedSeason,
+        }
+      })
+
+      console.log("Processed trades:", processedTrades)
+      setTrades(processedTrades)
+
+      analyzeOwnerBehavior(processedTrades, leagueUsers)
+    } catch (error) {
+      console.error("Error loading trade history:", error)
+
+      try {
+        const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
+        const mockTrades = generateMockTrades()
+        const processedTrades: ProcessedTrade[] = mockTrades.map((trade, index) => ({
+          transaction: trade,
+          participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
+          playersTraded: Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length,
+          picksTraded: trade.draft_picks?.length || 0,
+          date: new Date(trade.created || Date.now()).toLocaleDateString(),
+          week: getWeekFromTimestamp(trade.created || Date.now()),
+          season: selectedSeason,
+        }))
+
+        setTrades(processedTrades)
+        setUsers(leagueUsers)
+        analyzeOwnerBehavior(processedTrades, leagueUsers)
+      } catch (fallbackError) {
+        console.error("Fallback error:", fallbackError)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [leagueId, analyzeOwnerBehavior, selectedSeason])
 
   const getPreferredTradeTypes = (types: Record<string, number>) => {
     const preferences = []

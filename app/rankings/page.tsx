@@ -14,7 +14,7 @@ import { RankingsComparison } from "@/components/rankings-comparison"
 import { PlayerSearch } from "@/components/player-search"
 import { PlayerDetailModal } from "@/components/player-detail-modal"
 import { APIKeyManager } from "@/components/api-key-manager"
-import type { RankingSystem, PlayerRanking } from "@/lib/rankings-types"
+import type { RankingSystem } from "@/lib/rankings-types";
 import { usePlayerData } from "@/contexts/player-data-context"
 import { normalizePosition } from "@/lib/player-utils"
 import { AIRankingsService } from "@/lib/ai-rankings-service"
@@ -277,6 +277,9 @@ export default function RankingsPage() {
     // Prevent multiple API calls in development mode (React StrictMode)
     if (Object.keys(players).length === 0) return;
     
+    // Only generate AI rankings once when players are first loaded
+    if (aiRankingSystem) return;
+    
     let cancelled = false;
     
     const loadAllRankings = async () => {
@@ -288,7 +291,28 @@ export default function RankingsPage() {
       try {
         // After all initial rankings are loaded, automatically generate AI rankings for next upcoming week
         if (!cancelled) {
-          await generateAiRankings(); // This will automatically determine the next upcoming week
+          const { year: nextYear, week: nextWeek } = getNextUpcomingWeek();
+          const targetYear = nextYear;
+          const currentProjectionType = projectionType;
+          
+          // For season projections, don't specify a week
+          const targetWeek = currentProjectionType === "season" ? undefined : nextWeek;
+          
+          console.log(`Generating AI rankings predictions for ${currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`}`);
+          const allRankings = getAllSystems();
+          const aiService = new AIRankingsService();
+          const aiSystem = await aiService.generateAIRankings(allRankings, {
+            year: targetYear,
+            week: targetWeek,
+            useHistoricalData: true // Use historical data to inform future predictions
+          });
+          setAiRankingSystem(aiSystem);
+          setSelectedSource("ai");
+          setSelectedSystem(aiSystem);
+          
+          // Update the state to reflect what we generated
+          setSelectedYear(targetYear);
+          setSelectedWeek(targetWeek || null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -308,7 +332,7 @@ export default function RankingsPage() {
       cancelled = true;
       clearTimeout(timeoutId);
     }
-  }, [players, apiKeys, generateAiRankings])
+  }, [players, apiKeys, aiRankingSystem, getAllSystems, getNextUpcomingWeek, projectionType]);
 
   const getAllPositions = (): string[] => {
     const positions = new Set<string>()

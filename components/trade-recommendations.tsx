@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,46 +20,7 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
   const [loading, setLoading] = useState(true)
   const [rosters, setRosters] = useState<SleeperRoster[]>([])
 
-  useEffect(() => {
-    const fetchLeagueData = async () => {
-      setLoading(true)
-      try {
-        // Fetch league rosters and users
-        const [leagueRosters, leagueUsers] = await Promise.all([
-          sleeperAPI.getLeagueRosters(league.league_id),
-          sleeperAPI.getLeagueUsers(league.league_id),
-        ])
-
-        setRosters(leagueRosters)
-
-        // Find user's roster
-        const userRoster = leagueRosters.find((roster) => roster.owner_id === userId)
-        if (!userRoster) {
-          setRecommendations([])
-          return
-        }
-
-        // Generate league-specific recommendations based on real data
-        const leagueSpecificRecs = await generateLeagueSpecificRecommendations(
-          league,
-          userRoster,
-          leagueRosters,
-          leagueUsers,
-        )
-
-        setRecommendations(leagueSpecificRecs)
-      } catch (error) {
-        console.error("Error fetching league data:", error)
-        setRecommendations([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchLeagueData()
-  }, [league, userId])
-
-  const generateLeagueSpecificRecommendations = async (
+  const generateLeagueSpecificRecommendations = useCallback(async (
     league: SleeperLeague,
     userRoster: SleeperRoster,
     allRosters: SleeperRoster[],
@@ -100,7 +61,46 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
 
     // Sort by confidence and return top recommendations
     return recommendations.sort((a, b) => b.confidence - a.confidence).slice(0, 5)
-  }
+  }, [userId])
+
+  useEffect(() => {
+    const fetchLeagueData = async () => {
+      setLoading(true)
+      try {
+        // Fetch league rosters and users
+        const [leagueRosters, leagueUsers] = await Promise.all([
+          sleeperAPI.getLeagueRosters(league.league_id),
+          sleeperAPI.getLeagueUsers(league.league_id),
+        ])
+
+        setRosters(leagueRosters)
+
+        // Find user's roster
+        const userRoster = leagueRosters.find((roster) => roster.owner_id === userId)
+        if (!userRoster) {
+          setRecommendations([])
+          return
+        }
+
+        // Generate league-specific recommendations based on real data
+        const leagueSpecificRecs = await generateLeagueSpecificRecommendations(
+          league,
+          userRoster,
+          leagueRosters,
+          leagueUsers,
+        )
+
+        setRecommendations(leagueSpecificRecs)
+      } catch (error) {
+        console.error("Error fetching league data:", error)
+        setRecommendations([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLeagueData()
+  }, [league, userId, generateLeagueSpecificRecommendations])
 
   const analyzeRosterNeeds = (roster: SleeperRoster, rosterPositions: string[]) => {
     const positionCounts = rosterPositions.reduce(
@@ -128,7 +128,16 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
     opponentRoster: SleeperRoster,
     userNeeds: Record<string, boolean>,
     opponentNeeds: Record<string, boolean>,
-  ) => {
+  ): {
+    confidence: number
+    projectedGain: number
+    reasoning: string[]
+    yourPlayers: Array<{ name: string; position: string; currentValue: number; projectedValue: number }>
+    theirPlayers: Array<{ name: string; position: string; currentValue: number; projectedValue: number }>
+    tradeType: "buy_low" | "sell_high" | "positional_need" | "value_play"
+    urgency: "high" | "medium" | "low"
+    successProbability: number
+  } | null => {
     // This is a simplified trade opportunity finder
     // In a real implementation, this would use player values, projections, etc.
 
@@ -144,8 +153,8 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
         ],
         yourPlayers: [{ name: "WR Depth Player", position: "WR", currentValue: 60, projectedValue: 55 }],
         theirPlayers: [{ name: "RB Target", position: "RB", currentValue: 65, projectedValue: 70 }],
-        tradeType: "positional_need" as const,
-        urgency: "medium" as const,
+        tradeType: "positional_need",
+        urgency: "medium",
         successProbability: 82,
       }
     }

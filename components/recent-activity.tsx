@@ -39,7 +39,7 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
   }
   const { players, isLoading: playersLoading } = context
 
-  const calculatePlayerValue = (playerId: string): number => {
+  const calculatePlayerValue = useCallback((playerId: string): number => {
     const player = players[playerId]
     if (!player) return 0
 
@@ -60,7 +60,7 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
     const teamMultiplier = topTierTeams.includes(player.team || "") ? 1.2 : 1.0
 
     return Math.round(baseValue * teamMultiplier)
-  }
+  }, [players])
 
   const calculateRankingChange = (addedValue: number, droppedValue: number): number => {
     const netValue = addedValue - droppedValue
@@ -68,7 +68,7 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
     return Math.round(netValue / 5) // Every 5 points of value = 1 ranking position
   }
 
-  const enhanceTransactions = (rawTransactions: SleeperTransaction[]): EnhancedTransaction[] => {
+  const enhanceTransactions = useCallback((rawTransactions: SleeperTransaction[]): EnhancedTransaction[] => {
     return rawTransactions.map((transaction) => {
       const playerDetails: EnhancedTransaction["playerDetails"] = []
       let totalValueAdded = 0
@@ -138,7 +138,7 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
         impactScore: Math.abs(netValue),
       }
     })
-  }
+  }, [players, rosters, users, calculatePlayerValue])
 
   const getCurrentNFLWeek = (): number => {
     // NFL season typically starts in early September
@@ -240,7 +240,7 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
     } finally {
       setLoading(false)
     }
-  }, [leagueId, players, playersLoading])
+  }, [leagueId, enhanceTransactions])
 
   useEffect(() => {
     if (!playersLoading && Object.keys(players).length > 0) {

@@ -17,6 +17,7 @@ import { useLeagueSelection } from "@/hooks/use-league-selection"
 import { useLoadingStates } from "@/hooks/use-loading-states"
 import { useDebugInfo } from "@/hooks/use-debug-info"
 import { useSafeLocalStorage } from "@/hooks/use-local-storage"
+import { SleeperLeague } from "@/lib/sleeper-api"
 
 export default function DashboardPage() {
   const { isClient } = useSafeLocalStorage()
@@ -94,14 +95,14 @@ export default function DashboardPage() {
         const debugInfo = await generateRetryDebugInfo()
         setDebugInfo(debugInfo)
       })
-    } catch (error) {
+    } catch {
       const errorDebugInfo = await generateRetryDebugInfo()
       setDebugInfo(errorDebugInfo)
     }
   }, [withRetrying, retryConnection, generateRetryDebugInfo, setDebugInfo])
 
   // Wrapped league details loading
-  const handleLoadLeagueDetails = useCallback(async (league: any) => {
+  const handleLoadLeagueDetails = useCallback(async (league: SleeperLeague) => {
     await withLoading(() => loadLeagueDetails(league))
   }, [withLoading, loadLeagueDetails])
 

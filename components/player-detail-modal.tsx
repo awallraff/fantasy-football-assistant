@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,6 +58,72 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
   const displayTeam = actualPlayer ? actualPlayer.team : player.realTeam || player.team || "FA"
   const displayInjuryStatus = actualPlayer ? actualPlayer.injury_status : player.injuryStatus || "Healthy"
 
+  const generatePlayerSpecificNews = useCallback(async (
+    playerName: string,
+    position: string,
+    team: string,
+  ): Promise<PlayerNews[]> => {
+    const newsTemplates = [
+      {
+        title: `${playerName} Shows Strong Performance`,
+        summary: `${playerName} has been a consistent performer for ${team}, showing reliability in the ${position} position with solid fantasy production.`,
+        impact: "medium",
+        source: "Fantasy Analysis",
+      },
+      {
+        title: `${team} Offensive Outlook`,
+        summary: `The ${team} offense has been creating opportunities for ${playerName}, making him a viable option in the ${position} position for fantasy lineups.`,
+        impact: "low",
+        source: "Team Analysis",
+      },
+      {
+        title: `${position} Position Update`,
+        summary:
+          displayInjuryStatus !== "Healthy"
+            ? `${playerName} is currently listed as ${displayInjuryStatus}. Fantasy managers should monitor his status closely.`
+            : `${playerName} is healthy and expected to maintain his role in ${team}'s offense.`,
+        impact: (displayInjuryStatus !== "Healthy" ? "high" : "low") as "high" | "low",
+        source: "Injury Report",
+      },
+    ]
+
+    // Add position-specific news
+    if (position === "QB") {
+      newsTemplates.push({
+        title: `Quarterback Analysis: ${playerName}`,
+        summary: `${playerName} has shown good decision-making and arm strength, making him a solid fantasy quarterback option for ${team}.`,
+        impact: "medium",
+        source: "QB Analysis",
+      })
+    } else if (position === "RB") {
+      newsTemplates.push({
+        title: `Backfield Report: ${playerName}`,
+        summary: `${playerName} has been getting consistent touches in ${team}'s backfield, providing reliable fantasy production.`,
+        impact: "medium",
+        source: "Backfield Report",
+      })
+    } else if (position === "WR") {
+      newsTemplates.push({
+        title: `Receiver Update: ${playerName}`,
+        summary: `${playerName} has been a target in ${team}'s passing game, showing potential for fantasy relevance.`,
+        impact: "medium",
+        source: "Receiver Report",
+      })
+    } else if (position === "TE") {
+      newsTemplates.push({
+        title: `Tight End Focus: ${playerName}`,
+        summary: `${playerName} has been utilized in ${team}'s offense, providing value in the tight end position.`,
+        impact: "medium",
+        source: "TE Analysis",
+      })
+    }
+
+    return newsTemplates.map((template, index) => ({
+      ...template,
+      timestamp: `${index + 1} ${index === 0 ? "hour" : "day"}${index === 0 ? "" : "s"} ago`,
+    })) as PlayerNews[]
+  }, [displayInjuryStatus])
+
   useEffect(() => {
     const loadPlayerData = async () => {
     setIsLoading(true)
@@ -93,73 +159,8 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
     }
     
     loadPlayerData()
-  }, [player.playerId, displayName])
+  }, [player.playerId, displayName, displayPosition, displayTeam, generatePlayerSpecificNews, player.projectedPoints])
 
-  const generatePlayerSpecificNews = async (
-    playerName: string,
-    position: string,
-    team: string,
-  ): Promise<PlayerNews[]> => {
-    const newsTemplates = [
-      {
-        title: `${playerName} Shows Strong Performance`,
-        summary: `${playerName} has been a consistent performer for ${team}, showing reliability in the ${position} position with solid fantasy production.`,
-        impact: "medium" as const,
-        source: "Fantasy Analysis",
-      },
-      {
-        title: `${team} Offensive Outlook`,
-        summary: `The ${team} offense has been creating opportunities for ${playerName}, making him a viable option in the ${position} position for fantasy lineups.`,
-        impact: "low" as const,
-        source: "Team Analysis",
-      },
-      {
-        title: `${position} Position Update`,
-        summary:
-          displayInjuryStatus !== "Healthy"
-            ? `${playerName} is currently listed as ${displayInjuryStatus}. Fantasy managers should monitor his status closely.`
-            : `${playerName} is healthy and expected to maintain his role in ${team}'s offense.`,
-        impact: displayInjuryStatus !== "Healthy" ? ("high" as const) : ("low" as const),
-        source: "Injury Report",
-      },
-    ]
-
-    // Add position-specific news
-    if (position === "QB") {
-      newsTemplates.push({
-        title: `Quarterback Analysis: ${playerName}`,
-        summary: `${playerName} has shown good decision-making and arm strength, making him a solid fantasy quarterback option for ${team}.`,
-        impact: "medium" as const,
-        source: "QB Analysis",
-      })
-    } else if (position === "RB") {
-      newsTemplates.push({
-        title: `Backfield Report: ${playerName}`,
-        summary: `${playerName} has been getting consistent touches in ${team}'s backfield, providing reliable fantasy production.`,
-        impact: "medium" as const,
-        source: "Backfield Report",
-      })
-    } else if (position === "WR") {
-      newsTemplates.push({
-        title: `Receiver Update: ${playerName}`,
-        summary: `${playerName} has been a target in ${team}'s passing game, showing potential for fantasy relevance.`,
-        impact: "medium" as const,
-        source: "Receiver Report",
-      })
-    } else if (position === "TE") {
-      newsTemplates.push({
-        title: `Tight End Focus: ${playerName}`,
-        summary: `${playerName} has been utilized in ${team}'s offense, providing value in the tight end position.`,
-        impact: "medium" as const,
-        source: "TE Analysis",
-      })
-    }
-
-    return newsTemplates.map((template, index) => ({
-      ...template,
-      timestamp: `${index + 1} ${index === 0 ? "hour" : "day"}${index === 0 ? "" : "s"} ago`,
-    }))
-  }
 
   const getPositionBasedPoints = (position: string, isPreviousYear = false): number => {
     const basePoints = {

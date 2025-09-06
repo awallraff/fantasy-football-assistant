@@ -17,6 +17,8 @@ The codebase is generally well-written and follows modern React best practices. 
 **Recommendations:**
 
 *   **State Management:** The `app/dashboard/page.tsx` component contains a significant amount of state management logic. To improve readability and maintainability, consider extracting this logic into one or more custom hooks. For more complex state, a lightweight state management library like Zustand or Jotai could be beneficial.
+
+    ***UPDATE: This has been completed. The state management logic has been extracted into several custom hooks, which has significantly improved the readability and maintainability of the code.***
 *   **Component Size:** Some components, such as `app/dashboard/page.tsx` and `components/enhanced-team-roster.tsx`, have grown quite large. Break these down into smaller, more focused components to improve reusability and make them easier to understand and test.
 *   **Code Duplication:** The logic for handling the "No Leagues Connected" state is duplicated in `app/dashboard/page.tsx` and `app/trades/page.tsx`. Create a reusable component to display this message and handle the associated logic.
 *   **API Error Handling:** The `lib/sleeper-api.ts` file has basic error handling. Enhance this by implementing a more robust retry mechanism with exponential backoff for failed API requests. This will make the application more resilient to network issues.
@@ -50,7 +52,7 @@ The project uses Tailwind CSS for styling, which is a good choice for utility-fi
 
 Based on this review, here is a summary of the recommended action items for the development team:
 
-1.  **Refactor `app/dashboard/page.tsx`:** Extract state management logic into custom hooks.
+1.  **[COMPLETED]** Refactor `app/dashboard/page.tsx`:** Extract state management logic into custom hooks.
 2.  **Decompose Large Components:** Break down `app/dashboard/page.tsx` and `components/enhanced-team-roster.tsx` into smaller components.
 3.  **Create a `NoLeaguesConnected` Component:** Create a reusable component to handle the "No Leagues Connected" state.
 4.  **Improve API Error Handling:** Implement a retry mechanism with exponential backoff in `lib/sleeper-api.ts`.

@@ -252,24 +252,25 @@ export function NFLDataManager() {
       }
       
       // Filter data to show only the searched player
-      const playerName = searchPlayerName.trim().toLowerCase()
+      // Filter data to show only the searched player
+      const searchLower = searchPlayerName.trim().toLowerCase()
       const filteredData = {
         ...data,
         weekly_stats: data.weekly_stats.filter((stat: Record<string, unknown>) => {
-          const playerName = stat.player_name as string
-          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+          const statPlayerName = stat.player_name as string
+          return statPlayerName?.toLowerCase().includes(searchLower)
         }),
         seasonal_stats: data.seasonal_stats.filter((stat: Record<string, unknown>) => {
-          const playerName = stat.player_name as string
-          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+          const statPlayerName = stat.player_name as string
+          return statPlayerName?.toLowerCase().includes(searchLower)
         }),
         aggregated_season_stats: data.aggregated_season_stats?.filter((stat: Record<string, unknown>) => {
-          const playerName = stat.player_name as string
-          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+          const statPlayerName = stat.player_name as string
+          return statPlayerName?.toLowerCase().includes(searchLower)
         }) || [],
         player_info: data.player_info.filter((player: Record<string, unknown>) => {
-          const playerName = player.player_name as string
-          return playerName?.toLowerCase().includes(searchPlayerName.toLowerCase())
+          const statPlayerName = player.player_name as string
+          return statPlayerName?.toLowerCase().includes(searchLower)
         })
       }
       
