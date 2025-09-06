@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import "@/styles/globals.css"
+import "@/app/globals.css"
 import { Navigation } from "@/components/navigation"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -20,14 +20,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  console.log("[v0] Layout rendering...")
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <style>{`
 html {
   font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
+  --font-geist-sans: ${GeistSans.variable};
+  --font-geist-mono: ${GeistMono.variable};
 }
         `}</style>
       </head>

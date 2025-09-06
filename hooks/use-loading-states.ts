@@ -1,16 +1,18 @@
-import { useState, useCallback } from 'react'
+"use client"
+
+import { useState, useCallback } from "react"
 
 interface UseLoadingStatesReturn {
   // State
   loading: boolean
   loadingYears: boolean
   retrying: boolean
-  
+
   // Actions
   setLoading: (loading: boolean) => void
   setLoadingYears: (loading: boolean) => void
   setRetrying: (retrying: boolean) => void
-  
+
   // Async wrappers
   withLoading: <T>(asyncFn: () => Promise<T>) => Promise<T>
   withLoadingYears: <T>(asyncFn: () => Promise<T>) => Promise<T>
@@ -22,31 +24,37 @@ export function useLoadingStates(): UseLoadingStatesReturn {
   const [loadingYears, setLoadingYears] = useState(false)
   const [retrying, setRetrying] = useState(false)
 
-  const withLoading = useCallback(async <T>(asyncFn: () => Promise<T>): Promise<T> => {
-    setLoading(true)
-    try {
-      return await asyncFn()
-    } finally {
-      setLoading(false)
-    }
+  const withLoading = useCallback(<T,>(asyncFn: () => Promise<T>): Promise<T> => {
+    return (async (): Promise<T> => {
+      setLoading(true)
+      try {
+        return await asyncFn()
+      } finally {
+        setLoading(false)
+      }
+    })()
   }, [])
 
-  const withLoadingYears = useCallback(async <T>(asyncFn: () => Promise<T>): Promise<T> => {
-    setLoadingYears(true)
-    try {
-      return await asyncFn()
-    } finally {
-      setLoadingYears(false)
-    }
+  const withLoadingYears = useCallback(<T,>(asyncFn: () => Promise<T>): Promise<T> => {
+    return (async (): Promise<T> => {
+      setLoadingYears(true)
+      try {
+        return await asyncFn()
+      } finally {
+        setLoadingYears(false)
+      }
+    })()
   }, [])
 
-  const withRetrying = useCallback(async <T>(asyncFn: () => Promise<T>): Promise<T> => {
-    setRetrying(true)
-    try {
-      return await asyncFn()
-    } finally {
-      setRetrying(false)
-    }
+  const withRetrying = useCallback(<T,>(asyncFn: () => Promise<T>): Promise<T> => {
+    return (async (): Promise<T> => {
+      setRetrying(true)
+      try {
+        return await asyncFn()
+      } finally {
+        setRetrying(false)
+      }
+    })()
   }, [])
 
   return {
@@ -54,12 +62,12 @@ export function useLoadingStates(): UseLoadingStatesReturn {
     loading,
     loadingYears,
     retrying,
-    
+
     // Actions
     setLoading,
     setLoadingYears,
     setRetrying,
-    
+
     // Async wrappers
     withLoading,
     withLoadingYears,

@@ -7,10 +7,13 @@ import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import type { SleeperUser, SleeperLeague } from "@/lib/sleeper-api"
 
 export default function HomePage() {
+  console.log("[v0] HomePage rendering...")
+
   const { setItem, isClient } = useSafeLocalStorage()
-  
+
   const handleLeaguesConnected = (user: SleeperUser, leagues: SleeperLeague[]) => {
     try {
+      console.log("[v0] Leagues connected, saving data...")
       // Save to localStorage for dashboard access
       setItem("sleeper_user", JSON.stringify(user))
       setItem("sleeper_leagues", JSON.stringify(leagues))
@@ -47,9 +50,7 @@ export default function HomePage() {
             <CardContent className="pt-6">
               <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">Deep Analytics</h3>
-              <p className="text-sm text-muted-foreground">
-                Advanced metrics and performance insights for your teams
-              </p>
+              <p className="text-sm text-muted-foreground">Advanced metrics and performance insights for your teams</p>
             </CardContent>
           </Card>
 
@@ -57,9 +58,7 @@ export default function HomePage() {
             <CardContent className="pt-6">
               <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">Trade Analysis</h3>
-              <p className="text-sm text-muted-foreground">
-                Track opponent trade patterns and market trends
-              </p>
+              <p className="text-sm text-muted-foreground">Track opponent trade patterns and market trends</p>
             </CardContent>
           </Card>
 
@@ -67,9 +66,7 @@ export default function HomePage() {
             <CardContent className="pt-6">
               <Users className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">Custom Rankings</h3>
-              <p className="text-sm text-muted-foreground">
-                Import and manage your own player ranking systems
-              </p>
+              <p className="text-sm text-muted-foreground">Import and manage your own player ranking systems</p>
             </CardContent>
           </Card>
 
@@ -77,9 +74,7 @@ export default function HomePage() {
             <CardContent className="pt-6">
               <Trophy className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold mb-2">AI Recommendations</h3>
-              <p className="text-sm text-muted-foreground">
-                Smart trade and lineup suggestions based on league rules
-              </p>
+              <p className="text-sm text-muted-foreground">Smart trade and lineup suggestions based on league rules</p>
             </CardContent>
           </Card>
         </div>
