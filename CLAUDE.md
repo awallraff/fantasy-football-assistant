@@ -9,29 +9,29 @@ This is a **Fantasy Football Assistant** - a Next.js 15.2.4 application that int
 ## Build & Development Commands
 
 ### Development
-```bash
+\`\`\`bash
 npm run dev              # Start Next.js dev server (standard)
 npm run dev:unsafe       # Alternative dev command
-```
+\`\`\`
 
 ### Building & Production
-```bash
+\`\`\`bash
 npm run build            # Production build (Next.js)
 pnpm run build           # Used in CI/CD pipeline - MUST work without errors
 npm start                # Start production server
-```
+\`\`\`
 
 ### Code Quality
-```bash
+\`\`\`bash
 npm run lint             # Run ESLint
 npm run precheck         # Runs lint before deployment
-```
+\`\`\`
 
 ### Testing
-```bash
+\`\`\`bash
 npm run test:unit        # Run Jest unit tests
 npm run test:integration # Run Jest integration tests
-```
+\`\`\`
 
 **Important:** Playwright was removed from this project. Do not attempt to add or use Playwright testing.
 

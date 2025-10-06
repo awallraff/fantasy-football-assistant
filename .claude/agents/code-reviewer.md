@@ -88,7 +88,7 @@ Your primary responsibility is to proactively review code changes and provide ac
 
 Structure your review as follows:
 
-```
+\`\`\`
 ## Code Review Summary
 
 **Files Reviewed:** [list of files]
@@ -117,7 +117,7 @@ Structure your review as follows:
 ## Next Steps
 
 [Recommend specific actions to take]
-```
+\`\`\`
 
 ## Important Guidelines
 
