@@ -1,5 +1,5 @@
 import type { RankingSystem } from "./rankings-types"
-import type { NFLDataResponse, NFLWeeklyStats, NFLSeasonalStats } from "./nfl-data-service"
+import type { NFLDataResponse } from "./nfl-data-service"
 
 export interface PromptBuilderOptions {
   year?: number
@@ -93,8 +93,7 @@ export class PromptBuilderService {
   private addHistoricalPerformanceContext(nflData: NFLDataResponse, type: "weekly" | "season"): string {
     let contextPrompt = ""
 
-    const data: (NFLWeeklyStats | NFLSeasonalStats)[] =
-      type === "weekly" ? nflData.weekly_stats : nflData.aggregated_season_stats
+    const data = type === "weekly" ? nflData.weekly_stats : nflData.aggregated_season_stats
 
     contextPrompt += `\nCOMPREHENSIVE HISTORICAL PERFORMANCE ANALYSIS:\n`
     contextPrompt += `Data includes ${nflData.metadata.total_players} players across ${nflData.metadata.years.join(", ")}\n`
