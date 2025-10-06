@@ -93,7 +93,10 @@ export class PromptBuilderService {
   private addHistoricalPerformanceContext(nflData: NFLDataResponse, type: "weekly" | "season"): string {
     let contextPrompt = ""
 
-    const data = type === "weekly" ? nflData.weekly_stats : nflData.aggregated_season_stats
+    // Type assertion to avoid TypeScript union type inference issues with array methods
+    // Both NFLWeeklyStats and NFLSeasonalStats extend NFLPlayerStats and have compatible properties
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (type === "weekly" ? nflData.weekly_stats : nflData.aggregated_season_stats) as any[]
 
     contextPrompt += `\nCOMPREHENSIVE HISTORICAL PERFORMANCE ANALYSIS:\n`
     contextPrompt += `Data includes ${nflData.metadata.total_players} players across ${nflData.metadata.years.join(", ")}\n`
