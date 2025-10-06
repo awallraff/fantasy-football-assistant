@@ -33,7 +33,8 @@
       "Bash(npm ls:*)",
       "Bash(git push:*)",
       "Bash(pnpm run:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": [],
