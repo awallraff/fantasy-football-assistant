@@ -1,0 +1,11 @@
+# NFL Data Extraction Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core NFL data package
+nfl_data_py>=0.3.0,<0.4.0
+
+# Data processing
+pandas>=2.0.0,<3.0.0
+
+# Required by pandas and nfl_data_py
+numpy>=1.24.0,<2.0.0

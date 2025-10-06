@@ -240,7 +240,6 @@ class NFLDataService {
       
       const python = spawn(pythonCmd, [this.scriptPath, ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        shell: true,
         // Set memory limit for Windows
         ...(process.platform === 'win32' && {
           env: {
