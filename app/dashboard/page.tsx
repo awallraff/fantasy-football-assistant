@@ -1,17 +1,17 @@
 "use client"
 
 import { useEffect, useCallback } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, RefreshCw, BarChart3, Trash2 } from "lucide-react"
-import Link from "next/link"
+import { RefreshCw } from "lucide-react"
 import { LeagueOverview } from "@/components/league-overview"
 import { EnhancedTeamRoster } from "@/components/enhanced-team-roster"
 import { StandingsTable } from "@/components/standings-table"
 import { RecentActivity } from "@/components/recent-activity"
+import { DashboardLoadingSkeleton } from "@/components/dashboard/loading-skeleton"
+import { NoLeaguesConnected } from "@/components/no-leagues-connected"
+import { LeagueCard } from "@/components/dashboard/league-card"
+import { LeagueHeader } from "@/components/dashboard/league-header"
+import { YearSelector } from "@/components/dashboard/year-selector"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
 import { useLeagueSelection } from "@/hooks/use-league-selection"
 import { useLoadingStates } from "@/hooks/use-loading-states"
@@ -118,127 +118,36 @@ export default function DashboardPage() {
 
   // Show loading state during hydration
   if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-32 bg-muted rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <DashboardLoadingSkeleton />
   }
 
   if (!user || leagues.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-lg mx-auto shadow-lg">
-            <CardHeader>
-              <CardTitle>No Leagues Connected</CardTitle>
-              <CardDescription>{!user ? "No user data found" : "No leagues found for your account"}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-muted p-3 rounded-md text-sm font-mono whitespace-pre-line text-muted-foreground">
-                {debugInfo}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {user && (
-                  <Button onClick={handleRetryConnection} disabled={retrying} className="w-full">
-                    {retrying ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Retrying...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Retry Fetching Leagues
-                      </>
-                    )}
-                  </Button>
-                )}
-
-                <Button variant="outline" onClick={clearAndRestart} className="w-full bg-transparent">
-                  Start Fresh
-                </Button>
-
-                <Button asChild className="w-full">
-                  <Link href="/">Back to Home</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <NoLeaguesConnected
+        hasUser={!!user}
+        debugInfo={debugInfo}
+        retrying={retrying}
+        onRetry={handleRetryConnection}
+        onClearAndRestart={clearAndRestart}
+      />
     )
   }
 
   if (selectedLeague) {
-    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleBackToLeagues}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Leagues
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">{selectedLeague.name}</h1>
-                <p className="text-muted-foreground">
-                  {selectedLeague.total_rosters} teams • {selectedLeague.season} season
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              {/* League/Year Switcher */}
-              <div className="flex items-center gap-2">
-                <Select value={selectedYear} onValueChange={handleYearChange}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableYears.map(year => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Select value={selectedLeague.league_id} onValueChange={handleLeagueChange}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currentYearLeagues.map(league => (
-                      <SelectItem key={league.league_id} value={league.league_id}>
-                        {league.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="h-6 w-px bg-border"></div>
-              
-              <Button variant="outline" onClick={() => handleLoadLeagueDetails(selectedLeague)} disabled={loading}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-            </div>
-          </div>
+          <LeagueHeader
+            selectedLeague={selectedLeague}
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            currentYearLeagues={currentYearLeagues}
+            loading={loading}
+            onBackToLeagues={handleBackToLeagues}
+            onYearChange={handleYearChange}
+            onLeagueChange={handleLeagueChange}
+            onRefresh={() => handleLoadLeagueDetails(selectedLeague)}
+          />
 
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
@@ -295,24 +204,12 @@ export default function DashboardPage() {
             Welcome back, {user.display_name || user.username}!
           </h1>
           <p className="text-muted-foreground">Select a league to view detailed analytics and insights</p>
-          
-          {/* Year Selector */}
-          {availableYears.length > 1 && (
-            <div className="flex justify-center mt-4">
-              <Select value={selectedYear} onValueChange={handleYearChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year}>
-                      {year} Season
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+
+          <YearSelector
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearChange={handleYearChange}
+          />
         </div>
 
         {/* Loading State */}
@@ -326,61 +223,13 @@ export default function DashboardPage() {
         {/* Leagues Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {currentYearLeagues.map((league) => (
-            <Card key={league.league_id} className="hover:shadow-lg transition-shadow border-border">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg text-card-foreground">{league.name}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={league.status === "in_season" ? "default" : "secondary"}>
-                      {league.status.replace("_", " ")}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRemoveLeague(league.league_id, `${league.name} (${league.season})`)
-                      }}
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      title={`Remove "${league.name}" from your leagues`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <CardDescription>
-                  {league.total_rosters} teams • {league.season} season
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="cursor-pointer" onClick={() => handleLoadLeagueDetails(league)}>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Sport</span>
-                    <span className="font-medium uppercase text-foreground">{league.sport}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Season Type</span>
-                    <span className="font-medium text-foreground">{league.season_type}</span>
-                  </div>
-                  <Button className="w-full mt-4" disabled={loading} onClick={(e) => {
-                    e.stopPropagation()
-                    handleLoadLeagueDetails(league)
-                  }}>
-                    {loading ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        View Analytics
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <LeagueCard
+              key={league.league_id}
+              league={league}
+              loading={loading}
+              onViewAnalytics={handleLoadLeagueDetails}
+              onRemoveLeague={handleRemoveLeague}
+            />
           ))}
         </div>
         

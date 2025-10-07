@@ -75,3 +75,22 @@ export function filterPlayersByPosition(
     .filter((player) => player.position && normalizePosition(player.position) === position)
     .sort((a, b) => formatPlayerName(a).localeCompare(formatPlayerName(b)))
 }
+
+/**
+ * Get the appropriate badge variant for a player's injury status
+ * @param status - The injury status (out, doubtful, questionable, etc.)
+ * @returns Badge variant name
+ */
+export function getInjuryBadgeColor(status?: string): "default" | "destructive" | "secondary" | "outline" {
+  if (!status) return "default"
+  switch (status.toLowerCase()) {
+    case "out":
+      return "destructive"
+    case "doubtful":
+      return "secondary"
+    case "questionable":
+      return "outline"
+    default:
+      return "default"
+  }
+}

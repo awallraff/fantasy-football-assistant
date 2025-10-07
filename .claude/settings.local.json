@@ -34,7 +34,13 @@
       "Bash(git push:*)",
       "Bash(pnpm run:*)",
       "Bash(git pull:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(npm audit:*)",
+      "Bash(test:*)",
+      "Bash(pnpm audit:*)",
+      "Bash(cat:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx jest:*)"
     ],
     "deny": [],
     "ask": [],

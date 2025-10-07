@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TrendingUp, TrendingDown, Activity, Star } from "lucide-react"
 import { usePlayerData } from "@/contexts/player-data-context"
+import { getInjuryBadgeColor } from "@/lib/player-utils"
 
 interface PlayerDetailModalProps {
   player: {
@@ -184,14 +185,6 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
       DEF: isPreviousYear ? 7.6 : 8.2,
     }
     return avgPoints[position as keyof typeof avgPoints] || 10.5
-  }
-
-  const getInjuryBadgeColor = (status?: string) => {
-    if (!status || status === "Healthy") return "default"
-    if (status === "Questionable") return "secondary"
-    if (status === "Doubtful") return "destructive"
-    if (status === "Out") return "destructive"
-    return "secondary"
   }
 
   const getTrendIcon = (trend: string) => {

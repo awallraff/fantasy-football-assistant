@@ -1,4 +1,6 @@
 // Sleeper API client for fantasy football data
+import { fetchWithRetry, type RetryOptions } from "./api-retry"
+
 const SLEEPER_BASE_URL = "https://api.sleeper.app/v1"
 
 export interface SleeperUser {
@@ -103,45 +105,89 @@ class SleeperAPI {
   private baseUrl = SLEEPER_BASE_URL
   private playersCache: { [sport: string]: { data: { [player_id: string]: SleeperPlayer }; sessionId: string } } = {}
   private currentSessionId: string
+  private defaultRetryOptions: RetryOptions = {
+    maxRetries: 3,
+    initialDelayMs: 1000,
+    maxDelayMs: 10000,
+    backoffMultiplier: 2,
+    useJitter: true,
+    onRetry: (error, attemptNumber, delayMs) => {
+      console.log(
+        `[Sleeper API] Retry attempt ${attemptNumber} after ${delayMs}ms:`,
+        error instanceof Error ? error.message : error
+      )
+    },
+  }
 
   constructor() {
     this.currentSessionId = Date.now().toString()
   }
 
-  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 10000): Promise<Response> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-    // Merge signals if one already exists
-    const existingSignal = options.signal
-    if (existingSignal) {
-      if (existingSignal.aborted) {
-        clearTimeout(timeoutId)
-        throw new Error("Request already aborted")
-      }
-      existingSignal.addEventListener('abort', () => controller.abort())
-    }
-
-    try {
-      const response = await fetch(url, {
+  private async fetchWithTimeout(
+    url: string,
+    options: RequestInit = {},
+    _timeoutMs = 10000, // Timeout is handled by fetch's signal, kept for API compatibility
+    retryOptions?: RetryOptions
+  ): Promise<Response> {
+    // Use fetchWithRetry for automatic retry with exponential backoff
+    return fetchWithRetry(
+      url,
+      {
         ...options,
-        signal: controller.signal,
+        signal: options.signal,
         headers: {
           Accept: "application/json",
           "User-Agent": "Fantasy-Analytics-App",
           "Cache-Control": "public, max-age=300", // 5 minute cache
           ...options.headers,
         },
-      })
-      clearTimeout(timeoutId)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      },
+      {
+        ...this.defaultRetryOptions,
+        ...retryOptions,
+        shouldRetry: (error, attemptNumber) => {
+          // Custom retry logic
+          if (error instanceof Error) {
+            const message = error.message
+
+            // Don't retry on 404 (not found) - these are expected for missing data
+            if (message.includes("HTTP 404")) {
+              return false
+            }
+
+            // Don't retry on 400 (bad request) - client error that won't change
+            if (message.includes("HTTP 400")) {
+              return false
+            }
+
+            // Retry on rate limiting (429)
+            if (message.includes("HTTP 429")) {
+              console.log("[Sleeper API] Rate limited, will retry with backoff")
+              return attemptNumber <= 3
+            }
+
+            // Retry on server errors (5xx)
+            if (message.includes("HTTP 5")) {
+              console.log("[Sleeper API] Server error, will retry with backoff")
+              return attemptNumber <= 3
+            }
+
+            // Retry on network/timeout errors
+            if (
+              message.includes("network") ||
+              message.includes("timeout") ||
+              message.includes("Failed to fetch")
+            ) {
+              console.log("[Sleeper API] Network error, will retry with backoff")
+              return attemptNumber <= 3
+            }
+          }
+
+          return false
+        },
       }
-      
-      return response
-    } catch (error) {
-      clearTimeout(timeoutId)
+    ).catch((error) => {
+      // Transform errors for better user experience
       if (error instanceof Error) {
         if (error.name === "AbortError") {
           throw new Error("Request timed out")
@@ -151,7 +197,7 @@ class SleeperAPI {
         }
       }
       throw error
-    }
+    })
   }
 
   // User endpoints
