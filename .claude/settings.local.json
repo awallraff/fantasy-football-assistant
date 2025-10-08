@@ -40,7 +40,8 @@
       "Bash(pnpm audit:*)",
       "Bash(cat:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(pnpm install:*)"
     ],
     "deny": [],
     "ask": [],

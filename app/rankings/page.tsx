@@ -18,6 +18,10 @@ import type { RankingSystem } from "@/lib/rankings-types";
 import { usePlayerData } from "@/contexts/player-data-context"
 import { normalizePosition } from "@/lib/player-utils"
 import { AIRankingsService } from "@/lib/ai-rankings-service"
+import { getNextUpcomingWeek } from "@/lib/nfl-season-utils"
+import { getTierColor } from "@/lib/ranking-utils"
+import { debugLog, debugInfo, debugError } from "@/lib/debug-utils"
+import { API_DEBOUNCE_TIMEOUT_MS } from "@/lib/constants/rankings"
 
 type RankingSource = "all" | "user" | "ai"
 
@@ -39,8 +43,6 @@ export default function RankingsPage() {
   const [selectedSystem, setSelectedSystem] = useState<RankingSystem | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<RankingSource>("ai")
-  const [sortBy, setSortBy] = useState<"rank" | "name" | "position" | "team" | "projectedPoints">("rank")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<SimplePlayerRanking | null>(null)
   const [apiKeys, setApiKeys] = useState<{ [key: string]: string }>({})
@@ -62,9 +64,9 @@ export default function RankingsPage() {
       try {
         const systems = JSON.parse(saved)
         setUserRankingSystems(systems)
-        console.log("Loaded from localStorage:", systems);
+        debugLog("Loaded from localStorage:", systems);
       } catch (e) {
-        console.error("Failed to load rankings:", e)
+        debugError("Failed to load rankings:", e)
       }
     }
 
@@ -74,10 +76,10 @@ export default function RankingsPage() {
       try {
         const keys = JSON.parse(savedKeys)
         setApiKeys(keys)
-        console.log('Loaded API keys from localStorage:', Object.keys(keys))
-        
+        debugLog('Loaded API keys from localStorage:', Object.keys(keys))
+
       } catch (e) {
-        console.error("Failed to load API keys:", e)
+        debugError("Failed to load API keys:", e)
       }
     }
   }, [isClient, getItem])
@@ -91,9 +93,9 @@ export default function RankingsPage() {
         try {
           const keys = JSON.parse(e.newValue)
           setApiKeys(keys)
-          console.log('API keys updated from storage event:', Object.keys(keys))
+          debugLog('API keys updated from storage event:', Object.keys(keys))
         } catch (e) {
-          console.error("Failed to parse updated API keys:", e)
+          debugError("Failed to parse updated API keys:", e)
         }
       }
     }
@@ -148,55 +150,6 @@ export default function RankingsPage() {
 
 
 
-  // Function to determine the next upcoming week dynamically
-  const getNextUpcomingWeek = useCallback(() => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
-    const currentDay = now.getDate();
-    
-    // NFL season typically runs from early September to early January
-    // Week 1 usually starts around the second Thursday of September
-    // For simplicity, let's assume:
-    // - Preseason: August 1 - September 10 (prep for Week 1)
-    // - Regular season: September 11 - January 8 (Weeks 1-18)
-    // - Playoffs: January 9 - February 15
-    // - Offseason: February 16 - July 31 (prep for next season)
-    
-    let targetYear = currentYear;
-    let targetWeek = 1;
-    
-    if (currentMonth >= 9 && currentDay >= 11) {
-      // We're in the current NFL season (Sep 11 - Dec 31)
-      targetYear = currentYear;
-      // Estimate current week based on date
-      const seasonStart = new Date(currentYear, 8, 11); // September 11
-      const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      targetWeek = Math.min(Math.max(weeksSinceStart + 1, 1), 18);
-    } else if (currentMonth >= 1 && currentMonth <= 2) {
-      // We're in playoffs/early offseason (Jan 1 - Feb 15)
-      // Target next season's Week 1
-      targetYear = currentYear;
-      targetWeek = 1;
-    } else {
-      // We're in offseason/preseason (Feb 16 - Sep 10)
-      // Target upcoming season's Week 1
-      if (currentMonth >= 2) {
-        targetYear = currentYear; // Same year for March-August
-      } else {
-        targetYear = currentYear; // January-February is still current season year
-      }
-      targetWeek = 1;
-    }
-    
-    // For 2025, since we're in preseason, target Week 1
-    if (currentYear === 2024) {
-      targetYear = 2025;
-      targetWeek = 1;
-    }
-    
-    return { year: targetYear, week: targetWeek };
-  }, []);
 
   const generateAiRankings = useCallback(async (customYear?: number, customWeek?: number, forceProjectionType?: "season" | "weekly") => {
     const { year: nextYear, week: nextWeek } = getNextUpcomingWeek();
@@ -209,7 +162,7 @@ export default function RankingsPage() {
     setIsLoading(true);
     try {
       const projectionDesc = currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`;
-      console.log(`Generating AI rankings predictions for ${projectionDesc}`);
+      debugInfo(`Generating AI rankings predictions for ${projectionDesc}`);
       const allRankings = getAllSystems();
       const aiService = new AIRankingsService();
       const aiSystem = await aiService.generateAIRankings(allRankings, {
@@ -225,11 +178,11 @@ export default function RankingsPage() {
       setSelectedYear(targetYear);
       setSelectedWeek(targetWeek || null);
     } catch (error) {
-      console.error("Error generating AI rankings:", error);
+      debugError("Error generating AI rankings:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [getNextUpcomingWeek, projectionType, getAllSystems]);
+  }, [projectionType, getAllSystems]);
 
   const handleProjectionTypeChange = useCallback(async (newType: "season" | "weekly") => {
     setProjectionType(newType);
@@ -284,8 +237,8 @@ export default function RankingsPage() {
     
     const loadAllRankings = async () => {
       if (cancelled) return;
-      
-      console.info("Loading rankings from external APIs...")
+
+      debugInfo("Loading rankings from external APIs...")
       setIsLoading(true)
       
       try {
@@ -297,8 +250,8 @@ export default function RankingsPage() {
           
           // For season projections, don't specify a week
           const targetWeek = currentProjectionType === "season" ? undefined : nextWeek;
-          
-          console.log(`Generating AI rankings predictions for ${currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`}`);
+
+          debugInfo(`Generating AI rankings predictions for ${currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`}`);
           const allRankings = getAllSystems();
           const aiService = new AIRankingsService();
           const aiSystem = await aiService.generateAIRankings(allRankings, {
@@ -326,13 +279,13 @@ export default function RankingsPage() {
     }
     
     // Debounce API calls to prevent rapid successive calls
-    const timeoutId = setTimeout(loadAllRankings, 500)
+    const timeoutId = setTimeout(loadAllRankings, API_DEBOUNCE_TIMEOUT_MS)
     
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
     }
-  }, [players, apiKeys, aiRankingSystem, getAllSystems, getNextUpcomingWeek, projectionType]);
+  }, [players, apiKeys, aiRankingSystem, getAllSystems, projectionType]);
 
   const getAllPositions = (): string[] => {
     const positions = new Set<string>()
@@ -348,11 +301,11 @@ export default function RankingsPage() {
   }
 
     const handleImportComplete = (newSystem: RankingSystem) => {
-    console.log("Import complete, new system:", newSystem);
+    debugLog("Import complete, new system:", newSystem);
     const updatedSystems = [...userRankingSystems, newSystem]
     setUserRankingSystems(updatedSystems)
     setItem("ranking_systems", JSON.stringify(updatedSystems))
-    console.log("Saved to localStorage:", JSON.stringify(updatedSystems));
+    debugLog("Saved to localStorage:", JSON.stringify(updatedSystems));
     setSelectedSystem(newSystem)
   }
 
@@ -375,33 +328,22 @@ export default function RankingsPage() {
   }
 
   const refreshRankings = async () => {
-    console.log('Refresh Rankings called, current API keys:', Object.keys(apiKeys))
-    
+    debugLog('Refresh Rankings called, current API keys:', Object.keys(apiKeys))
+
     // Also try to reload API keys in case they were updated
     const savedKeys = localStorage.getItem("fantasy_api_keys")
     if (savedKeys) {
       try {
         const keys = JSON.parse(savedKeys)
         setApiKeys(keys)
-        console.log('Reloaded API keys during refresh:', Object.keys(keys))
-        
+        debugLog('Reloaded API keys during refresh:', Object.keys(keys))
+
       } catch (e) {
-        console.error("Failed to reload API keys:", e)
+        debugError("Failed to reload API keys:", e)
       }
     }
   }
 
-  const getTierColor = (tier?: number) => {
-    if (!tier) return "bg-gray-500";
-    switch (tier) {
-      case 1: return "bg-red-500";
-      case 2: return "bg-orange-500";
-      case 3: return "bg-yellow-500";
-      case 4: return "bg-green-500";
-      case 5: return "bg-blue-500";
-      default: return "bg-purple-500";
-    }
-  };
 
   const handleTableSort = (field: string) => {
     if (tableSortField === field) {
@@ -631,14 +573,14 @@ export default function RankingsPage() {
               <TrendingUp className="h-4 w-4 mr-2" />
               {isLoading ? "Loading..." : "Refresh Rankings"}
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={() => {
-                console.log('=== DEBUG INFO ===')
-                console.log('Current API Keys state:', apiKeys)
-                console.log('localStorage content:', localStorage.getItem("fantasy_api_keys"))
-                console.log('All systems count:', getAllSystems().length)
-                console.log('================')
+                debugLog('=== DEBUG INFO ===')
+                debugLog('Current API Keys state:', apiKeys)
+                debugLog('localStorage content:', localStorage.getItem("fantasy_api_keys"))
+                debugLog('All systems count:', getAllSystems().length)
+                debugLog('================')
               }}
             >
               Debug Info
@@ -724,7 +666,7 @@ export default function RankingsPage() {
             <CardTitle>Ranking Filters & Sorting</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Ranking Source</label>
                 <Select value={selectedSource} onValueChange={(value: RankingSource) => {
@@ -803,8 +745,8 @@ export default function RankingsPage() {
 
               <div>
                 <label className="text-sm font-medium mb-2 block">AI Projection Type</label>
-                <Select 
-                  value={projectionType} 
+                <Select
+                  value={projectionType}
                   onValueChange={(value: "season" | "weekly") => handleProjectionTypeChange(value)}
                   disabled={selectedSource !== "ai" || isLoading}
                 >
@@ -814,35 +756,6 @@ export default function RankingsPage() {
                   <SelectContent>
                     <SelectItem value="weekly">Weekly Projections</SelectItem>
                     <SelectItem value="season">Season Projections</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Sort By</label>
-                <Select value={sortBy} onValueChange={(value: "rank" | "name" | "position" | "team" | "projectedPoints") => setSortBy(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rank">Rank</SelectItem>
-                    <SelectItem value="name">Player Name</SelectItem>
-                    <SelectItem value="position">Position</SelectItem>
-                    <SelectItem value="team">Team</SelectItem>
-                    <SelectItem value="projectedPoints">Projected Points</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Sort Direction</label>
-                <Select value={sortDirection} onValueChange={(value: "asc" | "desc") => setSortDirection(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asc">Ascending</SelectItem>
-                    <SelectItem value="desc">Descending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
