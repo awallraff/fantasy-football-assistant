@@ -9,7 +9,7 @@ export interface PromptBuilderOptions {
 
 // Most recent season with complete NFL data available
 // Update this when new season data becomes available
-const LATEST_AVAILABLE_SEASON = 2024;
+import { LATEST_AVAILABLE_SEASON } from './constants/nfl-season';
 
 /**
  * Service responsible for building AI prompts for player ranking generation

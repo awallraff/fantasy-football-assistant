@@ -13,10 +13,11 @@ import { useNFLDataSort } from "@/hooks/use-nfl-data-sort"
 import { useNFLDataFilter } from "@/hooks/use-nfl-data-filter"
 import { useNFLDataExport } from "@/hooks/use-nfl-data-export"
 import { safeNumber, formatValue, generateSafeKey } from "@/lib/nfl-data-utils"
+import { LATEST_AVAILABLE_SEASON, getAvailableSeasonYears } from "@/lib/constants/nfl-season"
 
 export function NFLDataManagerFixed() {
-  // Default to 2024 (most recent season with available data)
-  const [selectedYears, setSelectedYears] = useState<string[]>(["2024"])
+  // Default to most recent season with available data
+  const [selectedYears, setSelectedYears] = useState<string[]>([LATEST_AVAILABLE_SEASON.toString()])
   const [selectedPositions, setSelectedPositions] = useState<string[]>(["QB", "RB", "WR", "TE"])
   const [selectedPositionFilter, setSelectedPositionFilter] = useState<string>("ALL")
   const [selectedWeek, setSelectedWeek] = useState<string>("all")
@@ -48,9 +49,9 @@ export function NFLDataManagerFixed() {
   const { exportData: handleExportData } = useNFLDataExport()
 
   // Constants with safe defaults
-  // Most recent season with available data (2024 as of now)
-  const latestAvailableYear = 2024
-  const availableYears = Array.from({ length: 5 }, (_, i) => latestAvailableYear - i)
+  // Most recent season with available data
+  const latestAvailableYear = LATEST_AVAILABLE_SEASON
+  const availableYears = getAvailableSeasonYears(5)
   const availablePositions = ["ALL", "QB", "RB", "WR", "TE"]
   const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1)
   const nflTeams = [

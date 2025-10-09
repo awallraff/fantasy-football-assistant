@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Database, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { NFLDataManagerFixed } from "@/components/nfl-data-manager-fixed"
+import { NFLDataErrorBoundary } from "@/components/nfl-data/NFLDataErrorBoundary"
 
 export default function NFLDataPage() {
   return (
@@ -63,8 +64,15 @@ export default function NFLDataPage() {
           </CardContent>
         </Card>
 
-        {/* NFL Data Manager */}
-        <NFLDataManagerFixed />
+        {/* NFL Data Manager wrapped in Error Boundary */}
+        <NFLDataErrorBoundary
+          onError={(error, errorInfo) => {
+            // Log to monitoring service in production
+            console.error("[NFLDataPage] Error caught:", error, errorInfo)
+          }}
+        >
+          <NFLDataManagerFixed />
+        </NFLDataErrorBoundary>
       </div>
     </div>
   )
