@@ -41,7 +41,8 @@
       "Bash(cat:*)",
       "Bash(npx eslint:*)",
       "Bash(npx jest:*)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": [],

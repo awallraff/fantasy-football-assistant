@@ -3,6 +3,7 @@
 import React from "react"
 import { Badge } from "@/components/ui/badge"
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { getTierColor } from "@/lib/ranking-utils"
 
 /**
  * Props interface for RankingsTable component
@@ -28,88 +29,6 @@ export interface SimplePlayerRanking {
   tier?: number
   notes?: string
   injuryStatus?: string
-}
-
-/**
- * Get tier badge color based on tier number
- */
-const getTierColor = (tier?: number): string => {
-  if (!tier) return "bg-gray-500"
-  switch (tier) {
-    case 1:
-      return "bg-red-500"
-    case 2:
-      return "bg-orange-500"
-    case 3:
-      return "bg-yellow-500"
-    case 4:
-      return "bg-green-500"
-    case 5:
-      return "bg-blue-500"
-    default:
-      return "bg-purple-500"
-  }
-}
-
-/**
- * Sort rankings data based on field and direction
- */
-const sortTableData = (
-  data: SimplePlayerRanking[],
-  sortField: string,
-  sortDirection: "asc" | "desc"
-): SimplePlayerRanking[] => {
-  return [...data].sort((a, b) => {
-    let compareValue = 0
-
-    switch (sortField) {
-      case "rank":
-        compareValue = a.rank - b.rank
-        break
-      case "playerName":
-        compareValue = a.playerName.localeCompare(b.playerName)
-        break
-      case "position":
-        compareValue = a.position.localeCompare(b.position)
-        break
-      case "team":
-        compareValue = a.team.localeCompare(b.team)
-        break
-      case "projectedPoints": {
-        const aPoints = a.projectedPoints || 0
-        const bPoints = b.projectedPoints || 0
-
-        // For descending sort (default for points), put 0 values at bottom
-        if (sortDirection === "desc") {
-          if (aPoints === 0 && bPoints !== 0) return 1
-          if (bPoints === 0 && aPoints !== 0) return -1
-          return bPoints - aPoints
-        } else {
-          // For ascending sort, 0 values stay at bottom
-          if (aPoints === 0 && bPoints !== 0) return 1
-          if (bPoints === 0 && aPoints !== 0) return -1
-          return aPoints - bPoints
-        }
-      }
-      case "tier": {
-        const aTier = a.tier || 999
-        const bTier = b.tier || 999
-
-        // For descending sort, put high tier numbers (999) at bottom
-        if (sortDirection === "desc") {
-          if (aTier === 999 && bTier !== 999) return 1
-          if (bTier === 999 && aTier !== 999) return -1
-          return bTier - aTier
-        } else {
-          return aTier - bTier
-        }
-      }
-      default:
-        compareValue = a.rank - b.rank
-    }
-
-    return sortDirection === "desc" ? -compareValue : compareValue
-  })
 }
 
 /**
@@ -171,8 +90,7 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({
  */
 export const RankingsTable = React.memo<RankingsTableProps>(
   ({ rankings, sortField, sortDirection, onSort, onPlayerClick }) => {
-    const sortedData = sortTableData(rankings, sortField, sortDirection)
-
+    // Rankings are pre-sorted by parent component
     return (
       <div className="border rounded-md overflow-hidden">
         <div className="overflow-x-auto max-h-96">
@@ -236,7 +154,7 @@ export const RankingsTable = React.memo<RankingsTableProps>(
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((player) => (
+              {rankings.map((player) => (
                 <tr
                   key={player.playerId}
                   className="border-b hover:bg-muted/30 transition-colors cursor-pointer"

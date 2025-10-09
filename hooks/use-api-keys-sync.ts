@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSafeLocalStorage } from '@/hooks/use-local-storage'
+import { debugLog, debugError } from '@/lib/debug-utils'
 
 /**
  * Return type for the useAPIKeysSync hook
@@ -57,9 +58,9 @@ export function useAPIKeysSync(): UseAPIKeysSyncReturn {
       try {
         const keys = JSON.parse(savedKeys)
         setApiKeys(keys)
-        console.log('Loaded API keys from localStorage:', Object.keys(keys))
+        debugLog('Loaded API keys from localStorage:', Object.keys(keys))
       } catch (e) {
-        console.error("Failed to load API keys:", e)
+        debugError("Failed to load API keys:", e)
         setApiKeys({})
       }
     }
@@ -84,9 +85,9 @@ export function useAPIKeysSync(): UseAPIKeysSyncReturn {
         try {
           const keys = JSON.parse(e.newValue)
           setApiKeys(keys)
-          console.log('API keys updated from storage event:', Object.keys(keys))
+          debugLog('API keys updated from storage event:', Object.keys(keys))
         } catch (e) {
-          console.error("Failed to parse updated API keys:", e)
+          debugError("Failed to parse updated API keys:", e)
         }
       }
     }

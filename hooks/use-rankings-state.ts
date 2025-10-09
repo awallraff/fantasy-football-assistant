@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSafeLocalStorage } from '@/hooks/use-local-storage'
 import type { RankingSystem } from '@/lib/rankings-types'
+import { debugLog, debugError } from '@/lib/debug-utils'
 
 /**
  * Type for ranking source selection
@@ -74,9 +75,9 @@ export function useRankingsState(): UseRankingsStateReturn {
       try {
         const systems = JSON.parse(saved)
         setUserRankingSystems(systems)
-        console.log("Loaded ranking systems from localStorage:", systems)
+        debugLog("Loaded ranking systems from localStorage:", systems)
       } catch (e) {
-        console.error("Failed to load rankings:", e)
+        debugError("Failed to load rankings:", e)
       }
     }
   }, [isClient, getItem])
@@ -131,17 +132,17 @@ export function useRankingsState(): UseRankingsStateReturn {
     if (selectedSystem && !availableSystems.some(sys => sys.id === selectedSystem.id)) {
       setSelectedSystem(null)
     }
-  }, [selectedSource, userRankingSystems, aiRankingSystem, selectedSystem, getAllSystems])
+  }, [selectedSource, userRankingSystems, aiRankingSystem, selectedSystem])
 
   /**
    * Handle import of new ranking system
    */
   const handleImportComplete = useCallback((newSystem: RankingSystem) => {
-    console.log("Import complete, new system:", newSystem)
+    debugLog("Import complete, new system:", newSystem)
     const updatedSystems = [...userRankingSystems, newSystem]
     setUserRankingSystems(updatedSystems)
     setItem("ranking_systems", JSON.stringify(updatedSystems))
-    console.log("Saved to localStorage:", JSON.stringify(updatedSystems))
+    debugLog("Saved to localStorage:", JSON.stringify(updatedSystems))
     setSelectedSystem(newSystem)
   }, [userRankingSystems, setItem])
 

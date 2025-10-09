@@ -28,13 +28,19 @@ export function useLocalStorage<T>(
       // Allow value to be a function so we have the same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value
       setStoredValue(valueToStore)
-      
+
       // Only save to localStorage on the client
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(key, JSON.stringify(valueToStore))
       }
     } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error)
+      // Handle quota exceeded error specifically
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.error(`localStorage quota exceeded for key "${key}". Consider clearing old data or reducing storage usage.`)
+        // Optionally notify user or trigger cleanup
+      } else {
+        console.error(`Error setting localStorage key "${key}":`, error)
+      }
     }
   }
 
@@ -67,12 +73,21 @@ export function useSafeLocalStorage() {
     }
   }, [isClient])
 
-  const setItem = useCallback((key: string, value: string): void => {
-    if (!isClient) return
+  const setItem = useCallback((key: string, value: string): boolean => {
+    if (!isClient) return false
     try {
       localStorage.setItem(key, value)
+      return true
     } catch (error) {
-      console.error('Failed to set localStorage item:', error)
+      // Handle quota exceeded error specifically
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.error(`localStorage quota exceeded for key "${key}". Consider clearing old data or reducing storage usage.`)
+        // Optionally notify user or trigger cleanup
+        return false
+      } else {
+        console.error('Failed to set localStorage item:', error)
+        return false
+      }
     }
   }, [isClient])
 

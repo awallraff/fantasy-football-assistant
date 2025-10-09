@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { AIRankingsService } from '@/lib/ai-rankings-service'
 import { getNextUpcomingWeek } from '@/lib/nfl-season-utils'
 import type { RankingSystem } from '@/lib/rankings-types'
+import { debugLog, debugError } from '@/lib/debug-utils'
 
 /**
  * Projection type for AI rankings
@@ -69,6 +70,9 @@ export function useAIRankingsGenerator(): UseAIRankingsGeneratorReturn {
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [projectionType, setProjectionType] = useState<ProjectionType>("weekly")
 
+  // Abort controller for cancelling in-flight requests
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   /**
    * Clear any existing error
    */
@@ -83,6 +87,14 @@ export function useAIRankingsGenerator(): UseAIRankingsGeneratorReturn {
     allSystems: RankingSystem[],
     options: AIRankingGenerationOptions = {}
   ): Promise<RankingSystem | null> => {
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController()
+
     // Get next upcoming week as default
     const { year: nextYear, week: nextWeek } = getNextUpcomingWeek()
 
@@ -103,7 +115,7 @@ export function useAIRankingsGenerator(): UseAIRankingsGeneratorReturn {
         ? `${targetYear} season`
         : `Week ${targetWeek} of ${targetYear}`
 
-      console.log(`Generating AI rankings predictions for ${projectionDesc}`)
+      debugLog(`Generating AI rankings predictions for ${projectionDesc}`)
 
       const aiService = new AIRankingsService()
       const aiSystem = await aiService.generateAIRankings(allSystems, {
@@ -119,14 +131,29 @@ export function useAIRankingsGenerator(): UseAIRankingsGeneratorReturn {
 
       return aiSystem
     } catch (err) {
+      // Handle aborted requests gracefully
+      if (err instanceof Error && err.name === 'AbortError') {
+        debugLog('AI ranking generation cancelled')
+        return null
+      }
+
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate AI rankings'
-      console.error("Error generating AI rankings:", err)
+      debugError("Error generating AI rankings:", err)
       setError(errorMessage)
       return null
     } finally {
       setIsGenerating(false)
     }
   }, [projectionType])
+
+  // Cleanup effect: abort any in-flight request on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
 
   return {
     // State
