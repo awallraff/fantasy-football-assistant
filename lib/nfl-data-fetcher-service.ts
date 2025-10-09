@@ -6,6 +6,10 @@ export interface NflDataFetchOptions {
   positions?: string[];
 }
 
+// Most recent season with complete NFL data available
+// Update this when new season data becomes available
+const LATEST_AVAILABLE_SEASON = 2024;
+
 /**
  * Service responsible for fetching NFL historical data for AI rankings
  * This is a simplified wrapper around the NFL data API specifically for rankings use
@@ -19,14 +23,14 @@ export class NflDataFetcherService {
   async fetchHistoricalData(options: NflDataFetchOptions = {}): Promise<NFLDataResponse | null> {
     try {
       console.log(`Fetching comprehensive NFL historical data for predictive analysis...`);
-      
-      // Always use 2024 data for predictions (most recent complete season)
+
+      // Use most recent complete season for predictions
       const currentYear = new Date().getFullYear();
       const targetYear = options.year || (currentYear >= 2025 ? 2025 : currentYear);
-      const dataYear = 2024; // Always use 2024 data for historical analysis
-      
+      const dataYear = LATEST_AVAILABLE_SEASON; // Use most recent complete season for historical analysis
+
       const positions = options.positions || ['QB', 'RB', 'WR', 'TE'];
-      
+
       const params = new URLSearchParams({
         action: 'extract',
         years: dataYear.toString(),

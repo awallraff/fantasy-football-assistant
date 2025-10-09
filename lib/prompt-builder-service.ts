@@ -7,6 +7,10 @@ export interface PromptBuilderOptions {
   useHistoricalData?: boolean
 }
 
+// Most recent season with complete NFL data available
+// Update this when new season data becomes available
+const LATEST_AVAILABLE_SEASON = 2024;
+
 /**
  * Service responsible for building AI prompts for player ranking generation
  */
@@ -29,7 +33,7 @@ export class PromptBuilderService {
       prompt += "HISTORICAL NFL PERFORMANCE DATA:\n"
       prompt += "================================\n"
 
-      const year = options.year || 2024
+      const year = options.year || LATEST_AVAILABLE_SEASON
       const week = options.week
 
       if (week) {

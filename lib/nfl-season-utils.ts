@@ -65,11 +65,5 @@ export function getNextUpcomingWeek(): NextUpcomingWeek {
     targetWeek = 1;
   }
 
-  // For 2025, since we're in preseason, target Week 1
-  if (currentYear === 2024) {
-    targetYear = 2025;
-    targetWeek = 1;
-  }
-
   return { year: targetYear, week: targetWeek };
 }

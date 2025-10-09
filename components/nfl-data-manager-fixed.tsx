@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -66,6 +66,7 @@ export function NFLDataManagerFixed() {
   const [loading, setLoading] = useState(false)
   const [testResult, setTestResult] = useState<TestResult | null>(null)
   const [nflData, setNflData] = useState<NFLDataResponse | null>(null)
+  // Default to 2024 (most recent season with available data)
   const [selectedYears, setSelectedYears] = useState<string[]>(["2024"])
   const [selectedPositions, setSelectedPositions] = useState<string[]>(["QB", "RB", "WR", "TE"])
   const [selectedPositionFilter, setSelectedPositionFilter] = useState<string>("ALL")
@@ -76,16 +77,21 @@ export function NFLDataManagerFixed() {
   const [sortField, setSortField] = useState<string>("fantasy_points_ppr")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [selectedColumns] = useState<string[]>([
-    "player_name", "position", "team", "fantasy_points_ppr", "targets", "receptions", 
+    "player_name", "position", "team", "fantasy_points_ppr", "targets", "receptions",
     "receiving_yards", "receiving_tds", "rushing_attempts", "rushing_yards", "rushing_tds",
     "passing_yards", "passing_tds", "interceptions"
   ])
   const [error, setError] = useState<string | null>(null)
   const [showLegend, setShowLegend] = useState(false)
 
+  // Refs for race condition prevention
+  const hasInitialLoadAttempted = useRef(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   // Constants with safe defaults
-  const currentYear = new Date().getFullYear()
-  const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i)
+  // Most recent season with available data (2024 as of now)
+  const latestAvailableYear = 2024
+  const availableYears = Array.from({ length: 5 }, (_, i) => latestAvailableYear - i)
   const availablePositions = ["ALL", "QB", "RB", "WR", "TE"]
   const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1)
   const nflTeams = [
@@ -219,34 +225,47 @@ export function NFLDataManagerFixed() {
   }, [])
 
   const extractNFLData = useCallback(async () => {
+    // Cancel any in-flight requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController()
+    const signal = abortControllerRef.current.signal
+
     setLoading(true)
     setError(null)
-    
+
     try {
       const params = new URLSearchParams({
         action: 'extract',
         years: selectedYears.join(','),
         positions: selectedPositions.join(',')
       })
-      
+
       if (selectedWeek && selectedWeek !== "all") {
         params.set('week', selectedWeek)
       }
-      
-      const response = await fetch(`/api/nfl-data?${params}`)
-      
+
+      const response = await fetch(`/api/nfl-data?${params}`, { signal })
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
-      
+
       const data = await response.json()
-      
+
       if (data.error) {
         throw new Error(data.error)
       }
-      
+
       setNflData(data)
     } catch (err) {
+      // Ignore abort errors
+      if (err instanceof Error && err.name === 'AbortError') {
+        return
+      }
       setError(err instanceof Error ? err.message : 'Failed to extract NFL data')
     } finally {
       setLoading(false)
@@ -269,27 +288,23 @@ export function NFLDataManagerFixed() {
     URL.revokeObjectURL(url)
   }, [nflData, selectedYears])
 
-  // Safe auto-load
+  // Safe auto-load - only runs once on mount
   useEffect(() => {
-    let mounted = true
-    
-    const autoLoadData = async () => {
-      if (!nflData && !loading && mounted) {
-        console.log("Auto-loading 2024 NFL data...")
-        try {
-          await extractNFLData()
-        } catch (error) {
-          console.error("Failed to auto-load data:", error)
-        }
+    if (!hasInitialLoadAttempted.current && !nflData && !loading) {
+      hasInitialLoadAttempted.current = true
+      console.log("Auto-loading 2024 NFL data...")
+      extractNFLData().catch(error => {
+        console.error("Failed to auto-load data:", error)
+      })
+    }
+
+    // Cleanup: abort any in-flight requests on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
       }
     }
-    
-    autoLoadData()
-    
-    return () => {
-      mounted = false
-    }
-  }, [extractNFLData, loading, nflData])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Safe data filtering
   const getFilteredWeeklyData = (): Record<string, unknown>[] => {
@@ -424,6 +439,19 @@ export function NFLDataManagerFixed() {
             )}
           </div>
 
+          {/* Data Availability Warning */}
+          {selectedYears.length > 0 && parseInt(selectedYears[0]) > latestAvailableYear && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-center gap-2 text-yellow-800">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">Data Not Available</span>
+              </div>
+              <p className="text-sm text-yellow-700 mt-1">
+                {selectedYears[0]} season data is not yet available. Most recent data available: {latestAvailableYear}
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
               <div className="flex items-center gap-2 text-destructive">
@@ -431,6 +459,11 @@ export function NFLDataManagerFixed() {
                 <span className="text-sm font-medium">Error</span>
               </div>
               <p className="text-sm text-destructive/80 mt-1">{error}</p>
+              {error.includes("404") && (
+                <p className="text-sm text-destructive/80 mt-1">
+                  Try selecting {latestAvailableYear} or an earlier season with available data.
+                </p>
+              )}
             </div>
           )}
 

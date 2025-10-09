@@ -46,7 +46,7 @@ export default function NFLDataPage() {
                   <li>• Seasonal player statistics</li>
                   <li>• Player roster information</li>
                   <li>• Position-specific data (QB, RB, WR, TE)</li>
-                  <li>• Historical data from 2020-2024</li>
+                  <li>• Historical data from 2020-present</li>
                 </ul>
               </div>
               <div>
