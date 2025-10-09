@@ -131,27 +131,50 @@ class NFLDataService {
       timeout = this.defaultTimeout
     } = options
 
+    // Check if running in production environment without Python support
+    if (process.env.VERCEL && !process.env.PYTHON_ENABLED) {
+      return {
+        weekly_stats: [],
+        seasonal_stats: [],
+        aggregated_season_stats: [],
+        player_info: [],
+        team_analytics: [],
+        metadata: {
+          years: years || [],
+          positions,
+          week,
+          extracted_at: new Date().toISOString(),
+          total_weekly_records: 0,
+          total_seasonal_records: 0,
+          total_aggregated_records: 0,
+          total_players: 0,
+          total_teams: 0
+        },
+        error: 'NFL data service is only available in local development. Python runtime is not available on Vercel serverless functions. This feature requires a Python backend or separate data API.'
+      }
+    }
+
     try {
       console.log('Starting NFL data extraction with options:', options)
-      
+
       const args = ['--positions', ...positions]
-      
+
       if (years && years.length > 0) {
         args.push('--years', ...years.map(y => y.toString()))
       }
-      
+
       if (week !== undefined) {
         args.push('--week', week.toString())
       }
 
       const data = await this.runPythonScript(args, timeout)
-      
+
       console.log(`NFL data extraction completed. Found ${data.metadata.total_players} players`)
-      
+
       return data
     } catch (error) {
       console.error('Error extracting NFL data:', error)
-      
+
       return {
         weekly_stats: [],
         seasonal_stats: [],
@@ -328,22 +351,30 @@ class NFLDataService {
 
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
+      // Check if running in production environment without Python support
+      if (process.env.VERCEL && !process.env.PYTHON_ENABLED) {
+        return {
+          success: false,
+          message: 'NFL data service is only available in local development. Python runtime is not available on Vercel serverless functions.'
+        }
+      }
+
       console.log('Testing NFL data service connection...')
-      
+
       // Test with minimal data request
       const testData = await this.extractNFLData({
         years: [this.getCurrentSeason()],
         positions: ['QB'],
         week: 1
       })
-      
+
       if (testData.error) {
         return {
           success: false,
           message: `Test failed: ${testData.error}`
         }
       }
-      
+
       return {
         success: true,
         message: `Connection successful. Found ${testData.metadata.total_players} QB records for week 1.`
