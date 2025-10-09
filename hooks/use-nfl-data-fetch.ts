@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import type { NFLDataResponse } from "@/lib/nfl-data-service"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
+import { logger, generateRequestId } from "@/lib/logging-service"
 
 export interface UseNFLDataFetchOptions {
   selectedYears: string[]
@@ -38,6 +39,9 @@ export function useNFLDataFetch({
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const testConnection = useCallback(async () => {
+    const requestId = generateRequestId('nfl-test')
+
+    logger.info('NFL connection test started', undefined, requestId)
     setLoading(true)
     setError(null)
 
@@ -45,9 +49,19 @@ export function useNFLDataFetch({
       const response = await fetchWithRetry('/api/nfl-data?action=test')
       const result = await response.json()
       setTestResult(result)
+
+      logger.info('NFL connection test completed', { success: result.success }, requestId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to test connection')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to test connection'
+      setError(errorMessage)
       setTestResult({ success: false, message: 'Connection failed' })
+
+      logger.error(
+        'NFL connection test failed',
+        err instanceof Error ? err : new Error(errorMessage),
+        {},
+        requestId
+      )
     } finally {
       setLoading(false)
     }
@@ -55,19 +69,18 @@ export function useNFLDataFetch({
 
   const extractData = useCallback(async () => {
     // Generate unique request ID for logging and debugging
-    const requestId = `nfl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    const startTime = Date.now()
+    const requestId = generateRequestId('nfl-data')
+    const timer = logger.startTimer(requestId)
 
-    console.log(`[${requestId}] NFL data fetch started`, {
+    logger.info('NFL data fetch started', {
       years: selectedYears,
       positions: selectedPositions,
       week: selectedWeek,
-      timestamp: new Date().toISOString()
-    })
+    }, requestId)
 
     // Cancel any in-flight requests
     if (abortControllerRef.current) {
-      console.log(`[${requestId}] Aborting previous request`)
+      logger.debug('Aborting previous request', undefined, requestId)
       abortControllerRef.current.abort()
     }
 
@@ -103,28 +116,25 @@ export function useNFLDataFetch({
 
       setData(responseData)
 
-      const duration = Date.now() - startTime
-      console.log(`[${requestId}] NFL data fetch completed`, {
-        duration_ms: duration,
+      timer.end('NFL data fetch completed', {
         records: responseData?.metadata?.total_players,
-        timestamp: new Date().toISOString()
       })
     } catch (err) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') {
-        console.log(`[${requestId}] NFL data fetch aborted`)
+        logger.debug('NFL data fetch aborted', undefined, requestId)
         return
       }
 
-      const duration = Date.now() - startTime
       const errorMessage = err instanceof Error ? err.message : 'Failed to extract NFL data'
       setError(errorMessage)
 
-      console.error(`[${requestId}] NFL data fetch failed after ${duration}ms`, {
-        error: errorMessage,
-        duration_ms: duration,
-        timestamp: new Date().toISOString()
-      })
+      logger.error(
+        'NFL data fetch failed',
+        err instanceof Error ? err : new Error(errorMessage),
+        {},
+        requestId
+      )
     } finally {
       setLoading(false)
     }
@@ -137,9 +147,9 @@ export function useNFLDataFetch({
   useEffect(() => {
     if (autoLoad && !hasInitialLoadAttempted.current && !data && !loading) {
       hasInitialLoadAttempted.current = true
-      console.log("Auto-loading NFL data...")
+      logger.info("Auto-loading NFL data on mount")
       extractData().catch(error => {
-        console.error("Failed to auto-load data:", error)
+        logger.error("Failed to auto-load NFL data", error instanceof Error ? error : new Error(String(error)))
       })
     }
   }, [autoLoad, data, loading, extractData])
