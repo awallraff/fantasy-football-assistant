@@ -6,11 +6,21 @@ FastAPI service that wraps nfl_data_py for deployment on Railway/Render
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Tuple
 import nfl_data_py as nfl
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import logging
+import sys
+
+# Configure structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="NFL Data API",
@@ -32,6 +42,76 @@ class NFLDataRequest(BaseModel):
     years: List[int]
     positions: List[str] = ["QB", "RB", "WR", "TE"]
     week: Optional[int] = None
+
+
+def sanitize_dataframe(df: pd.DataFrame, df_name: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """
+    Sanitize DataFrame by replacing Inf with NaN, then filling with 0.
+    Logs data quality issues for monitoring.
+
+    Args:
+        df: DataFrame to sanitize
+        df_name: Name for logging purposes
+
+    Returns:
+        Tuple of (sanitized_df, quality_metrics)
+    """
+    if df.empty:
+        return df, {"inf_count": 0, "nan_count": 0}
+
+    numeric_df = df.select_dtypes(include=[np.number])
+    inf_count = int(np.isinf(numeric_df).sum().sum())
+    nan_count = int(numeric_df.isna().sum().sum())
+
+    if inf_count > 0:
+        inf_columns = np.isinf(numeric_df).sum()
+        inf_columns = {col: int(count) for col, count in inf_columns[inf_columns > 0].items()}
+        logger.warning(
+            f"Data quality issue in {df_name}: {inf_count} Inf values sanitized",
+            extra={"dataframe": df_name, "inf_columns": inf_columns, "total_rows": len(df)}
+        )
+
+    if nan_count > 0:
+        logger.info(
+            f"Sanitizing {df_name}: {nan_count} NaN values found",
+            extra={"dataframe": df_name, "nan_count": nan_count}
+        )
+
+    sanitized_df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
+
+    return sanitized_df, {
+        "inf_count": inf_count,
+        "nan_count": nan_count
+    }
+
+
+def validate_nfl_data(df: pd.DataFrame, df_name: str) -> None:
+    """
+    Validate data from nfl_data_py for unexpected values.
+    Logs warnings if upstream data contains Inf values.
+
+    Args:
+        df: DataFrame to validate
+        df_name: Name for logging purposes
+    """
+    if df.empty:
+        return
+
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+
+    for col in numeric_cols:
+        inf_count = int(np.isinf(df[col]).sum())
+        if inf_count > 0:
+            sample_rows = df[np.isinf(df[col])].head(3).to_dict('records')
+            logger.error(
+                f"UPSTREAM DATA QUALITY ISSUE: {df_name}.{col} contains {inf_count} Inf values from nfl_data_py",
+                extra={
+                    "dataframe": df_name,
+                    "column": col,
+                    "inf_count": inf_count,
+                    "sample_rows": sample_rows
+                }
+            )
 
 
 @app.get("/")
@@ -89,15 +169,28 @@ def extract_nfl_data(
 
     Example: /api/nfl-data/extract?years=2024&positions=QB,RB&week=1
     """
+    request_id = datetime.utcnow().isoformat()
+
     try:
         # Parse parameters
         year_list = [int(y.strip()) for y in years.split(',')]
         position_list = [p.strip().upper() for p in positions.split(',')]
 
-        print(f"Fetching data for years: {year_list}, positions: {position_list}, week: {week}")
+        logger.info(
+            "NFL data fetch started",
+            extra={
+                "request_id": request_id,
+                "years": year_list,
+                "positions": position_list,
+                "week": week
+            }
+        )
 
         # Fetch weekly stats - import_weekly_data doesn't take positions parameter
         weekly_df = nfl.import_weekly_data(year_list)
+        validate_nfl_data(weekly_df, "weekly_data")
+        logger.info(f"Fetched {len(weekly_df)} weekly records", extra={"request_id": request_id})
+
         # Filter by position
         if not weekly_df.empty and 'position' in weekly_df.columns:
             weekly_df = weekly_df[weekly_df['position'].isin(position_list)]
@@ -106,12 +199,18 @@ def extract_nfl_data(
 
         # Fetch seasonal stats - import_seasonal_data doesn't take positions parameter
         seasonal_df = nfl.import_seasonal_data(year_list)
+        validate_nfl_data(seasonal_df, "seasonal_data")
+        logger.info(f"Fetched {len(seasonal_df)} seasonal records", extra={"request_id": request_id})
+
         # Filter by position
         if not seasonal_df.empty and 'position' in seasonal_df.columns:
             seasonal_df = seasonal_df[seasonal_df['position'].isin(position_list)]
 
         # Fetch roster data - use import_seasonal_rosters (correct function name)
         roster_df = nfl.import_seasonal_rosters(year_list)
+        validate_nfl_data(roster_df, "roster_data")
+        logger.info(f"Fetched {len(roster_df)} roster records", extra={"request_id": request_id})
+
         if not roster_df.empty and 'position' in roster_df.columns:
             roster_df = roster_df[roster_df['position'].isin(position_list)]
 
@@ -141,17 +240,27 @@ def extract_nfl_data(
         # Calculate team analytics
         team_analytics = calculate_team_analytics(aggregated_df)
 
-        # Convert to JSON-serializable format
-        # Replace NaN and Inf with None/0 to ensure JSON compliance
-        weekly_df = weekly_df.replace([np.inf, -np.inf], np.nan).fillna(0)
-        seasonal_df = seasonal_df.replace([np.inf, -np.inf], np.nan).fillna(0)
-        aggregated_df = aggregated_df.replace([np.inf, -np.inf], np.nan).fillna(0)
-        roster_df = roster_df.replace([np.inf, -np.inf], np.nan).fillna(0)
+        # Convert to JSON-serializable format with sanitization
+        # Track data quality metrics
+        quality_metrics = {}
+
+        weekly_df, quality_metrics['weekly'] = sanitize_dataframe(weekly_df, "weekly_stats")
+        seasonal_df, quality_metrics['seasonal'] = sanitize_dataframe(seasonal_df, "seasonal_stats")
+        aggregated_df, quality_metrics['aggregated'] = sanitize_dataframe(aggregated_df, "aggregated_stats")
+        roster_df, quality_metrics['roster'] = sanitize_dataframe(roster_df, "roster_data")
 
         weekly_stats = weekly_df.to_dict('records')
         seasonal_stats = seasonal_df.to_dict('records')
         aggregated_stats = aggregated_df.to_dict('records')
         player_info = roster_df.to_dict('records')
+
+        logger.info(
+            "Data sanitization completed",
+            extra={
+                "request_id": request_id,
+                "quality_metrics": quality_metrics
+            }
+        )
 
         return {
             "weekly_stats": weekly_stats,
@@ -168,11 +277,22 @@ def extract_nfl_data(
                 "total_seasonal_records": len(seasonal_stats),
                 "total_aggregated_records": len(aggregated_stats),
                 "total_players": len(roster_df['player_id'].unique()) if not roster_df.empty else 0,
-                "total_teams": len(aggregated_df['team'].unique()) if not aggregated_df.empty and 'team' in aggregated_df.columns else (len(aggregated_df['recent_team'].unique()) if not aggregated_df.empty and 'recent_team' in aggregated_df.columns else 0)
+                "total_teams": len(aggregated_df['team'].unique()) if not aggregated_df.empty and 'team' in aggregated_df.columns else (len(aggregated_df['recent_team'].unique()) if not aggregated_df.empty and 'recent_team' in aggregated_df.columns else 0),
+                "data_quality": quality_metrics,
+                "request_id": request_id
             }
         }
 
     except Exception as e:
+        logger.error(
+            f"Error in extract_nfl_data",
+            extra={
+                "request_id": request_id,
+                "error": str(e),
+                "error_type": type(e).__name__
+            },
+            exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -259,7 +379,7 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
         team_stats['offensive_identity'] = team_stats['passing_percentage'].apply(classify_offense)
 
     # Fill NaN and Inf values to ensure JSON compliance
-    team_stats = team_stats.replace([np.inf, -np.inf], np.nan).fillna(0)
+    team_stats, _ = sanitize_dataframe(team_stats, "team_analytics")
 
     return team_stats.to_dict('records')
 
