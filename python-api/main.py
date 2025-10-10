@@ -183,25 +183,36 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
     else:
         return []  # No team column available
 
-    team_stats = aggregated_df.groupby(team_col).agg({
-        'fantasy_points': 'sum',
-        'fantasy_points_ppr': 'sum',
-        'passing_yards': 'sum',
-        'passing_tds': 'sum',
-        'interceptions': 'sum',
-        'rushing_yards': 'sum',
-        'rushing_tds': 'sum',
-        'rushing_attempts': 'sum',
-        'receiving_yards': 'sum',
-        'receiving_tds': 'sum',
-        'receptions': 'sum',
-        'targets': 'sum'
-    }).reset_index()
+    # Build aggregation dictionary based on available columns
+    available_cols = aggregated_df.columns.tolist()
+    agg_dict = {}
 
-    # Calculate derived metrics
-    team_stats['yards_per_carry'] = team_stats['rushing_yards'] / team_stats['rushing_attempts'].replace(0, 1)
-    team_stats['catch_rate'] = team_stats['receptions'] / team_stats['targets'].replace(0, 1)
-    team_stats['yards_per_target'] = team_stats['receiving_yards'] / team_stats['targets'].replace(0, 1)
+    stat_columns = [
+        'fantasy_points', 'fantasy_points_ppr', 'passing_yards', 'passing_tds',
+        'interceptions', 'rushing_yards', 'rushing_tds', 'rushing_attempts',
+        'receiving_yards', 'receiving_tds', 'receptions', 'targets'
+    ]
+
+    for col in stat_columns:
+        if col in available_cols:
+            agg_dict[col] = 'sum'
+
+    # If no stat columns available, return empty
+    if not agg_dict:
+        return []
+
+    # Perform aggregation only on available columns
+    team_stats = aggregated_df.groupby(team_col).agg(agg_dict).reset_index()
+
+    # Calculate derived metrics only if base columns exist
+    if 'rushing_yards' in team_stats.columns and 'rushing_attempts' in team_stats.columns:
+        team_stats['yards_per_carry'] = team_stats['rushing_yards'] / team_stats['rushing_attempts'].replace(0, 1)
+
+    if 'receptions' in team_stats.columns and 'targets' in team_stats.columns:
+        team_stats['catch_rate'] = team_stats['receptions'] / team_stats['targets'].replace(0, 1)
+
+    if 'receiving_yards' in team_stats.columns and 'targets' in team_stats.columns:
+        team_stats['yards_per_target'] = team_stats['receiving_yards'] / team_stats['targets'].replace(0, 1)
 
     # Position-specific fantasy points
     for pos in ['QB', 'RB', 'WR', 'TE']:
@@ -225,19 +236,20 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
     if not te_df.empty and 'targets' in te_df.columns:
         team_stats['te_targets'] = team_stats[team_col].map(te_df.groupby(team_col)['targets'].sum()).fillna(0)
 
-    # Offensive identity
-    total_yards = team_stats['passing_yards'] + team_stats['rushing_yards']
-    team_stats['passing_percentage'] = (team_stats['passing_yards'] / total_yards.replace(0, 1)) * 100
+    # Offensive identity - only if passing and rushing yards exist
+    if 'passing_yards' in team_stats.columns and 'rushing_yards' in team_stats.columns:
+        total_yards = team_stats['passing_yards'] + team_stats['rushing_yards']
+        team_stats['passing_percentage'] = (team_stats['passing_yards'] / total_yards.replace(0, 1)) * 100
 
-    def classify_offense(pct):
-        if pct > 60:
-            return "Pass-Heavy"
-        elif pct < 40:
-            return "Run-Heavy"
-        else:
-            return "Balanced"
+        def classify_offense(pct):
+            if pct > 60:
+                return "Pass-Heavy"
+            elif pct < 40:
+                return "Run-Heavy"
+            else:
+                return "Balanced"
 
-    team_stats['offensive_identity'] = team_stats['passing_percentage'].apply(classify_offense)
+        team_stats['offensive_identity'] = team_stats['passing_percentage'].apply(classify_offense)
 
     # Fill NaN values
     team_stats = team_stats.fillna(0)
