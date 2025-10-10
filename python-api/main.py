@@ -115,22 +115,27 @@ def extract_nfl_data(
             roster_df = roster_df[roster_df['position'].isin(position_list)]
 
         # Aggregate weekly stats into season totals
-        agg_dict = {
-            'fantasy_points': 'sum',
-            'fantasy_points_ppr': 'sum',
-            'passing_yards': 'sum',
-            'passing_tds': 'sum',
-            'interceptions': 'sum',
-            'rushing_yards': 'sum',
-            'rushing_tds': 'sum',
-            'rushing_attempts': 'sum',
-            'receiving_yards': 'sum',
-            'receiving_tds': 'sum',
-            'receptions': 'sum',
-            'targets': 'sum'
-        }
+        # Only aggregate columns that exist in the dataframe
+        available_cols = weekly_df.columns.tolist()
 
-        aggregated_df = weekly_df.groupby(['player_id', 'player_name', 'position', 'team', 'season']).agg(agg_dict).reset_index()
+        agg_dict = {}
+        for col in ['fantasy_points', 'fantasy_points_ppr', 'passing_yards', 'passing_tds',
+                    'interceptions', 'rushing_yards', 'rushing_tds', 'rushing_attempts',
+                    'receiving_yards', 'receiving_tds', 'receptions', 'targets']:
+            if col in available_cols:
+                agg_dict[col] = 'sum'
+
+        # Determine groupby columns based on what's available
+        groupby_cols = ['player_id']
+        for col in ['player_name', 'player_display_name', 'position', 'recent_team', 'team', 'season']:
+            if col in available_cols:
+                groupby_cols.append(col)
+
+        # Only aggregate if we have data
+        if not weekly_df.empty and agg_dict:
+            aggregated_df = weekly_df.groupby(groupby_cols).agg(agg_dict).reset_index()
+        else:
+            aggregated_df = pd.DataFrame()
 
         # Calculate team analytics
         team_analytics = calculate_team_analytics(aggregated_df)
@@ -156,7 +161,7 @@ def extract_nfl_data(
                 "total_seasonal_records": len(seasonal_stats),
                 "total_aggregated_records": len(aggregated_stats),
                 "total_players": len(roster_df['player_id'].unique()) if not roster_df.empty else 0,
-                "total_teams": len(aggregated_df['team'].unique()) if not aggregated_df.empty else 0
+                "total_teams": len(aggregated_df['team'].unique()) if not aggregated_df.empty and 'team' in aggregated_df.columns else (len(aggregated_df['recent_team'].unique()) if not aggregated_df.empty and 'recent_team' in aggregated_df.columns else 0)
             }
         }
 
@@ -169,7 +174,16 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
     if aggregated_df.empty:
         return []
 
-    team_stats = aggregated_df.groupby('team').agg({
+    # Determine team column name (could be 'team' or 'recent_team')
+    team_col = None
+    if 'team' in aggregated_df.columns:
+        team_col = 'team'
+    elif 'recent_team' in aggregated_df.columns:
+        team_col = 'recent_team'
+    else:
+        return []  # No team column available
+
+    team_stats = aggregated_df.groupby(team_col).agg({
         'fantasy_points': 'sum',
         'fantasy_points_ppr': 'sum',
         'passing_yards': 'sum',
@@ -192,20 +206,24 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
     # Position-specific fantasy points
     for pos in ['QB', 'RB', 'WR', 'TE']:
         pos_df = aggregated_df[aggregated_df['position'] == pos]
-        pos_points = pos_df.groupby('team')['fantasy_points_ppr'].sum()
-        team_stats[f'{pos.lower()}_fantasy_points'] = team_stats['team'].map(pos_points).fillna(0)
+        if not pos_df.empty and 'fantasy_points_ppr' in pos_df.columns:
+            pos_points = pos_df.groupby(team_col)['fantasy_points_ppr'].sum()
+            team_stats[f'{pos.lower()}_fantasy_points'] = team_stats[team_col].map(pos_points).fillna(0)
 
     # Touches and targets
     rb_df = aggregated_df[aggregated_df['position'] == 'RB']
-    team_stats['rb_touches'] = team_stats['team'].map(
-        rb_df.groupby('team').apply(lambda x: (x['rushing_attempts'] + x['receptions']).sum())
-    ).fillna(0)
+    if not rb_df.empty and 'rushing_attempts' in rb_df.columns and 'receptions' in rb_df.columns:
+        team_stats['rb_touches'] = team_stats[team_col].map(
+            rb_df.groupby(team_col).apply(lambda x: (x['rushing_attempts'] + x['receptions']).sum())
+        ).fillna(0)
 
     wr_df = aggregated_df[aggregated_df['position'] == 'WR']
-    team_stats['wr_targets'] = team_stats['team'].map(wr_df.groupby('team')['targets'].sum()).fillna(0)
+    if not wr_df.empty and 'targets' in wr_df.columns:
+        team_stats['wr_targets'] = team_stats[team_col].map(wr_df.groupby(team_col)['targets'].sum()).fillna(0)
 
     te_df = aggregated_df[aggregated_df['position'] == 'TE']
-    team_stats['te_targets'] = team_stats['team'].map(te_df.groupby('team')['targets'].sum()).fillna(0)
+    if not te_df.empty and 'targets' in te_df.columns:
+        team_stats['te_targets'] = team_stats[team_col].map(te_df.groupby(team_col)['targets'].sum()).fillna(0)
 
     # Offensive identity
     total_yards = team_stats['passing_yards'] + team_stats['rushing_yards']
