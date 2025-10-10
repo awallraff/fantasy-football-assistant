@@ -109,9 +109,10 @@ def extract_nfl_data(
         if not seasonal_df.empty and 'position' in seasonal_df.columns:
             seasonal_df = seasonal_df[seasonal_df['position'].isin(position_list)]
 
-        # Fetch roster data
-        roster_df = nfl.import_rosters(year_list)
-        roster_df = roster_df[roster_df['position'].isin(position_list)]
+        # Fetch roster data - use import_seasonal_rosters (correct function name)
+        roster_df = nfl.import_seasonal_rosters(year_list)
+        if not roster_df.empty and 'position' in roster_df.columns:
+            roster_df = roster_df[roster_df['position'].isin(position_list)]
 
         # Aggregate weekly stats into season totals
         agg_dict = {
