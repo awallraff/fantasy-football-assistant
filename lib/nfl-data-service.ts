@@ -1,5 +1,6 @@
 import { spawn } from 'child_process'
 import path from 'path'
+import { isExternalAPIAvailable, fetchFromExternalAPI, testExternalAPIConnection } from './nfl-data-api-client'
 
 export interface NFLPlayerStats {
   position: string;
@@ -131,8 +132,14 @@ class NFLDataService {
       timeout = this.defaultTimeout
     } = options
 
-    // Check if running in production environment without Python support
-    if (process.env.VERCEL && !process.env.PYTHON_ENABLED) {
+    // Priority 1: Check if external API is available (for production on Vercel)
+    if (isExternalAPIAvailable()) {
+      console.log('Using external NFL Data API')
+      return fetchFromExternalAPI(options)
+    }
+
+    // Priority 2: Check if running in production environment without Python support and without external API
+    if (process.env.VERCEL) {
       return {
         weekly_stats: [],
         seasonal_stats: [],
@@ -150,11 +157,13 @@ class NFLDataService {
           total_players: 0,
           total_teams: 0
         },
-        error: 'NFL data service is only available in local development. Python runtime is not available on Vercel serverless functions. This feature requires a Python backend or separate data API.'
+        error: 'NFL data service requires either local Python environment or external API. Please set NFL_DATA_API_URL environment variable to your deployed Python API service (Railway/Render).'
       }
     }
 
+    // Priority 3: Use local Python script (for local development)
     try {
+      console.log('Using local Python script for NFL data extraction')
       console.log('Starting NFL data extraction with options:', options)
 
       const args = ['--positions', ...positions]
@@ -351,15 +360,22 @@ class NFLDataService {
 
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      // Check if running in production environment without Python support
-      if (process.env.VERCEL && !process.env.PYTHON_ENABLED) {
+      // Priority 1: Check if external API is available
+      if (isExternalAPIAvailable()) {
+        console.log('Testing external NFL Data API connection...')
+        return testExternalAPIConnection()
+      }
+
+      // Priority 2: Check if running in production environment without Python support
+      if (process.env.VERCEL) {
         return {
           success: false,
-          message: 'NFL data service is only available in local development. Python runtime is not available on Vercel serverless functions.'
+          message: 'NFL data service requires either local Python environment or external API. Please set NFL_DATA_API_URL environment variable to your deployed Python API service (Railway/Render).'
         }
       }
 
-      console.log('Testing NFL data service connection...')
+      // Priority 3: Test local Python script
+      console.log('Testing local Python script connection...')
 
       // Test with minimal data request
       const testData = await this.extractNFLData({

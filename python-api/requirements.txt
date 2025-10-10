@@ -1,0 +1,5 @@
+fastapi==0.115.0
+uvicorn==0.32.0
+nfl-data-py==0.3.3
+pandas==2.2.3
+pydantic==2.9.2
