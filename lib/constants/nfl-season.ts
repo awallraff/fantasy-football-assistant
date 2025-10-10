@@ -13,14 +13,14 @@
  *
  * Update locations:
  * 1. This file: `lib/constants/nfl-season.ts`
- * 2. Test the Python script: `python scripts/nfl_data_extractor.py --years YYYY --positions QB --week 1`
+ * 2. Test the Python API: `curl "https://your-api.onrender.com/api/nfl-data/extract?years=YYYY&positions=QB&week=1"`
  * 3. Deploy changes before Week 1 of the new season
  *
  * @example
  * // When 2025 season data becomes available (September 2025):
  * export const LATEST_AVAILABLE_SEASON = 2025
  */
-export const LATEST_AVAILABLE_SEASON = 2025
+export const LATEST_AVAILABLE_SEASON = 2024
 
 /**
  * Get the default season year for UI components

@@ -351,12 +351,28 @@ def extract_nfl_data(
             detail=f"Failed to fetch data from nfl_data_py: {str(e)}"
         )
     except Exception as e:
+        # Check if this is a 404 from nfl_data_py (data not available for requested year)
+        error_msg = str(e)
+        if "404" in error_msg or "Not Found" in error_msg:
+            logger.warning(
+                f"Data not available from nfl_data_py",
+                extra={
+                    "request_id": request_id,
+                    "years": year_list if 'year_list' in locals() else None,
+                    "error": error_msg
+                }
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=f"NFL data not available for the requested year(s). The data may not be published yet by nfl_data_py. Try selecting an earlier season (2020-2024)."
+            )
+
         # Internal server error
         logger.error(
             f"Error in extract_nfl_data",
             extra={
                 "request_id": request_id,
-                "error": str(e),
+                "error": error_msg,
                 "error_type": type(e).__name__
             },
             exc_info=True
