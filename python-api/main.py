@@ -54,9 +54,15 @@ def health_check():
 def test_connection():
     """Test connection to nfl_data_py"""
     try:
-        # Try fetching minimal data
-        df = nfl.import_weekly_data([2024], ["QB"])
-        player_count = len(df['player_id'].unique()) if not df.empty else 0
+        # Try fetching minimal data - import_weekly_data doesn't take positions parameter
+        df = nfl.import_weekly_data([2024])
+
+        # Filter for QBs
+        if not df.empty and 'position' in df.columns:
+            qb_df = df[df['position'] == 'QB']
+            player_count = len(qb_df['player_id'].unique()) if not qb_df.empty else 0
+        else:
+            player_count = 0
 
         return {
             "success": True,
@@ -89,13 +95,19 @@ def extract_nfl_data(
 
         print(f"Fetching data for years: {year_list}, positions: {position_list}, week: {week}")
 
-        # Fetch weekly stats
-        weekly_df = nfl.import_weekly_data(year_list, position_list)
+        # Fetch weekly stats - import_weekly_data doesn't take positions parameter
+        weekly_df = nfl.import_weekly_data(year_list)
+        # Filter by position
+        if not weekly_df.empty and 'position' in weekly_df.columns:
+            weekly_df = weekly_df[weekly_df['position'].isin(position_list)]
         if week is not None:
             weekly_df = weekly_df[weekly_df['week'] == week]
 
-        # Fetch seasonal stats
-        seasonal_df = nfl.import_seasonal_data(year_list, position_list)
+        # Fetch seasonal stats - import_seasonal_data doesn't take positions parameter
+        seasonal_df = nfl.import_seasonal_data(year_list)
+        # Filter by position
+        if not seasonal_df.empty and 'position' in seasonal_df.columns:
+            seasonal_df = seasonal_df[seasonal_df['position'].isin(position_list)]
 
         # Fetch roster data
         roster_df = nfl.import_rosters(year_list)
