@@ -294,13 +294,12 @@ class TestCalculateTeamAnalytics:
         df = pd.DataFrame({
             'team': ['KC'],
             'position': ['RB'],
-            'rushing_yards': [100],
+            'rushing_yards': [0],  # Set to 0 for division by zero test
             'rushing_attempts': [0],  # Division by zero
             'targets': [0],
             'receptions': [0],
             'receiving_yards': [0],
-            'passing_yards': [0],
-            'rushing_yards': [0]
+            'passing_yards': [0]
         })
 
         result = calculate_team_analytics(df)
