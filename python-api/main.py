@@ -114,6 +114,45 @@ def validate_nfl_data(df: pd.DataFrame, df_name: str) -> None:
             )
 
 
+def validate_input_parameters(years: List[int], positions: List[str], week: Optional[int]) -> None:
+    """
+    Validate input parameters for NFL data extraction.
+
+    Args:
+        years: List of years to fetch data for
+        positions: List of positions to filter
+        week: Optional week number
+
+    Raises:
+        HTTPException: If parameters are invalid
+    """
+    # Validate years (1999 is when nfl_data_py historical data starts)
+    current_year = datetime.utcnow().year
+    for year in years:
+        if year < 1999 or year > current_year:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Year {year} is out of valid range (1999-{current_year})"
+            )
+
+    # Validate positions
+    valid_positions = {'QB', 'RB', 'WR', 'TE', 'K', 'DEF'}
+    for position in positions:
+        if position not in valid_positions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid position '{position}'. Valid positions: {', '.join(sorted(valid_positions))}"
+            )
+
+    # Validate week (NFL regular season is 18 weeks, playoffs add 4 more)
+    if week is not None:
+        if week < 1 or week > 22:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Week {week} is out of valid range (1-22)"
+            )
+
+
 @app.get("/")
 def read_root():
     """Health check endpoint"""
@@ -173,8 +212,18 @@ def extract_nfl_data(
 
     try:
         # Parse parameters
-        year_list = [int(y.strip()) for y in years.split(',')]
+        try:
+            year_list = [int(y.strip()) for y in years.split(',')]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid year format: {str(e)}"
+            )
+
         position_list = [p.strip().upper() for p in positions.split(',')]
+
+        # Validate input parameters
+        validate_input_parameters(year_list, position_list, week)
 
         logger.info(
             "NFL data fetch started",
@@ -283,7 +332,26 @@ def extract_nfl_data(
             }
         }
 
+    except HTTPException:
+        # Re-raise HTTP exceptions (400, etc.) without modification
+        raise
+    except (ConnectionError, TimeoutError) as e:
+        # Upstream service unavailable
+        logger.error(
+            f"Upstream service error in extract_nfl_data",
+            extra={
+                "request_id": request_id,
+                "error": str(e),
+                "error_type": type(e).__name__
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch data from nfl_data_py: {str(e)}"
+        )
     except Exception as e:
+        # Internal server error
         logger.error(
             f"Error in extract_nfl_data",
             extra={
@@ -293,7 +361,10 @@ def extract_nfl_data(
             },
             exc_info=True
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 
 def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
@@ -333,13 +404,25 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
 
     # Calculate derived metrics only if base columns exist
     if 'rushing_yards' in team_stats.columns and 'rushing_attempts' in team_stats.columns:
-        team_stats['yards_per_carry'] = team_stats['rushing_yards'] / team_stats['rushing_attempts'].replace(0, 1)
+        team_stats['yards_per_carry'] = np.where(
+            team_stats['rushing_attempts'] > 0,
+            team_stats['rushing_yards'] / team_stats['rushing_attempts'],
+            0.0
+        )
 
     if 'receptions' in team_stats.columns and 'targets' in team_stats.columns:
-        team_stats['catch_rate'] = team_stats['receptions'] / team_stats['targets'].replace(0, 1)
+        team_stats['catch_rate'] = np.where(
+            team_stats['targets'] > 0,
+            team_stats['receptions'] / team_stats['targets'],
+            0.0
+        )
 
     if 'receiving_yards' in team_stats.columns and 'targets' in team_stats.columns:
-        team_stats['yards_per_target'] = team_stats['receiving_yards'] / team_stats['targets'].replace(0, 1)
+        team_stats['yards_per_target'] = np.where(
+            team_stats['targets'] > 0,
+            team_stats['receiving_yards'] / team_stats['targets'],
+            0.0
+        )
 
     # Position-specific fantasy points
     for pos in ['QB', 'RB', 'WR', 'TE']:
@@ -366,7 +449,11 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
     # Offensive identity - only if passing and rushing yards exist
     if 'passing_yards' in team_stats.columns and 'rushing_yards' in team_stats.columns:
         total_yards = team_stats['passing_yards'] + team_stats['rushing_yards']
-        team_stats['passing_percentage'] = (team_stats['passing_yards'] / total_yards.replace(0, 1)) * 100
+        team_stats['passing_percentage'] = np.where(
+            total_yards > 0,
+            (team_stats['passing_yards'] / total_yards) * 100,
+            0.0
+        )
 
         def classify_offense(pct):
             if pct > 60:

@@ -165,6 +165,154 @@ class TestValidateNFLData:
         assert 'UPSTREAM DATA QUALITY ISSUE' not in caplog.text
 
 
+class TestCalculateTeamAnalytics:
+    """Tests for calculate_team_analytics function"""
+
+    def test_empty_dataframe(self):
+        """Test that empty DataFrame returns empty list"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame()
+        result = calculate_team_analytics(df)
+        assert result == []
+
+    def test_no_team_column(self):
+        """Test that DataFrame without team column returns empty list"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'player_id': ['1', '2'],
+            'fantasy_points': [10, 20]
+        })
+        result = calculate_team_analytics(df)
+        assert result == []
+
+    def test_basic_team_aggregation(self):
+        """Test basic team-level aggregation"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'team': ['KC', 'KC', 'SF', 'SF'],
+            'position': ['QB', 'RB', 'QB', 'WR'],
+            'fantasy_points_ppr': [25.0, 15.0, 22.0, 18.0],
+            'passing_yards': [300, 0, 280, 0],
+            'rushing_yards': [10, 80, 5, 0]
+        })
+
+        result = calculate_team_analytics(df)
+
+        assert len(result) == 2
+        # KC should have 40 total fantasy points
+        kc_stats = [r for r in result if r['team'] == 'KC'][0]
+        assert kc_stats['fantasy_points_ppr'] == 40.0
+
+        # SF should have 40 total fantasy points
+        sf_stats = [r for r in result if r['team'] == 'SF'][0]
+        assert sf_stats['fantasy_points_ppr'] == 40.0
+
+    def test_division_by_zero_handled(self):
+        """Test that division by zero is handled correctly with np.where"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'team': ['KC', 'SF'],
+            'position': ['RB', 'RB'],
+            'rushing_yards': [100, 0],
+            'rushing_attempts': [20, 0],  # Zero attempts for SF
+            'targets': [5, 0],  # Zero targets for SF
+            'receptions': [3, 0],
+            'receiving_yards': [30, 0]
+        })
+
+        result = calculate_team_analytics(df)
+
+        # KC should have valid yards_per_carry
+        kc_stats = [r for r in result if r['team'] == 'KC'][0]
+        assert kc_stats['yards_per_carry'] == 5.0
+
+        # SF should have 0.0 (not Inf) for yards_per_carry
+        sf_stats = [r for r in result if r['team'] == 'SF'][0]
+        assert sf_stats['yards_per_carry'] == 0.0
+        assert sf_stats['catch_rate'] == 0.0
+        assert sf_stats['yards_per_target'] == 0.0
+
+    def test_offensive_identity_classification(self):
+        """Test offensive identity classification"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'team': ['PASS_HEAVY', 'RUN_HEAVY', 'BALANCED'],
+            'position': ['QB', 'RB', 'QB'],
+            'passing_yards': [400, 150, 250],  # 80%, 30%, 50%
+            'rushing_yards': [100, 350, 250]
+        })
+
+        result = calculate_team_analytics(df)
+
+        pass_heavy = [r for r in result if r['team'] == 'PASS_HEAVY'][0]
+        assert pass_heavy['offensive_identity'] == 'Pass-Heavy'
+        assert pass_heavy['passing_percentage'] == 80.0
+
+        run_heavy = [r for r in result if r['team'] == 'RUN_HEAVY'][0]
+        assert run_heavy['offensive_identity'] == 'Run-Heavy'
+        assert run_heavy['passing_percentage'] == 30.0
+
+        balanced = [r for r in result if r['team'] == 'BALANCED'][0]
+        assert balanced['offensive_identity'] == 'Balanced'
+        assert balanced['passing_percentage'] == 50.0
+
+    def test_position_specific_fantasy_points(self):
+        """Test position-specific fantasy point tracking"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'team': ['KC', 'KC', 'KC', 'KC'],
+            'position': ['QB', 'RB', 'WR', 'TE'],
+            'fantasy_points_ppr': [25.0, 18.0, 15.0, 10.0]
+        })
+
+        result = calculate_team_analytics(df)
+
+        kc_stats = result[0]
+        assert kc_stats['qb_fantasy_points'] == 25.0
+        assert kc_stats['rb_fantasy_points'] == 18.0
+        assert kc_stats['wr_fantasy_points'] == 15.0
+        assert kc_stats['te_fantasy_points'] == 10.0
+
+    def test_handles_recent_team_column(self):
+        """Test that recent_team column is used when team column is missing"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'recent_team': ['KC', 'SF'],
+            'position': ['QB', 'QB'],
+            'fantasy_points_ppr': [25.0, 22.0]
+        })
+
+        result = calculate_team_analytics(df)
+
+        assert len(result) == 2
+        assert result[0]['recent_team'] in ['KC', 'SF']
+        assert result[1]['recent_team'] in ['KC', 'SF']
+
+    def test_no_inf_in_output(self):
+        """Test that calculate_team_analytics never produces Inf values"""
+        from main import calculate_team_analytics
+        df = pd.DataFrame({
+            'team': ['KC'],
+            'position': ['RB'],
+            'rushing_yards': [100],
+            'rushing_attempts': [0],  # Division by zero
+            'targets': [0],
+            'receptions': [0],
+            'receiving_yards': [0],
+            'passing_yards': [0],
+            'rushing_yards': [0]
+        })
+
+        result = calculate_team_analytics(df)
+
+        # Convert to DataFrame to check for Inf
+        result_df = pd.DataFrame(result)
+        numeric_cols = result_df.select_dtypes(include=[np.number])
+
+        # No Inf values should exist
+        assert not np.isinf(numeric_cols).any().any()
+
+
 class TestIntegration:
     """Integration tests for combined functionality"""
 
