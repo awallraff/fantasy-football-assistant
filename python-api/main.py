@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import nfl_data_py as nfl
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 app = FastAPI(
@@ -141,9 +142,15 @@ def extract_nfl_data(
         team_analytics = calculate_team_analytics(aggregated_df)
 
         # Convert to JSON-serializable format
-        weekly_stats = weekly_df.fillna(0).to_dict('records')
-        seasonal_stats = seasonal_df.fillna(0).to_dict('records')
-        aggregated_stats = aggregated_df.fillna(0).to_dict('records')
+        # Replace NaN and Inf with None/0 to ensure JSON compliance
+        weekly_df = weekly_df.replace([np.inf, -np.inf], np.nan).fillna(0)
+        seasonal_df = seasonal_df.replace([np.inf, -np.inf], np.nan).fillna(0)
+        aggregated_df = aggregated_df.replace([np.inf, -np.inf], np.nan).fillna(0)
+        roster_df = roster_df.replace([np.inf, -np.inf], np.nan).fillna(0)
+
+        weekly_stats = weekly_df.to_dict('records')
+        seasonal_stats = seasonal_df.to_dict('records')
+        aggregated_stats = aggregated_df.to_dict('records')
         player_info = roster_df.to_dict('records')
 
         return {
@@ -251,8 +258,8 @@ def calculate_team_analytics(aggregated_df: pd.DataFrame) -> List[dict]:
 
         team_stats['offensive_identity'] = team_stats['passing_percentage'].apply(classify_offense)
 
-    # Fill NaN values
-    team_stats = team_stats.fillna(0)
+    # Fill NaN and Inf values to ensure JSON compliance
+    team_stats = team_stats.replace([np.inf, -np.inf], np.nan).fillna(0)
 
     return team_stats.to_dict('records')
 

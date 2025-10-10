@@ -20,7 +20,7 @@
  * // When 2025 season data becomes available (September 2025):
  * export const LATEST_AVAILABLE_SEASON = 2025
  */
-export const LATEST_AVAILABLE_SEASON = 2024
+export const LATEST_AVAILABLE_SEASON = 2025
 
 /**
  * Get the default season year for UI components
