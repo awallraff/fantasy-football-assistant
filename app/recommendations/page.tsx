@@ -13,6 +13,7 @@ import { LineupOptimizer } from "@/components/lineup-optimizer"
 import { WaiverWireAnalyzer } from "@/components/waiver-wire-analyzer"
 import { StartSitAdvisor } from "@/components/start-sit-advisor"
 import { StrategicInsights } from "@/components/strategic-insights"
+import { ErrorDisplay, categorizeError } from "@/components/ui/error-display"
 import type { SleeperLeague, SleeperUser } from "@/lib/sleeper-api"
 import { sleeperAPI } from "@/lib/sleeper-api"
 
@@ -21,6 +22,8 @@ export default function RecommendationsPage() {
   const [leagues, setLeagues] = useState<SleeperLeague[]>([])
   const [selectedLeague, setSelectedLeague] = useState<SleeperLeague | null>(null)
   const [selectedSeason, setSelectedSeason] = useState<string>("2025")
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [apiError, setApiError] = useState<{ message: string; error: unknown } | null>(null)
   const { getItem, setItem, isClient } = useSafeLocalStorage()
 
   useEffect(() => {
@@ -37,8 +40,10 @@ export default function RecommendationsPage() {
         if (leagueData.length > 0) {
           setSelectedLeague(leagueData[0])
         }
+        setLoadError(null)
       } catch (e) {
         console.error("Failed to load recommendations data:", e)
+        setLoadError(e instanceof Error ? e.message : "Failed to load saved league data")
       }
     }
   }, [isClient, getItem])
@@ -46,6 +51,7 @@ export default function RecommendationsPage() {
   const refreshLeaguesForSeason = async (season: string) => {
     if (!user) return
 
+    setApiError(null)
     try {
       const seasonLeagues = await sleeperAPI.getUserLeagues(user.user_id, "nfl", season)
       setLeagues(seasonLeagues)
@@ -57,6 +63,10 @@ export default function RecommendationsPage() {
       setItem("sleeper_leagues", JSON.stringify(seasonLeagues))
     } catch (error) {
       console.error("Error fetching leagues for season:", error)
+      setApiError({
+        message: error instanceof Error ? error.message : "Failed to fetch leagues for selected season",
+        error
+      })
     }
   }
 
@@ -74,6 +84,50 @@ export default function RecommendationsPage() {
             <div className="h-8 bg-muted rounded w-1/4"></div>
             <div className="h-4 bg-muted rounded w-1/2"></div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">AI Recommendations</h1>
+          <ErrorDisplay
+            type="validation"
+            title="Failed to Load League Data"
+            message={loadError}
+            showRetry={true}
+            onRetry={() => window.location.reload()}
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/">Return Home</Link>
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (apiError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">AI Recommendations</h1>
+          <ErrorDisplay
+            type={categorizeError(apiError.error)}
+            title="Failed to Fetch League Data"
+            message={apiError.message}
+            showRetry={true}
+            onRetry={() => refreshLeaguesForSeason(selectedSeason)}
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/">Return Home</Link>
+              </Button>
+            }
+          />
         </div>
       </div>
     )

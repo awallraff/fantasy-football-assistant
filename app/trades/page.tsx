@@ -12,12 +12,14 @@ import { TradeHistory } from "@/components/trade-history"
 import { TradeEvaluator } from "@/components/trade-evaluator"
 import { MarketTrends } from "@/components/market-trends"
 import { OpponentAnalysis } from "@/components/opponent-analysis"
+import { ErrorDisplay } from "@/components/ui/error-display"
 import type { SleeperLeague, SleeperUser } from "@/lib/sleeper-api"
 
 export default function TradesPage() {
   const [user, setUser] = useState<SleeperUser | null>(null)
   const [leagues, setLeagues] = useState<SleeperLeague[]>([])
   const [selectedLeague, setSelectedLeague] = useState<SleeperLeague | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const { getItem, isClient } = useSafeLocalStorage()
 
   // Load data from localStorage
@@ -35,8 +37,10 @@ export default function TradesPage() {
         if (leagueData.length > 0) {
           setSelectedLeague(leagueData[0])
         }
+        setLoadError(null)
       } catch (e) {
         console.error("Failed to load trade data:", e)
+        setLoadError(e instanceof Error ? e.message : "Failed to load saved league data")
       }
     }
   }, [isClient, getItem])
@@ -50,6 +54,28 @@ export default function TradesPage() {
             <div className="h-8 bg-muted rounded w-1/4"></div>
             <div className="h-4 bg-muted rounded w-1/2"></div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Trade Analysis</h1>
+          <ErrorDisplay
+            type="validation"
+            title="Failed to Load League Data"
+            message={loadError}
+            showRetry={true}
+            onRetry={() => window.location.reload()}
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/">Return Home</Link>
+              </Button>
+            }
+          />
         </div>
       </div>
     )

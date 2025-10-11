@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, Database, RefreshCw, CheckCircle, XCircle, AlertCircle, Info, ChevronDown, ChevronRight } from "lucide-react"
+import { Download, Database, RefreshCw, CheckCircle, XCircle, Info, ChevronDown, ChevronRight } from "lucide-react"
 import { NFLDataControls } from "./nfl-data/NFLDataControls"
 import { NFLDataTable } from "./nfl-data/NFLDataTable"
 import { useNFLDataFetch } from "@/hooks/use-nfl-data-fetch"
@@ -14,6 +14,7 @@ import { useNFLDataFilter } from "@/hooks/use-nfl-data-filter"
 import { useNFLDataExport } from "@/hooks/use-nfl-data-export"
 import { safeNumber, formatValue, generateSafeKey } from "@/lib/nfl-data-utils"
 import { LATEST_AVAILABLE_SEASON, getAvailableSeasonYears } from "@/lib/constants/nfl-season"
+import { ErrorDisplay, categorizeError } from "@/components/ui/error-display"
 
 export function NFLDataManagerFixed() {
   // Default to most recent season with available data
@@ -163,30 +164,36 @@ export function NFLDataManagerFixed() {
 
           {/* Data Availability Warning */}
           {selectedYears.length > 0 && parseInt(selectedYears[0]) > latestAvailableYear && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <div className="flex items-center gap-2 text-yellow-800">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">Data Not Available</span>
-              </div>
-              <p className="text-sm text-yellow-700 mt-1">
-                {selectedYears[0]} season data is not yet available. Most recent data available: {latestAvailableYear}
-              </p>
-            </div>
+            <ErrorDisplay
+              type="not-found"
+              title="Season Data Not Available"
+              message={`${selectedYears[0]} season data is not yet available. Most recent data available: ${latestAvailableYear}`}
+              showRetry={false}
+            />
           )}
 
+          {/* Enhanced Error Display with Retry */}
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-              <div className="flex items-center gap-2 text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">Error</span>
-              </div>
-              <p className="text-sm text-destructive/80 mt-1">{error}</p>
-              {error.includes("404") && (
-                <p className="text-sm text-destructive/80 mt-1">
-                  Try selecting {latestAvailableYear} or an earlier season with available data.
-                </p>
-              )}
-            </div>
+            <ErrorDisplay
+              type={categorizeError({ message: error })}
+              title={error.includes("404") ? "Data Not Found" : undefined}
+              message={error}
+              technicalDetails={error.includes("HTTP") ? error : undefined}
+              showRetry={true}
+              onRetry={extractData}
+              isRetrying={loading}
+              actions={
+                error.includes("404") ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedYears([latestAvailableYear.toString()])}
+                  >
+                    Switch to {latestAvailableYear}
+                  </Button>
+                ) : undefined
+              }
+            />
           )}
 
           {/* Data Extraction Controls */}
