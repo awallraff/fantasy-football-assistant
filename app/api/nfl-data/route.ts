@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nflDataService from '@/lib/nfl-data-service'
+import nflDataCacheService from '@/lib/nfl-data-cache-service'
+import {
+  validateNFLDataResponse,
+  logValidationError,
+  formatValidationError
+} from '@/lib/schemas/nfl-data-schemas'
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,12 +34,28 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(testResult)
         
       case 'extract':
-        const data = await nflDataService.extractNFLData({
+        // Use caching service for data extraction
+        const data = await nflDataCacheService.extractNFLData({
           years,
           positions,
           week
         })
-        return NextResponse.json(data)
+
+        // Validate the response data
+        const validationResult = validateNFLDataResponse(data)
+
+        if (!validationResult.success) {
+          logValidationError(validationResult.error, 'NFL Data API - Extract')
+
+          // Return the data with validation warning (graceful degradation)
+          return NextResponse.json({
+            ...data,
+            validation_warning: 'Data failed schema validation. Some fields may be missing or incorrect.',
+            validation_errors: formatValidationError(validationResult.error),
+          })
+        }
+
+        return NextResponse.json(validationResult.data)
         
       case 'player':
         if (!playerIdParam) {
@@ -53,7 +75,21 @@ export async function GET(request: NextRequest) {
           )
         }
         const teamStats = await nflDataService.getTeamStats(teamParam, years)
-        return NextResponse.json(teamStats)
+
+        // Validate the response data
+        const teamValidationResult = validateNFLDataResponse(teamStats)
+
+        if (!teamValidationResult.success) {
+          logValidationError(teamValidationResult.error, 'NFL Data API - Team')
+
+          return NextResponse.json({
+            ...teamStats,
+            validation_warning: 'Data failed schema validation.',
+            validation_errors: formatValidationError(teamValidationResult.error),
+          })
+        }
+
+        return NextResponse.json(teamValidationResult.data)
         
       case 'position':
         if (!positionParam) {
@@ -63,7 +99,21 @@ export async function GET(request: NextRequest) {
           )
         }
         const positionStats = await nflDataService.getPositionStats(positionParam, years)
-        return NextResponse.json(positionStats)
+
+        // Validate the response data
+        const positionValidationResult = validateNFLDataResponse(positionStats)
+
+        if (!positionValidationResult.success) {
+          logValidationError(positionValidationResult.error, 'NFL Data API - Position')
+
+          return NextResponse.json({
+            ...positionStats,
+            validation_warning: 'Data failed schema validation.',
+            validation_errors: formatValidationError(positionValidationResult.error),
+          })
+        }
+
+        return NextResponse.json(positionValidationResult.data)
         
       case 'current-week':
         if (week === undefined) {
@@ -73,7 +123,21 @@ export async function GET(request: NextRequest) {
           )
         }
         const currentWeekStats = await nflDataService.getCurrentWeekStats(week)
-        return NextResponse.json(currentWeekStats)
+
+        // Validate the response data
+        const weekValidationResult = validateNFLDataResponse(currentWeekStats)
+
+        if (!weekValidationResult.success) {
+          logValidationError(weekValidationResult.error, 'NFL Data API - Current Week')
+
+          return NextResponse.json({
+            ...currentWeekStats,
+            validation_warning: 'Data failed schema validation.',
+            validation_errors: formatValidationError(weekValidationResult.error),
+          })
+        }
+
+        return NextResponse.json(weekValidationResult.data)
         
       default:
         return NextResponse.json(
@@ -101,8 +165,23 @@ export async function POST(request: NextRequest) {
     
     switch (action) {
       case 'extract':
-        const data = await nflDataService.extractNFLData(options)
-        return NextResponse.json(data)
+        // Use caching service for data extraction
+        const data = await nflDataCacheService.extractNFLData(options)
+
+        // Validate the response data
+        const validationResult = validateNFLDataResponse(data)
+
+        if (!validationResult.success) {
+          logValidationError(validationResult.error, 'NFL Data API - POST Extract')
+
+          return NextResponse.json({
+            ...data,
+            validation_warning: 'Data failed schema validation.',
+            validation_errors: formatValidationError(validationResult.error),
+          })
+        }
+
+        return NextResponse.json(validationResult.data)
         
       case 'player':
         if (!options.playerId) {
@@ -122,7 +201,21 @@ export async function POST(request: NextRequest) {
           )
         }
         const teamStats = await nflDataService.getTeamStats(options.team, options.years)
-        return NextResponse.json(teamStats)
+
+        // Validate the response data
+        const postTeamValidationResult = validateNFLDataResponse(teamStats)
+
+        if (!postTeamValidationResult.success) {
+          logValidationError(postTeamValidationResult.error, 'NFL Data API - POST Team')
+
+          return NextResponse.json({
+            ...teamStats,
+            validation_warning: 'Data failed schema validation.',
+            validation_errors: formatValidationError(postTeamValidationResult.error),
+          })
+        }
+
+        return NextResponse.json(postTeamValidationResult.data)
         
       default:
         return NextResponse.json(
