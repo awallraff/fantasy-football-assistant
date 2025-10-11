@@ -2,39 +2,11 @@
 
 ## Overview
 
-The NFL Data feature requires a Python backend that can't run on Vercel. This guide walks you through deploying the Python API service to Railway (recommended) or Render, then connecting it to your Vercel app.
+The NFL Data feature requires a Python backend that can't run on Vercel. This guide walks you through deploying the Python API service to Render, then connecting it to your Vercel app.
 
 ## Quick Start (5 minutes)
 
-### Option 1: Railway (Recommended)
-
-1. **Create Railway Account**
-   - Go to [railway.app](https://railway.app)
-   - Sign up with GitHub
-
-2. **Deploy Python API**
-   - Click "New Project" → "Deploy from GitHub repo"
-   - Select this repository
-   - Railway will auto-detect the `python-api` directory
-   - Click "Deploy"
-
-3. **Get Your API URL**
-   - Once deployed, Railway provides a URL like: `https://your-app-name.up.railway.app`
-   - Copy this URL
-
-4. **Configure Vercel**
-   - Go to your Vercel project settings
-   - Navigate to "Environment Variables"
-   - Add:
-     ```
-     NFL_DATA_API_URL=https://your-app-name.up.railway.app
-     ```
-   - Redeploy your Vercel app
-
-5. **Done!** 🎉
-   - Your NFL Data page will now work in production
-
-### Option 2: Render
+### Deploy to Render
 
 1. **Create Render Account**
    - Go to [render.com](https://render.com)
@@ -54,7 +26,16 @@ The NFL Data feature requires a Python backend that can't run on Vercel. This gu
    - Copy this URL
 
 4. **Configure Vercel**
-   - Same as Railway step 4 above
+   - Go to your Vercel project settings
+   - Navigate to "Environment Variables"
+   - Add:
+     ```
+     NFL_DATA_API_URL=https://your-app.onrender.com
+     ```
+   - Redeploy your Vercel app
+
+5. **Done!** 🎉
+   - Your NFL Data page will now work in production
 
 ## Testing Your Deployment
 
@@ -62,7 +43,7 @@ The NFL Data feature requires a Python backend that can't run on Vercel. This gu
 
 Visit your API URL in a browser:
 ```
-https://your-app.up.railway.app/health
+https://your-app.onrender.com/health
 ```
 
 You should see:
@@ -73,7 +54,7 @@ You should see:
 ### 2. Test NFL Data Connection
 
 ```
-https://your-app.up.railway.app/api/nfl-data/test
+https://your-app.onrender.com/api/nfl-data/test
 ```
 
 Should return:
@@ -94,14 +75,12 @@ Should return:
 
 ## Cost
 
-Both services offer generous free tiers:
+Render offers a generous free tier:
 
-| Service | Free Tier | Limits |
-|---------|-----------|--------|
-| **Railway** | 500 hours/month | Perfect for this use case |
-| **Render** | 750 hours/month | Sleeps after 15min inactivity |
-
-**Recommendation**: Railway (no sleep, better for real-time use)
+- **Free Tier**: 750 hours/month
+- **Limitation**: Sleeps after 15min of inactivity
+- **Cold Start**: First request after sleep takes ~30-60 seconds
+- **Paid Tier**: $7/month for always-on service
 
 ## Advanced Configuration
 
@@ -132,15 +111,12 @@ The Python API doesn't need any environment variables, but you can add:
 
 ## Monitoring
 
-### Railway
-- View logs: Project → "Logs" tab
-- Metrics: Project → "Metrics" tab
-- Deployments: Project → "Deployments" tab
+Render provides comprehensive monitoring tools:
 
-### Render
-- View logs: Service → "Logs" tab
-- Metrics: Service → "Metrics" tab
-- Events: Service → "Events" tab
+- **Logs**: Service → "Logs" tab (real-time streaming)
+- **Metrics**: Service → "Metrics" tab (CPU, memory, requests)
+- **Events**: Service → "Events" tab (deployments, restarts)
+- **Health Checks**: Automatic monitoring of `/health` endpoint
 
 ## Troubleshooting
 
@@ -176,9 +152,10 @@ The Python API doesn't need any environment variables, but you can add:
 **Problem**: API request times out
 
 **Solution**:
-- Railway/Render free tier may sleep after inactivity
+- Render free tier sleeps after 15 minutes of inactivity
 - First request after sleep takes ~30-60 seconds (cold start)
-- Consider upgrading to paid tier for instant response
+- This is normal behavior - subsequent requests will be fast
+- Consider upgrading to paid tier ($7/month) for always-on service
 
 ## API Endpoints Reference
 
@@ -186,7 +163,7 @@ The Python API doesn't need any environment variables, but you can add:
 Health check and service info
 
 ### `GET /health`
-Simple health check (used by Railway/Render)
+Simple health check (used by Render)
 
 ### `GET /api/nfl-data/test`
 Test connection to nfl_data_py
@@ -217,7 +194,7 @@ After successful deployment:
 
 ## Support
 
-**Railway Issues**: [railway.app/help](https://railway.app/help)
-**Render Issues**: [render.com/docs](https://render.com/docs)
+**Render Documentation**: [render.com/docs](https://render.com/docs)
+**Render Support**: [render.com/support](https://render.com/support)
 
 For code issues, check `python-api/README.md` for detailed API documentation.

@@ -1,11 +1,11 @@
 # NFL Data API Service
 
-FastAPI service that wraps `nfl_data_py` for deployment on Railway/Render.
+FastAPI service that wraps `nfl_data_py` for deployment on Render.
 
 ## Features
 
 - ✅ RESTful API for NFL data
-- ✅ Compatible with Railway and Render deployments
+- ✅ Deployed on Render with automatic builds
 - ✅ CORS enabled for Vercel integration
 - ✅ Health check endpoints
 - ✅ Comprehensive error handling
@@ -16,7 +16,7 @@ FastAPI service that wraps `nfl_data_py` for deployment on Railway/Render.
 Health check and service info
 
 ### `GET /health`
-Simple health check for Railway/Render
+Simple health check for Render
 
 ### `GET /api/nfl-data/test`
 Test connection to nfl_data_py library
@@ -81,22 +81,6 @@ View API docs at `http://localhost:8000/docs`
 
 ## Deployment
 
-### Railway
-
-1. **Create New Project**
-   - Go to [Railway](https://railway.app)
-   - Click "New Project" → "Deploy from GitHub repo"
-   - Select your repository
-   - Set root directory to `/python-api`
-
-2. **Configure Environment** (optional)
-   - Railway auto-detects Python and installs dependencies
-   - No environment variables needed
-
-3. **Deploy**
-   - Railway will automatically deploy
-   - Copy the generated URL (e.g., `https://your-app.up.railway.app`)
-
 ### Render
 
 1. **Create New Web Service**
@@ -120,7 +104,7 @@ After deployment, update your Next.js environment variables:
 
 ```env
 # .env.local
-NFL_DATA_API_URL=https://your-app.up.railway.app
+NFL_DATA_API_URL=https://your-app.onrender.com
 ```
 
 Then update `lib/nfl-data-service.ts` to use the external API instead of spawning Python processes.
@@ -146,16 +130,16 @@ app.add_middleware(
 
 ## Cost
 
-- **Railway**: Free tier includes 500 hours/month (plenty for this use case)
-- **Render**: Free tier available (sleeps after 15 min of inactivity)
+- **Render**: Free tier available (sleeps after 15 min of inactivity, wakes on first request)
 
 ## Monitoring
 
-Both Railway and Render provide:
+Render provides:
 - Deployment logs
 - Application logs
 - Metrics and analytics
 - Automatic SSL certificates
+- Health check monitoring
 
 ## Troubleshooting
 
@@ -169,4 +153,4 @@ Solution: Ensure `requirements.txt` is in the root directory and includes `nfl-d
 ```
 Address already in use
 ```
-Solution: Railway/Render set `$PORT` automatically. Use `--port $PORT` in start command.
+Solution: Render sets `$PORT` automatically. Use `--port $PORT` in start command.

@@ -27,8 +27,7 @@ The NFL Data feature (`/nfl-data` page) uses Python child processes to fetch his
 Deploy the Python NFL data fetcher as a separate service:
 
 **Services to consider:**
-- **Railway** - Supports Python apps, easy deployment
-- **Render** - Free tier for Python services
+- **Render** - Free tier for Python services (currently used)
 - **Fly.io** - Python runtime support
 - **AWS Lambda** with Python runtime
 - **Google Cloud Functions** with Python
@@ -44,7 +43,7 @@ Deploy the Python NFL data fetcher as a separate service:
 Cache NFL data in a database or object storage:
 
 **Approach:**
-1. Run a scheduled job (GitHub Actions, Railway Cron) to fetch NFL data weekly
+1. Run a scheduled job (GitHub Actions, Render Cron) to fetch NFL data weekly
 2. Store results in:
    - Vercel Postgres
    - Supabase
@@ -116,12 +115,11 @@ This prevents deployment errors and provides clear feedback to users.
 ## Recommended Next Steps
 
 1. **Short term:** Keep current implementation (dev-only feature)
-2. **Medium term:** Deploy Python service to Railway/Render
+2. **Medium term:** Deploy Python service to Render
 3. **Long term:** Migrate to cached data approach or direct API calls
 
 ## Additional Resources
 
 - [Vercel Serverless Function Limits](https://vercel.com/docs/functions/runtimes)
-- [Railway Python Deployment](https://docs.railway.app/guides/python)
 - [Render Python Services](https://render.com/docs/deploy-python)
 - [nfl_data_py Documentation](https://github.com/cooperdff/nfl_data_py)

@@ -1,6 +1,6 @@
 """
 NFL Data API Service
-FastAPI service that wraps nfl_data_py for deployment on Railway/Render
+FastAPI service that wraps nfl_data_py for deployment on Render
 """
 
 from fastapi import FastAPI, HTTPException, Query
@@ -166,7 +166,7 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """Health check for Railway/Render"""
+    """Health check for Render"""
     return {"status": "ok"}
 
 

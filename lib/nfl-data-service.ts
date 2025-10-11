@@ -157,7 +157,7 @@ class NFLDataService {
           total_players: 0,
           total_teams: 0
         },
-        error: 'NFL data service requires either local Python environment or external API. Please set NFL_DATA_API_URL environment variable to your deployed Python API service (Railway/Render).'
+        error: 'NFL data service requires either local Python environment or external API. Please set NFL_DATA_API_URL environment variable to your deployed Python API service (Render).'
       }
     }
 
@@ -370,7 +370,7 @@ class NFLDataService {
       if (process.env.VERCEL) {
         return {
           success: false,
-          message: 'NFL data service requires either local Python environment or external API. Please set NFL_DATA_API_URL environment variable to your deployed Python API service (Railway/Render).'
+          message: 'NFL data service requires either local Python environment or external API. Please set NFL_DATA_API_URL environment variable to your deployed Python API service (Render).'
         }
       }
 

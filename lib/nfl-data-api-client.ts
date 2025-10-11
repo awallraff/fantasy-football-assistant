@@ -1,7 +1,7 @@
 /**
  * NFL Data API Client
  *
- * Fetches NFL data from external Python API service (Railway/Render)
+ * Fetches NFL data from external Python API service (Render)
  * This replaces the local Python child process spawning for production use
  */
 

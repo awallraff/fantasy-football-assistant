@@ -1,8 +1,8 @@
 # Render Deployment Guide
 
-## Why Render Instead of Railway?
+## Overview
 
-Railway is experiencing persistent "Failed to snapshot repository" errors. Render provides a reliable alternative with similar features and free tier.
+This guide walks through deploying the Python NFL Data API service to Render. Render provides a reliable platform with a generous free tier and excellent GitHub integration.
 
 ## Pre-Deployment Checklist
 
@@ -251,17 +251,17 @@ allow_origins=[
 - [x] Vercel app redeployed
 - [x] NFL Data page works in production
 
-## Comparison: Render vs Railway
+## Render Features
 
-| Feature | Render | Railway |
-|---------|--------|---------|
-| Free Tier Hours | 750/mo | 500/mo |
-| Build Time | ~3 min | ~2 min |
-| Cold Start | 15 min inactivity | Configurable |
-| GitHub Integration | ✅ Reliable | ❌ Currently broken |
-| Health Checks | ✅ Built-in | ✅ Built-in |
-| Auto-Deploy | ✅ Yes | ✅ Yes |
-| Custom Domains | ✅ Free | ✅ Free |
+| Feature | Details |
+|---------|---------|
+| Free Tier Hours | 750 hours/month |
+| Build Time | ~3 minutes |
+| Cold Start | Sleeps after 15 min inactivity |
+| GitHub Integration | ✅ Reliable auto-deploys |
+| Health Checks | ✅ Built-in monitoring |
+| Auto-Deploy | ✅ On git push to main |
+| Custom Domains | ✅ Free SSL certificates |
 
 ## Next Steps After Deployment
 
