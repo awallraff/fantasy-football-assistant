@@ -1,13 +1,13 @@
 """
 NFL Data API Service
-FastAPI service that wraps nfl_data_py for deployment on Render
+FastAPI service that wraps nflreadpy for deployment on Render
 """
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any, Tuple
-import nfl_data_py as nfl
+import nflreadpy as nfl
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="NFL Data API",
-    description="API for fetching NFL player statistics using nfl_data_py",
+    description="API for fetching NFL player statistics using nflreadpy",
     version="1.0.0"
 )
 
@@ -87,7 +87,7 @@ def sanitize_dataframe(df: pd.DataFrame, df_name: str) -> Tuple[pd.DataFrame, Di
 
 def validate_nfl_data(df: pd.DataFrame, df_name: str) -> None:
     """
-    Validate data from nfl_data_py for unexpected values.
+    Validate data from nflreadpy for unexpected values.
     Logs warnings if upstream data contains Inf values.
 
     Args:
@@ -104,7 +104,7 @@ def validate_nfl_data(df: pd.DataFrame, df_name: str) -> None:
         if inf_count > 0:
             sample_rows = df[np.isinf(df[col])].head(3).to_dict('records')
             logger.error(
-                f"UPSTREAM DATA QUALITY ISSUE: {df_name}.{col} contains {inf_count} Inf values from nfl_data_py",
+                f"UPSTREAM DATA QUALITY ISSUE: {df_name}.{col} contains {inf_count} Inf values from nflreadpy",
                 extra={
                     "dataframe": df_name,
                     "column": col,
@@ -126,7 +126,7 @@ def validate_input_parameters(years: List[int], positions: List[str], week: Opti
     Raises:
         HTTPException: If parameters are invalid
     """
-    # Validate years (1999 is when nfl_data_py historical data starts)
+    # Validate years (1999 is when nflreadpy historical data starts)
     current_year = datetime.utcnow().year
     for year in years:
         if year < 1999 or year > current_year:
@@ -172,10 +172,11 @@ def health_check():
 
 @app.get("/api/nfl-data/test")
 def test_connection():
-    """Test connection to nfl_data_py"""
+    """Test connection to nflreadpy"""
     try:
-        # Try fetching minimal data - import_weekly_data doesn't take positions parameter
-        df = nfl.import_weekly_data([2024])
+        # Try fetching minimal data with nflreadpy
+        df_polars = nfl.load_player_stats(seasons=[2024], summary_level="week")
+        df = df_polars.to_pandas()  # Convert to pandas
 
         # Filter for QBs
         if not df.empty and 'position' in df.columns:
@@ -235,8 +236,9 @@ def extract_nfl_data(
             }
         )
 
-        # Fetch weekly stats - import_weekly_data doesn't take positions parameter
-        weekly_df = nfl.import_weekly_data(year_list)
+        # Fetch weekly stats using nflreadpy
+        weekly_polars = nfl.load_player_stats(seasons=year_list, summary_level="week")
+        weekly_df = weekly_polars.to_pandas()  # Convert to pandas
         validate_nfl_data(weekly_df, "weekly_data")
         logger.info(f"Fetched {len(weekly_df)} weekly records", extra={"request_id": request_id})
 
@@ -246,8 +248,9 @@ def extract_nfl_data(
         if week is not None:
             weekly_df = weekly_df[weekly_df['week'] == week]
 
-        # Fetch seasonal stats - import_seasonal_data doesn't take positions parameter
-        seasonal_df = nfl.import_seasonal_data(year_list)
+        # Fetch seasonal stats using nflreadpy
+        seasonal_polars = nfl.load_player_stats(seasons=year_list, summary_level="reg")
+        seasonal_df = seasonal_polars.to_pandas()  # Convert to pandas
         validate_nfl_data(seasonal_df, "seasonal_data")
         logger.info(f"Fetched {len(seasonal_df)} seasonal records", extra={"request_id": request_id})
 
@@ -255,8 +258,9 @@ def extract_nfl_data(
         if not seasonal_df.empty and 'position' in seasonal_df.columns:
             seasonal_df = seasonal_df[seasonal_df['position'].isin(position_list)]
 
-        # Fetch roster data - use import_seasonal_rosters (correct function name)
-        roster_df = nfl.import_seasonal_rosters(year_list)
+        # Fetch roster data using nflreadpy
+        roster_polars = nfl.load_rosters(seasons=year_list)
+        roster_df = roster_polars.to_pandas()  # Convert to pandas
         validate_nfl_data(roster_df, "roster_data")
         logger.info(f"Fetched {len(roster_df)} roster records", extra={"request_id": request_id})
 
@@ -325,7 +329,7 @@ def extract_nfl_data(
                 "total_weekly_records": len(weekly_stats),
                 "total_seasonal_records": len(seasonal_stats),
                 "total_aggregated_records": len(aggregated_stats),
-                "total_players": len(roster_df['player_id'].unique()) if not roster_df.empty else 0,
+                "total_players": len(roster_df['gsis_id'].unique()) if not roster_df.empty and 'gsis_id' in roster_df.columns else 0,
                 "total_teams": len(aggregated_df['team'].unique()) if not aggregated_df.empty and 'team' in aggregated_df.columns else (len(aggregated_df['recent_team'].unique()) if not aggregated_df.empty and 'recent_team' in aggregated_df.columns else 0),
                 "data_quality": quality_metrics,
                 "request_id": request_id
@@ -348,14 +352,14 @@ def extract_nfl_data(
         )
         raise HTTPException(
             status_code=502,
-            detail=f"Failed to fetch data from nfl_data_py: {str(e)}"
+            detail=f"Failed to fetch data from nflreadpy: {str(e)}"
         )
     except Exception as e:
-        # Check if this is a 404 from nfl_data_py (data not available for requested year)
+        # Check if this is a 404 from nflreadpy (data not available for requested year)
         error_msg = str(e)
         if "404" in error_msg or "Not Found" in error_msg:
             logger.warning(
-                f"Data not available from nfl_data_py",
+                f"Data not available from nflreadpy",
                 extra={
                     "request_id": request_id,
                     "years": year_list if 'year_list' in locals() else None,
@@ -364,7 +368,7 @@ def extract_nfl_data(
             )
             raise HTTPException(
                 status_code=404,
-                detail=f"NFL data not available for the requested year(s). The data may not be published yet by nfl_data_py. Try selecting an earlier season (2020-2024)."
+                detail=f"NFL data not available for the requested year(s). The data may not be published yet by nflreadpy. Try selecting an earlier season (2020-2024)."
             )
 
         # Internal server error

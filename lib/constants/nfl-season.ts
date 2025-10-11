@@ -17,10 +17,13 @@
  * 3. Deploy changes before Week 1 of the new season
  *
  * @example
- * // When 2025 season data becomes available (September 2025):
- * export const LATEST_AVAILABLE_SEASON = 2025
+ * // When 2026 season data becomes available (September 2026):
+ * export const LATEST_AVAILABLE_SEASON = 2026
+ *
+ * @changelog
+ * - 2025-10-10: Updated to 2025 (migrated to nflreadpy library)
  */
-export const LATEST_AVAILABLE_SEASON = 2024
+export const LATEST_AVAILABLE_SEASON = 2025
 
 /**
  * Get the default season year for UI components
