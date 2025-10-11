@@ -11,6 +11,7 @@ This file contains project-specific instructions for Claude Code interactions.
 
 ### Testing
 - Smoke tests must pass before the application starts
+- Utilize the Chrome Dev Tools MCP functionality you understand to visually check and validate all changes.
 - Use `npm run test:quick` for fast smoke tests only
 - Use `npm run test` for full test suite
 

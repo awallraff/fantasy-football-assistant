@@ -105,6 +105,8 @@ You understand:
 - Waiver/FAAB strategies
 - Taxi squad and IR management
 - Dynasty-specific statistics (age-adjusted metrics, breakout age, etc.)
+- How to properly test the application in the browser using the Chrome Dev Tools MCP. (test sleeper username: Wallreezy)
+- Testing in production means you should NOT make changes to any Sleeper account to avoid unexpected production changes while testing.
 
 Apply this expertise to ensure features align with how dynasty managers actually think and operate.
 

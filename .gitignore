@@ -26,3 +26,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 package-versions.json
+
+# testing
+coverage/
+
+# python
+__pycache__/
+*.pyc
