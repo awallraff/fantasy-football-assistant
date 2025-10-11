@@ -7,6 +7,7 @@
     "dev": "next dev",
     "dev:unsafe": "next dev",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "precheck": "npm run lint",
     "start": "next start",
     "test:integration": "jest --testPathPatterns=\"integration\"",
