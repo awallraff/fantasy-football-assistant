@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NFL Player Stats Cache
+// Stores weekly and seasonal player statistics from nflreadpy
+model NFLPlayerStats {
+  id        String   @id @default(cuid())
+  playerId  String
+  playerName String
+  position  String
+  team      String?
+  season    Int
+  week      Int?     // null for seasonal stats
+
+  // Passing stats
+  passingYards      Float?
+  passingTDs        Int?
+  passingINTs       Int?
+  passingAttempts   Int?
+  passingCompletions Int?
+
+  // Rushing stats
+  rushingYards      Float?
+  rushingTDs        Int?
+  rushingAttempts   Int?
+
+  // Receiving stats
+  receivingYards    Float?
+  receivingTDs      Int?
+  receptions        Int?
+  targets           Int?
+
+  // Fantasy points
+  fantasyPoints     Float?
+  pprPoints         Float?
+  halfPprPoints     Float?
+
+  // Cache metadata
+  cachedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@unique([playerId, season, week])
+  @@index([playerId, season])
+  @@index([cachedAt])
+  @@index([expiresAt])
+}
+
+// NFL Team Stats Cache
+// Stores team-level statistics and metrics
+model NFLTeamStats {
+  id        String   @id @default(cuid())
+  team      String
+  season    Int
+  week      Int?     // null for seasonal stats
+
+  // Offensive stats
+  pointsScored      Float?
+  totalYards        Float?
+  passingYards      Float?
+  rushingYards      Float?
+  turnovers         Int?
+
+  // Defensive stats
+  pointsAllowed     Float?
+  yardsAllowed      Float?
+  sacks             Int?
+  interceptions     Int?
+  fumblesRecovered  Int?
+
+  // Cache metadata
+  cachedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@unique([team, season, week])
+  @@index([team, season])
+  @@index([cachedAt])
+  @@index([expiresAt])
+}
+
+// Cache Invalidation Log
+// Tracks cache invalidation events for monitoring
+model CacheInvalidation {
+  id          String   @id @default(cuid())
+  cacheType   String   // "player" or "team"
+  reason      String   // "expired", "manual", "data_update"
+  recordCount Int
+  timestamp   DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([cacheType])
+}
+
+// API Call Log
+// Tracks Python script calls for monitoring and debugging
+model APICallLog {
+  id            String   @id @default(cuid())
+  endpoint      String   // e.g., "nflreadpy.weekly_stats"
+  parameters    Json     // Store request parameters
+  success       Boolean
+  responseTime  Int      // milliseconds
+  errorMessage  String?
+  timestamp     DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([endpoint])
+  @@index([success])
+}

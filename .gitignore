@@ -33,3 +33,5 @@ coverage/
 # python
 __pycache__/
 *.pyc
+
+/lib/generated/prisma
