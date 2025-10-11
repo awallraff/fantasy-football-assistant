@@ -11,7 +11,8 @@
     "precheck": "npm run lint",
     "start": "next start",
     "test:integration": "jest --testPathPatterns=\"integration\"",
-    "test:unit": "jest"
+    "test:unit": "jest",
+    "warm-cache": "tsx scripts/warm-cache.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -82,6 +83,7 @@
     "prisma": "^6.17.1",
     "tailwindcss": "^4.1.9",
     "ts-jest": "^29.4.1",
+    "tsx": "^4.20.6",
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   },
