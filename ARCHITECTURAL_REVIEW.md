@@ -52,9 +52,16 @@ The project uses Tailwind CSS for styling, which is a good choice for utility-fi
 
 Based on this review, here is a summary of the recommended action items for the development team:
 
-1.  **[COMPLETED]** Refactor `app/dashboard/page.tsx`:** Extract state management logic into custom hooks.
-2.  **Decompose Large Components:** Break down `app/dashboard/page.tsx` and `components/enhanced-team-roster.tsx` into smaller components.
-3.  **Create a `NoLeaguesConnected` Component:** Create a reusable component to handle the "No Leagues Connected" state.
-4.  **Improve API Error Handling:** Implement a retry mechanism with exponential backoff in `lib/sleeper-api.ts`.
-5.  **Enhance Type Safety:** Replace `any` types with specific types and group component props into objects.
-6.  **Refactor Inline Styles:** Extract inline styles into reusable CSS classes.
+### ✅ Completed
+1.  **[COMPLETED]** Refactor `app/dashboard/page.tsx` - Extract state management logic into custom hooks.
+
+### 🔄 In Progress / Planned
+2.  **Decompose Large Components:** Break down `app/dashboard/page.tsx` and `components/enhanced-team-roster.tsx` into smaller components. (Priority: P1, Effort: ~15 hours)
+3.  **Create a `NoLeaguesConnected` Component:** Create a reusable component to handle the "No Leagues Connected" state. (Priority: P1, Effort: ~2 hours)
+4.  **Improve API Error Handling:** Implement a retry mechanism with exponential backoff in `lib/sleeper-api.ts`. (Priority: P2, Effort: ~8 hours)
+5.  **Enhance Type Safety:** Replace `any` types with specific types and group component props into objects. (Priority: P2, Effort: ~10 hours)
+6.  **Refactor Inline Styles:** Extract inline styles into reusable CSS classes. (Priority: P3, Effort: ~6 hours)
+
+**Total Remaining Effort:** ~41 hours (~1.5 sprints)
+
+See `PROJECT_STATUS.md` for the comprehensive current status and prioritized roadmap.
