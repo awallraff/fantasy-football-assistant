@@ -68,7 +68,10 @@
       "Bash(pnpm add:*)",
       "Bash(npx prisma:*)",
       "Bash(pkill:*)",
-      "mcp__chrome-devtools__select_page"
+      "mcp__chrome-devtools__select_page",
+      "Bash(git mv:*)",
+      "mcp__discord__send-message",
+      "mcp__discord__read-messages"
     ],
     "deny": [],
     "ask": [],
