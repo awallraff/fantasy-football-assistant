@@ -596,7 +596,7 @@ export default function RankingsPage() {
   // Show loading state during hydration
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-muted rounded w-1/4"></div>
@@ -613,12 +613,12 @@ export default function RankingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Player Rankings</h1>
-            <p className="text-muted-foreground">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
+            <h1 className="text-ios-title-1 font-bold text-foreground">Player Rankings</h1>
+            <p className="text-ios-body text-text-secondary">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={refreshRankings} disabled={isLoading} className="min-h-[44px]">

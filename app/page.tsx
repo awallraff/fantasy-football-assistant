@@ -28,12 +28,12 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Fantasy Football Analytics</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h1 className="text-ios-large-title font-bold text-foreground mb-4">Fantasy Football Analytics</h1>
+          <p className="text-ios-headline text-text-secondary max-w-2xl mx-auto">
             Deep analytics for your Sleeper fantasy football teams. Import rankings, analyze trades, and get AI-powered
             recommendations.
           </p>
@@ -49,32 +49,32 @@ export default function HomePage() {
           <Card className="text-center">
             <CardContent className="pt-6">
               <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Deep Analytics</h3>
-              <p className="text-sm text-muted-foreground">Advanced metrics and performance insights for your teams</p>
+              <h3 className="text-ios-headline font-semibold mb-2">Deep Analytics</h3>
+              <p className="text-ios-subheadline text-text-secondary">Advanced metrics and performance insights for your teams</p>
             </CardContent>
           </Card>
 
           <Card className="text-center">
             <CardContent className="pt-6">
               <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Trade Analysis</h3>
-              <p className="text-sm text-muted-foreground">Track opponent trade patterns and market trends</p>
+              <h3 className="text-ios-headline font-semibold mb-2">Trade Analysis</h3>
+              <p className="text-ios-subheadline text-text-secondary">Track opponent trade patterns and market trends</p>
             </CardContent>
           </Card>
 
           <Card className="text-center">
             <CardContent className="pt-6">
               <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Custom Rankings</h3>
-              <p className="text-sm text-muted-foreground">Import and manage your own player ranking systems</p>
+              <h3 className="text-ios-headline font-semibold mb-2">Custom Rankings</h3>
+              <p className="text-ios-subheadline text-text-secondary">Import and manage your own player ranking systems</p>
             </CardContent>
           </Card>
 
           <Card className="text-center">
             <CardContent className="pt-6">
               <Trophy className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">AI Recommendations</h3>
-              <p className="text-sm text-muted-foreground">Smart trade and lineup suggestions based on league rules</p>
+              <h3 className="text-ios-headline font-semibold mb-2">AI Recommendations</h3>
+              <p className="text-ios-subheadline text-text-secondary">Smart trade and lineup suggestions based on league rules</p>
             </CardContent>
           </Card>
         </div>
@@ -86,10 +86,10 @@ export default function HomePage() {
             <CardDescription>Comprehensive fantasy football analytics powered by Sleeper API</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="grid md:grid-cols-2 gap-4 text-ios-body">
               <div className="space-y-2">
-                <h4 className="font-medium">League Management</h4>
-                <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+                <h4 className="text-ios-headline font-semibold">League Management</h4>
+                <ul className="space-y-1 text-text-secondary">
                   <li>• Multi-league dashboard</li>
                   <li>• Real-time roster tracking</li>
                   <li>• Matchup analysis</li>
@@ -97,8 +97,8 @@ export default function HomePage() {
                 </ul>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium">Advanced Analytics</h4>
-                <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+                <h4 className="text-ios-headline font-semibold">Advanced Analytics</h4>
+                <ul className="space-y-1 text-text-secondary">
                   <li>• Player performance trends</li>
                   <li>• Trade value calculations</li>
                   <li>• Lineup optimization</li>

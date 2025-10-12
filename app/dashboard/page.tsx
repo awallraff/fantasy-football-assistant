@@ -136,7 +136,7 @@ export default function DashboardPage() {
 
   if (selectedLeague) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <LeagueHeader
             selectedLeague={selectedLeague}
@@ -231,14 +231,14 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-ios-title-1 font-bold text-foreground mb-2">
             Welcome back, {user.display_name || user.username}!
           </h1>
-          <p className="text-muted-foreground">Select a league to view detailed analytics and insights</p>
+          <p className="text-ios-body text-text-secondary">Select a league to view detailed analytics and insights</p>
 
           <YearSelector
             selectedYear={selectedYear}

@@ -3,7 +3,8 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "@/app/globals.css"
-import { Navigation } from "@/components/navigation"
+import { IOSBottomTabBar } from "@/components/ios-bottom-tab-bar"
+import { IOSDesktopNav } from "@/components/ios-desktop-nav"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { PlayerDataProvider } from "@/contexts/player-data-context"
@@ -33,12 +34,23 @@ html {
 }
         `}</style>
       </head>
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <body className="bg-background">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <PlayerDataProvider>
             <ProjectionsProvider>
-              <Navigation />
-              <main>{children}</main>
+              {/* Desktop Sidebar Navigation */}
+              <IOSDesktopNav />
+
+              {/* Main Content Area */}
+              <main className="md:ml-64 pb-20 md:pb-6">
+                <div className="min-h-screen">
+                  {children}
+                </div>
+              </main>
+
+              {/* Mobile Bottom Tab Bar */}
+              <IOSBottomTabBar />
+
               <Toaster />
             </ProjectionsProvider>
           </PlayerDataProvider>

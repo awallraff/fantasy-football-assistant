@@ -75,7 +75,9 @@
       "mcp__chrome-devtools__resize_page",
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__wait_for",
-      "mcp__chrome-devtools__evaluate_script"
+      "mcp__chrome-devtools__evaluate_script",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:www.radix-ui.com)"
     ],
     "deny": [],
     "ask": [],

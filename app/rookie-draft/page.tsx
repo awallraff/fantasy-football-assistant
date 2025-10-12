@@ -46,9 +46,9 @@ export default function RookieDraftPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold">Rookie Draft</h1>
+            <h1 className="text-ios-title-1 font-bold">Rookie Draft</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-ios-body text-text-secondary">
             Dynasty rookie rankings and draft management for the 2025 class
           </p>
         </div>
