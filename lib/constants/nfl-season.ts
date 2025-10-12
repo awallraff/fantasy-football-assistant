@@ -21,9 +21,10 @@
  * export const LATEST_AVAILABLE_SEASON = 2026
  *
  * @changelog
+ * - 2025-10-12: Reverted to 2024 (2025 season data not yet available in nfl_data_py)
  * - 2025-10-10: Updated to 2025 (migrated to nflreadpy library)
  */
-export const LATEST_AVAILABLE_SEASON = 2025
+export const LATEST_AVAILABLE_SEASON = 2024
 
 /**
  * Get the default season year for UI components

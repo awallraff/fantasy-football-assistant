@@ -167,16 +167,16 @@ export default function RecommendationsPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Recommendations</h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">AI Recommendations</h1>
+            <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
               Smart suggestions for trades, lineups, and strategic decisions
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <Select value={selectedSeason} onValueChange={handleSeasonChange}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
                 <SelectValue placeholder="Season" />
               </SelectTrigger>
               <SelectContent>
@@ -191,7 +191,7 @@ export default function RecommendationsPage() {
                 setSelectedLeague(league || null)
               }}
             >
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64 min-h-[44px]">
                 <SelectValue placeholder="Select League" />
               </SelectTrigger>
               <SelectContent>
@@ -202,14 +202,14 @@ export default function RecommendationsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="min-h-[44px]">
               <a href="/dashboard">Back to Dashboard</a>
             </Button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
@@ -261,12 +261,12 @@ export default function RecommendationsPage() {
 
         {selectedLeague && (
           <Tabs defaultValue="trades" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="trades">Trade Recs</TabsTrigger>
-              <TabsTrigger value="lineup">Lineup</TabsTrigger>
-              <TabsTrigger value="waiver">Waiver Wire</TabsTrigger>
-              <TabsTrigger value="startsit">Start/Sit</TabsTrigger>
-              <TabsTrigger value="insights">Insights</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[44px]">
+              <TabsTrigger value="trades" className="min-h-[44px]">Trade Recs</TabsTrigger>
+              <TabsTrigger value="lineup" className="min-h-[44px]">Lineup</TabsTrigger>
+              <TabsTrigger value="waiver" className="min-h-[44px]">Waiver Wire</TabsTrigger>
+              <TabsTrigger value="startsit" className="min-h-[44px]">Start/Sit</TabsTrigger>
+              <TabsTrigger value="insights" className="min-h-[44px]">Insights</TabsTrigger>
             </TabsList>
 
             <TabsContent value="trades">

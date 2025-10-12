@@ -104,14 +104,14 @@ export default function TradesPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Trade Analysis</h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Trade Analysis</h1>
+            <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
               Analyze trade patterns, evaluate proposals, and track market trends
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <Select
               value={selectedLeague?.league_id || ""}
               onValueChange={(value) => {
@@ -119,7 +119,7 @@ export default function TradesPage() {
                 setSelectedLeague(league || null)
               }}
             >
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64 min-h-[44px]">
                 <SelectValue placeholder="Select League" />
               </SelectTrigger>
               <SelectContent>
@@ -130,14 +130,14 @@ export default function TradesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="min-h-[44px]">
               <a href="/dashboard">Back to Dashboard</a>
             </Button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
@@ -189,11 +189,11 @@ export default function TradesPage() {
 
         {selectedLeague && (
           <Tabs defaultValue="history" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="history">Trade History</TabsTrigger>
-              <TabsTrigger value="evaluator">Trade Evaluator</TabsTrigger>
-              <TabsTrigger value="trends">Market Trends</TabsTrigger>
-              <TabsTrigger value="opponents">Opponent Analysis</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 min-h-[44px]">
+              <TabsTrigger value="history" className="min-h-[44px]">Trade History</TabsTrigger>
+              <TabsTrigger value="evaluator" className="min-h-[44px]">Trade Evaluator</TabsTrigger>
+              <TabsTrigger value="trends" className="min-h-[44px]">Market Trends</TabsTrigger>
+              <TabsTrigger value="opponents" className="min-h-[44px]">Opponent Analysis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="history">
