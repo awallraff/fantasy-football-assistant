@@ -29,21 +29,22 @@ export function LeagueHeader({
   onRefresh,
 }: LeagueHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-8">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBackToLeagues} className="min-h-[44px]">
+    <div className="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center gap-3 md:gap-4">
+        <Button variant="outline" onClick={onBackToLeagues} className="min-h-[44px] flex-shrink-0">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Leagues
+          <span className="hidden sm:inline">Back to Leagues</span>
+          <span className="sm:hidden">Back</span>
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{selectedLeague.name}</h1>
-          <p className="text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">{selectedLeague.name}</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">
             {selectedLeague.total_rosters} teams • {selectedLeague.season} season
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <LeagueYearSelector
           selectedYear={selectedYear}
           selectedLeagueId={selectedLeague.league_id}
@@ -53,9 +54,9 @@ export function LeagueHeader({
           onLeagueChange={onLeagueChange}
         />
 
-        <div className="h-6 w-px bg-border"></div>
+        <div className="hidden sm:block h-6 w-px bg-border"></div>
 
-        <Button variant="outline" onClick={onRefresh} disabled={loading} className="min-h-[44px]">
+        <Button variant="outline" onClick={onRefresh} disabled={loading} className="min-h-[44px] w-full sm:w-auto">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>

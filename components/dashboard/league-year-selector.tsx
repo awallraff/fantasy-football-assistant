@@ -21,9 +21,9 @@ export function LeagueYearSelector({
   onLeagueChange,
 }: LeagueYearSelectorProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full sm:w-auto">
       <Select value={selectedYear} onValueChange={onYearChange}>
-        <SelectTrigger className="w-20 min-h-[44px]">
+        <SelectTrigger className="w-20 min-h-[44px] flex-shrink-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -36,7 +36,7 @@ export function LeagueYearSelector({
       </Select>
 
       <Select value={selectedLeagueId} onValueChange={onLeagueChange}>
-        <SelectTrigger className="w-64 min-h-[44px]">
+        <SelectTrigger className="flex-1 sm:w-64 min-h-[44px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
