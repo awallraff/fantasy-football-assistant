@@ -408,134 +408,186 @@ export default function RankingsPage() {
 
   const renderRankingsTable = (rankings: SimplePlayerRanking[]) => {
     const sortedData = sortTableData(rankings);
-    
+
     return (
-      <div className="border rounded-md overflow-hidden">
-        <div className="overflow-x-auto max-h-96">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b sticky top-0">
-              <tr>
-                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                    onClick={() => handleTableSort("rank")}>
-                  <div className="flex items-center gap-1">
-                    Rank
-                    {tableSortField === "rank" ? (
-                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
-                    )}
-                  </div>
-                </th>
-                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                    onClick={() => handleTableSort("playerName")}>
-                  <div className="flex items-center gap-1">
-                    Player
-                    {tableSortField === "playerName" ? (
-                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
-                    )}
-                  </div>
-                </th>
-                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                    onClick={() => handleTableSort("position")}>
-                  <div className="flex items-center gap-1">
-                    Position
-                    {tableSortField === "position" ? (
-                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
-                    )}
-                  </div>
-                </th>
-                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                    onClick={() => handleTableSort("team")}>
-                  <div className="flex items-center gap-1">
-                    Team
-                    {tableSortField === "team" ? (
-                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
-                    )}
-                  </div>
-                </th>
-                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                    onClick={() => handleTableSort("projectedPoints")}>
-                  <div className="flex items-center gap-1">
-                    Projected Points
-                    {tableSortField === "projectedPoints" ? (
-                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
-                    )}
-                  </div>
-                </th>
-                <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                    onClick={() => handleTableSort("tier")}>
-                  <div className="flex items-center gap-1">
-                    Tier
-                    {tableSortField === "tier" ? (
-                      tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-                    ) : (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
-                    )}
-                  </div>
-                </th>
-                <th className="text-left p-2 font-medium">
-                  Status
-                </th>
-                <th className="text-left p-2 font-medium">
-                  Notes
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedData.map((player) => (
-                <tr key={player.playerId} 
-                    className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => setSelectedPlayerForModal(player)}>
-                  <td className="p-2">
-                    <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
+      <>
+        {/* Mobile: Card layout */}
+        <div className="md:hidden space-y-2">
+          {sortedData.map((player) => (
+            <Card
+              key={player.playerId}
+              className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+              onClick={() => setSelectedPlayerForModal(player)}
+            >
+              <div className="space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
                       {player.rank}
                     </div>
-                  </td>
-                  <td className="p-2 font-medium">
-                    {player.playerName}
-                  </td>
-                  <td className="p-2">
-                    <Badge variant="outline" className="text-xs">
-                      {player.position}
-                    </Badge>
-                  </td>
-                  <td className="p-2">
-                    {player.team}
-                  </td>
-                  <td className="p-2 font-medium">
-                    {player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}
-                  </td>
-                  <td className="p-2">
-                    {player.tier ? `Tier ${player.tier}` : '-'}
-                  </td>
-                  <td className="p-2">
+                    <div>
+                      <div className="font-semibold">{player.playerName}</div>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">{player.position}</Badge>
+                        <span className="text-sm text-muted-foreground">{player.team}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {player.tier && (
+                    <Badge variant="secondary" className="text-xs">Tier {player.tier}</Badge>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Projected: </span>
+                    <span className="font-medium">{player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}</span>
+                  </div>
+                  <div>
                     {player.injuryStatus && player.injuryStatus !== "Healthy" ? (
-                      <Badge variant="destructive" className="text-xs">
-                        {player.injuryStatus}
-                      </Badge>
+                      <Badge variant="destructive" className="text-xs">{player.injuryStatus}</Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        Healthy
-                      </Badge>
+                      <Badge variant="secondary" className="text-xs">Healthy</Badge>
                     )}
-                  </td>
-                  <td className="p-2 text-xs text-muted-foreground">
-                    {player.notes ? player.notes.slice(0, 50) + (player.notes.length > 50 ? '...' : '') : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+                {player.notes && (
+                  <div className="text-xs text-muted-foreground border-t pt-2">
+                    {player.notes}
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
-      </div>
+
+        {/* Desktop: Table layout */}
+        <div className="hidden md:block border rounded-md overflow-hidden">
+          <div className="overflow-x-auto max-h-96">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 border-b sticky top-0">
+                <tr>
+                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => handleTableSort("rank")}>
+                    <div className="flex items-center gap-1">
+                      Rank
+                      {tableSortField === "rank" ? (
+                        tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => handleTableSort("playerName")}>
+                    <div className="flex items-center gap-1">
+                      Player
+                      {tableSortField === "playerName" ? (
+                        tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => handleTableSort("position")}>
+                    <div className="flex items-center gap-1">
+                      Position
+                      {tableSortField === "position" ? (
+                        tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => handleTableSort("team")}>
+                    <div className="flex items-center gap-1">
+                      Team
+                      {tableSortField === "team" ? (
+                        tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => handleTableSort("projectedPoints")}>
+                    <div className="flex items-center gap-1">
+                      Projected Points
+                      {tableSortField === "projectedPoints" ? (
+                        tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => handleTableSort("tier")}>
+                    <div className="flex items-center gap-1">
+                      Tier
+                      {tableSortField === "tier" ? (
+                        tableSortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-40" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-2 font-medium">
+                    Status
+                  </th>
+                  <th className="text-left p-2 font-medium">
+                    Notes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedData.map((player) => (
+                  <tr key={player.playerId}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => setSelectedPlayerForModal(player)}>
+                    <td className="p-2">
+                      <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
+                        {player.rank}
+                      </div>
+                    </td>
+                    <td className="p-2 font-medium">
+                      {player.playerName}
+                    </td>
+                    <td className="p-2">
+                      <Badge variant="outline" className="text-xs">
+                        {player.position}
+                      </Badge>
+                    </td>
+                    <td className="p-2">
+                      {player.team}
+                    </td>
+                    <td className="p-2 font-medium">
+                      {player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}
+                    </td>
+                    <td className="p-2">
+                      {player.tier ? `Tier ${player.tier}` : '-'}
+                    </td>
+                    <td className="p-2">
+                      {player.injuryStatus && player.injuryStatus !== "Healthy" ? (
+                        <Badge variant="destructive" className="text-xs">
+                          {player.injuryStatus}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Healthy
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="p-2 text-xs text-muted-foreground">
+                      {player.notes ? player.notes.slice(0, 50) + (player.notes.length > 50 ? '...' : '') : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>
     );
   };
 
@@ -569,7 +621,7 @@ export default function RankingsPage() {
             <p className="text-muted-foreground">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={refreshRankings} disabled={isLoading}>
+            <Button onClick={refreshRankings} disabled={isLoading} className="min-h-[44px]">
               <TrendingUp className="h-4 w-4 mr-2" />
               {isLoading ? "Loading..." : "Refresh Rankings"}
             </Button>
@@ -582,10 +634,11 @@ export default function RankingsPage() {
                 debugLog('All systems count:', getAllSystems().length)
                 debugLog('================')
               }}
+              className="min-h-[44px]"
             >
               Debug Info
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="min-h-[44px]">
               <a href="/dashboard">Back to Dashboard</a>
             </Button>
           </div>
@@ -666,7 +719,7 @@ export default function RankingsPage() {
             <CardTitle>Ranking Filters & Sorting</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Ranking Source</label>
                 <Select value={selectedSource} onValueChange={(value: RankingSource) => {
@@ -685,7 +738,7 @@ export default function RankingsPage() {
                     setSelectedSystem(null);
                   }
                 }}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-[44px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -699,7 +752,7 @@ export default function RankingsPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Position</label>
                 <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-[44px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -722,7 +775,7 @@ export default function RankingsPage() {
                     setSelectedSystem(system || null)
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-[44px]">
                     <SelectValue placeholder={getAllSystems().length > 0 ? "Select system" : "No systems available"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -734,7 +787,7 @@ export default function RankingsPage() {
                       ))
                     ) : (
                       <SelectItem value="none" disabled>
-                        {selectedSource === "ai" ? "Generate AI rankings first" : 
+                        {selectedSource === "ai" ? "Generate AI rankings first" :
                          selectedSource === "user" ? "Import user rankings first" :
                          "No rankings available"}
                       </SelectItem>
@@ -750,7 +803,7 @@ export default function RankingsPage() {
                   onValueChange={(value: "season" | "weekly") => handleProjectionTypeChange(value)}
                   disabled={selectedSource !== "ai" || isLoading}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-[44px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -764,7 +817,7 @@ export default function RankingsPage() {
         </Card>
 
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -826,7 +879,7 @@ export default function RankingsPage() {
             </CardHeader>
             <CardContent>
               {/* Summary Stats */}
-              <div className="grid md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold">{filteredRankings.length}</div>
@@ -905,12 +958,12 @@ export default function RankingsPage() {
         )}
 
         <Tabs defaultValue="import" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="import">Import</TabsTrigger>
-            <TabsTrigger value="manage">Manage</TabsTrigger>
-            <TabsTrigger value="search">Search</TabsTrigger>
-            <TabsTrigger value="compare">Compare</TabsTrigger>
-            <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[44px]">
+            <TabsTrigger value="import" className="min-h-[44px]">Import</TabsTrigger>
+            <TabsTrigger value="manage" className="min-h-[44px]">Manage</TabsTrigger>
+            <TabsTrigger value="search" className="min-h-[44px]">Search</TabsTrigger>
+            <TabsTrigger value="compare" className="min-h-[44px]">Compare</TabsTrigger>
+            <TabsTrigger value="api-keys" className="min-h-[44px]">API Keys</TabsTrigger>
           </TabsList>
 
           <TabsContent value="import">
