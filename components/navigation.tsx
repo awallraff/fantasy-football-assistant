@@ -70,27 +70,29 @@ export function Navigation() {
         
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-gray-200 dark:border-gray-800">
-            <div className="pt-2 pb-3 space-y-1">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center px-3 py-2 text-base font-medium gap-3 transition-colors",
-                      pathname === item.href
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-500"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200",
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                )
-              })}
+          <div className="sm:hidden fixed inset-0 z-40 bg-white dark:bg-gray-900">
+            <div className="pt-16">
+              <div className="pt-2 pb-3 space-y-1">
+                {navigation.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center px-3 py-3 text-base font-medium gap-3 transition-colors",
+                        pathname === item.href
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-500"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200",
+                      )}
+                    >
+                      <Icon className="h-6 w-6" />
+                      {item.name}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}

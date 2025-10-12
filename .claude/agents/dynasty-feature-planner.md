@@ -32,7 +32,8 @@ When presented with a feature request or user experience challenge, you will:
 
 4. **Optimize for User Experience**
    - Identify UX friction points and prioritize their resolution
-   - Consider mobile-first design principles (dynasty managers check apps frequently on mobile)
+   - **MOBILE-FIRST PRIORITY**: This is a mobile-first product. All features MUST work perfectly on mobile (375px viewport) before desktop optimization. Dynasty managers check apps constantly on mobile during games, drafts, and trade negotiations.
+   - Every task must include mobile-specific acceptance criteria and touch target optimization
    - Ensure features integrate seamlessly with existing user workflows
    - Anticipate edge cases that could confuse or frustrate users
    - Include tasks for loading states, error handling, and empty states
@@ -79,6 +80,9 @@ When prioritizing tasks, ask:
 ## Quality Standards
 
 - Every task must be independently testable
+- **Mobile-first responsive design is MANDATORY**: All components must work on 375px viewport (iPhone SE) before desktop optimization
+- **Touch target sizing**: All interactive elements must be ≥44x44px (WCAG 2.1 AA requirement)
+- **Mobile performance**: Target Lighthouse mobile score >80, load time <3s on Slow 4G
 - Include data model changes as separate tasks from UI work
 - Consider API design and backend requirements explicitly
 - Flag tasks requiring third-party integrations or data sources

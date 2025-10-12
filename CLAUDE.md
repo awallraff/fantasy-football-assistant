@@ -147,6 +147,33 @@ When modifying NFL data services, ensure Python environment has required depende
 3. **Windows Development:** Project is developed on Windows (uses `child_process` for Python)
 4. **No Playwright:** Playwright was intentionally removed. Use Jest for testing.
 5. **Legacy Peer Deps:** Run `npm install --legacy-peer-deps` if dependency conflicts occur
+6. **Mobile-First Design:** This is a MOBILE-FIRST product. All features MUST work perfectly on 375px viewport (iPhone SE) before desktop optimization. Every component must have mobile-specific responsive design and touch target sizing ≥44px.
+
+## Bark Notification Protocol
+
+**CRITICAL:** You MUST send a Bark push notification to the user via `mcp__bark__send_bark_notification` in these scenarios:
+
+1. **Before asking user for input or a decision** - Always notify before prompting for user response
+2. **Task or phase completion** - Notify when major work is done and needs review
+3. **Blocking issues** - Notify immediately when encountering errors requiring user intervention
+4. **Testing or verification needed** - Notify when user action is required to test/verify changes
+5. **Long-running operations finish** - Notify when background work completes
+
+**Notification Levels:**
+- `critical` - Errors, blockers, urgent decisions needed
+- `timeSensitive` - Task completion, important updates, decisions needed
+- `active` - General progress updates, non-urgent notifications
+
+**Example:**
+```typescript
+mcp__bark__send_bark_notification({
+  title: "Sprint 3 - Decision Needed",
+  body: "Mobile audit complete. Ready to begin fixes. Review results in Claude Code.",
+  level: "timeSensitive"
+})
+```
+
+**Never** ask the user a question or request input without sending a Bark notification first. The user may be away from their desk and needs to be alerted.
 
 ## Common Issues
 

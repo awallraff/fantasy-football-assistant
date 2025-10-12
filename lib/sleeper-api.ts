@@ -1,5 +1,16 @@
 // Sleeper API client for fantasy football data
 import { fetchWithRetry, type RetryOptions } from "./api-retry"
+import {
+  validateSleeperUser,
+  validateSleeperLeague,
+  validateSleeperLeagues,
+  validateSleeperRosters,
+  validateSleeperUsers,
+  validateSleeperAllPlayers,
+  validateSleeperTransactions,
+  validateSleeperMatchups,
+  logValidationError,
+} from "./schemas/sleeper-schemas"
 
 const SLEEPER_BASE_URL = "https://api.sleeper.app/v1"
 
@@ -205,7 +216,16 @@ class SleeperAPI {
     try {
       const response = await this.fetchWithTimeout(`${this.baseUrl}/user/${username}`, options)
       if (!response.ok) return null
-      return await response.json()
+
+      const data = await response.json()
+      const validationResult = validateSleeperUser(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getUser(${username})`)
+        return null
+      }
+
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching user:", error)
       return null
@@ -216,7 +236,16 @@ class SleeperAPI {
     try {
       const response = await this.fetchWithTimeout(`${this.baseUrl}/user/${userId}`, options)
       if (!response.ok) return null
-      return await response.json()
+
+      const data = await response.json()
+      const validationResult = validateSleeperUser(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getUserById(${userId})`)
+        return null
+      }
+
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching user by ID:", error)
       return null
@@ -247,8 +276,16 @@ class SleeperAPI {
       }
 
       const leagues = await response.json()
-      console.log(`Successfully fetched ${leagues.length} leagues for ${season} season`)
-      return leagues
+      const validationResult = validateSleeperLeagues(leagues)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getUserLeagues(${userId}, ${season})`)
+        console.warn(`Schema validation failed for getUserLeagues, returning empty array`)
+        return []
+      }
+
+      console.log(`Successfully fetched ${validationResult.data.length} leagues for ${season} season`)
+      return validationResult.data
     } catch (error) {
       console.error(`Error fetching user leagues for ${season}:`, error)
       if (season === "2025") {
@@ -263,7 +300,16 @@ class SleeperAPI {
     try {
       const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}`)
       if (!response.ok) return null
-      return await response.json()
+
+      const data = await response.json()
+      const validationResult = validateSleeperLeague(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getLeague(${leagueId})`)
+        return null
+      }
+
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching league:", error)
       return null
@@ -276,7 +322,15 @@ class SleeperAPI {
         throw new Error("Invalid league ID")
       }
       const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/rosters`, options)
-      return await response.json()
+      const data = await response.json()
+      const validationResult = validateSleeperRosters(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getLeagueRosters(${leagueId})`)
+        return []
+      }
+
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching league rosters:", error)
       return []
@@ -289,7 +343,15 @@ class SleeperAPI {
         throw new Error("Invalid league ID")
       }
       const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/users`, options)
-      return await response.json()
+      const data = await response.json()
+      const validationResult = validateSleeperUsers(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getLeagueUsers(${leagueId})`)
+        return []
+      }
+
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching league users:", error)
       return []
@@ -300,7 +362,16 @@ class SleeperAPI {
     try {
       const response = await this.fetchWithTimeout(`${this.baseUrl}/league/${leagueId}/matchups/${week}`)
       if (!response.ok) return []
-      return await response.json()
+
+      const data = await response.json()
+      const validationResult = validateSleeperMatchups(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getMatchups(${leagueId}, ${week})`)
+        return []
+      }
+
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching matchups:", error)
       return []
@@ -340,8 +411,15 @@ class SleeperAPI {
         return []
       }
 
-      console.log(`Successfully fetched ${transactions.length} transactions`)
-      return transactions
+      const validationResult = validateSleeperTransactions(transactions)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getTransactions(${leagueId}, ${week})`)
+        return []
+      }
+
+      console.log(`Successfully fetched ${validationResult.data.length} transactions`)
+      return validationResult.data
     } catch (error) {
       console.warn(
         "Error fetching transactions (returning empty array):",
@@ -379,14 +457,29 @@ class SleeperAPI {
       }
 
       const data = await response.json()
+      const validationResult = validateSleeperAllPlayers(data)
+
+      if (!validationResult.success) {
+        logValidationError(validationResult.error, `Sleeper API - getAllPlayers(${sport})`)
+        console.warn("Schema validation failed for getAllPlayers, using fallback")
+
+        const cached = this.playersCache[sport]
+        if (cached) {
+          console.log("Using cached players data as fallback")
+          return cached.data
+        }
+
+        console.log("Using mock players data as fallback")
+        return this.getMockPlayersData()
+      }
 
       this.playersCache[sport] = {
-        data,
+        data: validationResult.data,
         sessionId: this.currentSessionId,
       }
 
-      console.log(`Successfully loaded ${Object.keys(data).length} players for session`)
-      return data
+      console.log(`Successfully loaded ${Object.keys(validationResult.data).length} players for session`)
+      return validationResult.data
     } catch (error) {
       console.error("Error fetching all players:", error)
 
@@ -581,9 +674,17 @@ class SleeperAPI {
         const response = await this.fetchWithTimeout(`${this.baseUrl}/user/${userId}/leagues/${sport}/${season}`)
 
         if (response.ok) {
-          const leagues = await response.json()
-          console.log(`Found ${leagues.length} leagues in ${season}`)
-          results.push({ season, leagues })
+          const data = await response.json()
+          const validationResult = validateSleeperLeagues(data)
+
+          if (!validationResult.success) {
+            logValidationError(validationResult.error, `Sleeper API - getUserLeaguesMultiSeason(${userId}, ${season})`)
+            console.warn(`Schema validation failed for ${season} season, returning empty`)
+            results.push({ season, leagues: [] })
+          } else {
+            console.log(`Found ${validationResult.data.length} leagues in ${season}`)
+            results.push({ season, leagues: validationResult.data })
+          }
         } else {
           console.log(`No data available for ${season} season (status: ${response.status})`)
           results.push({ season, leagues: [] })

@@ -60,7 +60,15 @@
       "Bash(git show:*)",
       "WebFetch(domain:nflreadpy.nflverse.com)",
       "Bash(timeout:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "mcp__chrome-devtools__fill",
+      "WebFetch(domain:lobehub.com)",
+      "mcp__bark__send_bark_notification",
+      "mcp__chrome-devtools__new_page",
+      "Bash(pnpm add:*)",
+      "Bash(npx prisma:*)",
+      "Bash(pkill:*)",
+      "mcp__chrome-devtools__select_page"
     ],
     "deny": [],
     "ask": [],
