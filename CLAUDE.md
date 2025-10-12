@@ -149,31 +149,172 @@ When modifying NFL data services, ensure Python environment has required depende
 5. **Legacy Peer Deps:** Run `npm install --legacy-peer-deps` if dependency conflicts occur
 6. **Mobile-First Design:** This is a MOBILE-FIRST product. All features MUST work perfectly on 375px viewport (iPhone SE) before desktop optimization. Every component must have mobile-specific responsive design and touch target sizing ≥44px.
 
-## Bark Notification Protocol
+## Communication Protocol: Bark + Discord
 
-**CRITICAL:** You MUST send a Bark push notification to the user via `mcp__bark__send_bark_notification` in these scenarios:
+**CRITICAL:** You MUST use BOTH Bark notifications AND Discord messages to communicate with the user when away from computer. This dual-notification system ensures the user never misses important updates.
 
-1. **Before asking user for input or a decision** - Always notify before prompting for user response
-2. **Task or phase completion** - Notify when major work is done and needs review
-3. **Blocking issues** - Notify immediately when encountering errors requiring user intervention
-4. **Testing or verification needed** - Notify when user action is required to test/verify changes
-5. **Long-running operations finish** - Notify when background work completes
+### When to Send Notifications (Bark + Discord)
 
-**Notification Levels:**
-- `critical` - Errors, blockers, urgent decisions needed
-- `timeSensitive` - Task completion, important updates, decisions needed
-- `active` - General progress updates, non-urgent notifications
+**ALWAYS send BOTH notifications in these scenarios:**
 
-**Example:**
+1. **Before asking for ANY user input or decision** - NEVER ask a question without notifying first
+2. **Task completion** - When any task, phase, or work item is completed
+3. **Blocking issues** - Errors, failures, or issues requiring user intervention
+4. **Testing/verification needed** - User action required to test or verify changes
+5. **Long-running operations finish** - Background work completes
+6. **Build/deployment status** - Success or failure of builds
+7. **Code review needed** - PRs ready, commits pushed, changes need review
+
+### Dual-Notification Pattern (REQUIRED)
+
+**Step 1: Send Bark notification**
 ```typescript
 mcp__bark__send_bark_notification({
-  title: "Sprint 3 - Decision Needed",
-  body: "Mobile audit complete. Ready to begin fixes. Review results in Claude Code.",
+  title: "Task Complete - Input Needed",
+  body: "Sprint 3 mobile fixes done. Need decision on navigation. Check Discord.",
   level: "timeSensitive"
 })
 ```
 
-**Never** ask the user a question or request input without sending a Bark notification first. The user may be away from their desk and needs to be alerted.
+**Step 2: Send Discord message (IMMEDIATELY AFTER)**
+```typescript
+mcp__discord__send-message({
+  channel: "general", // or user-specified channel
+  message: "✅ **Task Complete - Input Needed**\n\nSprint 3 Phase 2 mobile fixes are complete:\n- P0-009: Dashboard Teams tab fixed\n- P0-010: Rankings scroll fixed\n\n**Decision needed:** Should I proceed with P1-016 (mobile navigation) or move to next sprint?\n\nReply here or in Claude Code."
+})
+```
+
+**Step 3: Wait for user response via Discord**
+- After sending notifications, **actively check Discord for user responses**
+- When user replies in Discord, **acknowledge receipt immediately** with a confirmation message
+- Process user's Discord response and continue work
+- If user says to continue, confirm and proceed
+- If user provides input, confirm understanding and execute
+
+### Notification Levels
+
+**Bark Levels:**
+- `critical` - Errors, blockers, urgent decisions (red notification)
+- `timeSensitive` - Task completion, important updates, decisions needed (yellow notification)
+- `active` - General progress updates, non-urgent notifications (blue notification)
+
+**Discord Format:**
+- ✅ Success/completion
+- ❌ Error/failure
+- ⚠️ Warning/attention needed
+- 🔄 In progress
+- ❓ Question/decision needed
+- 📋 Information/summary
+
+### Discord Response Confirmation Protocol
+
+When user responds in Discord:
+
+1. **Read the Discord message** using `mcp__discord__read-messages`
+2. **Immediately confirm receipt** with a message like:
+   ```
+   ✅ Got it! [Brief summary of what you understood]
+
+   Proceeding with: [what you'll do next]
+   ```
+3. **Execute the work** as requested
+4. **Send completion notification** (Bark + Discord) when done
+
+### Examples
+
+**Example 1: Task Completion**
+```typescript
+// Bark
+mcp__bark__send_bark_notification({
+  title: "Teams Tab Fixed ✅",
+  body: "Dashboard Teams tab now populates on mobile. Ready for testing. Check Discord.",
+  level: "timeSensitive"
+})
+
+// Discord (immediately after)
+mcp__discord__send-message({
+  channel: "general",
+  message: "✅ **P0-009 Complete: Dashboard Teams Tab Fixed**\n\nThe Teams tab now correctly displays all team rosters on mobile (375px viewport).\n\n**Changes:**\n- Fixed sortedRosters filtering logic\n- Updated owner matching to handle edge cases\n- Added defensive null checks\n\n**Testing needed:** Please test on mobile device and confirm Teams tab shows all rosters.\n\nReply 'looks good' to proceed to P0-010 or 'issue' if problems found."
+})
+```
+
+**Example 2: Blocking Error**
+```typescript
+// Bark
+mcp__bark__send_bark_notification({
+  title: "Build Failed ❌",
+  body: "TypeScript errors in rankings page. Need guidance. Check Discord ASAP.",
+  level: "critical"
+})
+
+// Discord
+mcp__discord__send-message({
+  channel: "general",
+  message: "❌ **Build Failed - Urgent Input Needed**\n\n**Error:** TypeScript strict mode error in `app/rankings/page.tsx:465`\n\n**Issue:** `overflow-x-auto` class causing type error with Next.js 15\n\n**Options:**\n1. Change to `overflow-x-scroll` (standard CSS)\n2. Add type assertion\n3. Update Tailwind config\n\n**Recommendation:** Option 1 (safest)\n\nReply with option number or 'investigate further'"
+})
+```
+
+**Example 3: User Response Handling**
+```typescript
+// User sends in Discord: "looks good, continue with rankings fix"
+
+// Step 1: Read message
+const messages = await mcp__discord__read-messages({ channel: "general", limit: 10 })
+
+// Step 2: Immediately confirm
+await mcp__discord__send-message({
+  channel: "general",
+  message: "✅ **Confirmed!** Starting P0-010: Rankings horizontal scroll fix\n\nETA: 1-2 hours\nWill notify when complete."
+})
+
+// Step 3: Do the work...
+
+// Step 4: Notify completion (Bark + Discord)
+```
+
+### Discord Quick Commands (User Can Send)
+
+When user is away from computer, they can reply in Discord with quick commands:
+
+- **"continue"** / **"proceed"** - Continue with proposed plan
+- **"looks good"** / **"lgtm"** - Approve and continue
+- **"stop"** / **"wait"** - Stop and wait for further instruction
+- **"investigate"** - Do more investigation before proceeding
+- **"option 1"** / **"option 2"** - Choose from presented options
+- **"test first"** - Run tests before proceeding
+- **"show me"** - Provide more details/code snippets
+
+**When user sends ANY message in Discord, acknowledge it immediately** with a confirmation before proceeding.
+
+### Channel Configuration
+
+**Default channel:** `general` (unless user specifies otherwise)
+
+User can specify channel in their requests:
+- "send to #dev-logs"
+- "notify in #claude-updates"
+- "ping me in #work-queue"
+
+### Failure Recovery
+
+If Bark or Discord notification fails:
+
+1. **Log the error** in console
+2. **Retry once** after 2 seconds
+3. **Continue with task** (don't block work on notification failure)
+4. **Mention notification failure** in next successful notification
+
+### Summary: Notification Checklist
+
+Before asking user ANYTHING:
+- [ ] Send Bark notification with clear title and body
+- [ ] Send Discord message with detailed context
+- [ ] Wait for and monitor Discord for response
+- [ ] When response received, confirm immediately
+- [ ] Execute requested work
+- [ ] Send completion notification (Bark + Discord)
+
+**Never skip this protocol.** The user relies on these notifications to work remotely.
 
 ## Common Issues
 
