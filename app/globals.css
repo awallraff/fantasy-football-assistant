@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Light mode stays the same */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -19,100 +20,138 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+
+  /* Chart colors */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* iOS Dark Mode Color System */
+
+  /* Base Backgrounds */
+  --background: 10 10 10;           /* #0A0A0A - Primary background */
+  --background-elevated: 28 28 30;  /* #1C1C1E - Cards, elevated surfaces */
+  --background-tertiary: 44 44 46;  /* #2C2C2E - Elevated level 2 */
+  --background-pure-black: 0 0 0;   /* #000000 - Pure black for special use */
+
+  /* Text Colors */
+  --foreground: 255 255 255;        /* #FFFFFF - Primary text */
+  --text-secondary: 142 142 147;    /* #8E8E93 - Secondary text */
+  --text-tertiary: 99 99 102;       /* #636366 - Tertiary text */
+
+  /* Card & Popover */
+  --card: 28 28 30;                 /* #1C1C1E */
+  --card-foreground: 255 255 255;
+  --popover: 44 44 46;              /* #2C2C2E */
+  --popover-foreground: 255 255 255;
+
+  /* Primary (iOS Blue) */
+  --primary: 10 132 255;            /* #0A84FF - iOS Blue */
+  --primary-hover: 64 156 255;      /* #409CFF */
+  --primary-pressed: 0 87 217;      /* #0057D9 */
+  --primary-foreground: 255 255 255;
+
+  /* Secondary (iOS Purple) */
+  --secondary: 191 90 242;          /* #BF5AF2 */
+  --secondary-foreground: 255 255 255;
+
+  /* Muted */
+  --muted: 44 44 46;                /* #2C2C2E */
+  --muted-foreground: 142 142 147;  /* #8E8E93 */
+
+  /* Accent (iOS Teal) */
+  --accent: 90 200 250;             /* #5AC8FA */
+  --accent-foreground: 255 255 255;
+
+  /* Destructive (iOS Red) */
+  --destructive: 255 69 58;         /* #FF453A */
+  --destructive-foreground: 255 255 255;
+
+  /* Success (iOS Green) */
+  --success: 48 209 88;             /* #30D158 */
+  --success-foreground: 255 255 255;
+
+  /* Warning (iOS Orange) */
+  --warning: 255 159 10;            /* #FF9F0A */
+  --warning-foreground: 255 255 255;
+
+  /* Borders & Separators */
+  --border: 72 72 74;               /* #48484A */
+  --separator: 84 84 88;            /* #545458 with 0.6 opacity */
+  --input: 58 58 60;                /* #3A3A3C */
+  --ring: 10 132 255;               /* iOS Blue for focus rings */
+
+  /* Chart Colors (iOS System) */
+  --chart-1: 10 132 255;            /* Blue */
+  --chart-2: 48 209 88;             /* Green */
+  --chart-3: 255 159 10;            /* Orange */
+  --chart-4: 191 90 242;            /* Purple */
+  --chart-5: 90 200 250;            /* Teal */
+
+  /* Position Colors */
+  --position-qb: 255 69 58;         /* Red */
+  --position-rb: 90 200 250;        /* Teal */
+  --position-wr: 10 132 255;        /* Blue */
+  --position-te: 255 159 10;        /* Orange */
+  --position-k: 191 90 242;         /* Purple */
+  --position-def: 48 209 88;        /* Green */
+}
+
+/* iOS-style shadows for dark mode */
+.dark {
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 8px 0 rgba(0, 0, 0, 0.3), 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 16px 0 rgba(0, 0, 0, 0.3), 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 16px 32px 0 rgba(0, 0, 0, 0.4), 0 8px 16px 0 rgba(0, 0, 0, 0.3);
 }
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Map to Tailwind color system */
+  --color-background: rgb(var(--background));
+  --color-background-elevated: rgb(var(--background-elevated));
+  --color-background-tertiary: rgb(var(--background-tertiary));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+  --color-chart-1: rgb(var(--chart-1));
+  --color-chart-2: rgb(var(--chart-2));
+  --color-chart-3: rgb(var(--chart-3));
+  --color-chart-4: rgb(var(--chart-4));
+  --color-chart-5: rgb(var(--chart-5));
+
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 }
 
 @layer base {
@@ -120,6 +159,110 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* iOS-specific utility classes */
+@layer utilities {
+  /* Glass morphism */
+  .glass-ios {
+    background: rgba(28, 28, 30, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Touch target size */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* iOS Typography */
+  .text-ios-large-title {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 41px;
+    letter-spacing: 0.37px;
+  }
+
+  .text-ios-title-1 {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 34px;
+    letter-spacing: 0.36px;
+  }
+
+  .text-ios-title-2 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 28px;
+    letter-spacing: 0.35px;
+  }
+
+  .text-ios-title-3 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 25px;
+    letter-spacing: 0.38px;
+  }
+
+  .text-ios-headline {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.41px;
+  }
+
+  .text-ios-body {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 22px;
+    letter-spacing: -0.41px;
+  }
+
+  .text-ios-callout {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21px;
+    letter-spacing: -0.32px;
+  }
+
+  .text-ios-subheadline {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: -0.24px;
+  }
+
+  .text-ios-footnote {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+    letter-spacing: -0.08px;
+  }
+
+  .text-ios-caption {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+  }
+
+  /* Safe area support */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-area-inset-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+
+  .safe-area-inset-right {
+    padding-right: env(safe-area-inset-right, 0);
   }
 }

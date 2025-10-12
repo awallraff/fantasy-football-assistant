@@ -11,7 +11,7 @@
  * - Click to view detailed player profile
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import type {
   RookiePlayer,
   RookieFilterOptions,
   RookieSortOption,
+  RookieDraftClass,
 } from '@/lib/dynasty/rookie-draft-types';
 import {
   getRookieDraftClass,
@@ -62,18 +63,45 @@ export function RookieRankings({
   compact = false,
 }: RookieRankingsProps) {
   // Load rookie class data
-  const draftClass = getRookieDraftClass(year);
+  const [draftClass, setDraftClass] = useState<RookieDraftClass | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Filter and sort state
   const [filters, setFilters] = useState<RookieFilterOptions>({});
   const [sortBy, setSortBy] = useState<RookieSortOption>('consensus-rank');
 
+  // Fetch rookie data on mount
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+
+    getRookieDraftClass(year)
+      .then((data) => {
+        if (mounted) {
+          setDraftClass(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Error loading rookie draft class:', err);
+        if (mounted) {
+          setDraftClass({ year, players: [], rankings: [], updatedAt: new Date(), sources: [] });
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [year]);
+
   // Apply filters and sorting
   const filteredAndSortedRookies = useMemo(() => {
+    if (!draftClass) return [];
     let result = filterRookies(draftClass.players, filters);
     result = sortRookies(result, sortBy);
     return result;
-  }, [draftClass.players, filters, sortBy]);
+  }, [draftClass, filters, sortBy]);
 
   // Filter handlers
   const handlePositionFilter = (value: string) => {
@@ -103,6 +131,23 @@ export function RookieRankings({
   const handleSortChange = (value: string) => {
     setSortBy(value as RookieSortOption);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">{year} Rookie Rankings</h2>
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">Loading rookie rankings...</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

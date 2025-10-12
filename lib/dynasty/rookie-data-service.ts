@@ -93,7 +93,7 @@ export async function getRookieDraftClass(year: number = 2025): Promise<RookieDr
       players,
       rankings: generateRankingsFromPlayers(players),
       updatedAt: lastFetchTime || new Date(),
-      sources: ['nfl_data_py', 'nflverse'], // Real data sources
+      sources: ['internal'], // Real data from nfl_data_py via internal API
     };
   }
 

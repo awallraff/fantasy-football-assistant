@@ -71,7 +71,11 @@
       "mcp__chrome-devtools__select_page",
       "Bash(git mv:*)",
       "mcp__discord__send-message",
-      "mcp__discord__read-messages"
+      "mcp__discord__read-messages",
+      "mcp__chrome-devtools__resize_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__evaluate_script"
     ],
     "deny": [],
     "ask": [],
