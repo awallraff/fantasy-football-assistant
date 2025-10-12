@@ -23,7 +23,7 @@ export function LeagueYearSelector({
   return (
     <div className="flex items-center gap-2">
       <Select value={selectedYear} onValueChange={onYearChange}>
-        <SelectTrigger className="w-20">
+        <SelectTrigger className="w-20 min-h-[44px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -36,7 +36,7 @@ export function LeagueYearSelector({
       </Select>
 
       <Select value={selectedLeagueId} onValueChange={onLeagueChange}>
-        <SelectTrigger className="w-64">
+        <SelectTrigger className="w-64 min-h-[44px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

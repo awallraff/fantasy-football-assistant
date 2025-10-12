@@ -31,7 +31,7 @@ export function LeagueHeader({
   return (
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBackToLeagues}>
+        <Button variant="outline" onClick={onBackToLeagues} className="min-h-[44px]">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Leagues
         </Button>
@@ -55,7 +55,7 @@ export function LeagueHeader({
 
         <div className="h-6 w-px bg-border"></div>
 
-        <Button variant="outline" onClick={onRefresh} disabled={loading}>
+        <Button variant="outline" onClick={onRefresh} disabled={loading} className="min-h-[44px]">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>

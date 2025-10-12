@@ -136,8 +136,8 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
                 {roster.settings.wins}-{roster.settings.losses}
                 {roster.settings.ties > 0 && `-${roster.settings.ties}`}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)} className="h-8 w-8 p-0">
-                {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)} className="min-w-[44px] min-h-[44px] p-2">
+                {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
               </Button>
             </div>
           </CardTitle>

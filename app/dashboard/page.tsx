@@ -150,11 +150,11 @@ export default function DashboardPage() {
           />
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="teams">Teams</TabsTrigger>
-              <TabsTrigger value="standings">Standings</TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 min-h-[44px]">
+              <TabsTrigger value="overview" className="min-h-[44px]">Overview</TabsTrigger>
+              <TabsTrigger value="teams" className="min-h-[44px]">Teams</TabsTrigger>
+              <TabsTrigger value="standings" className="min-h-[44px]">Standings</TabsTrigger>
+              <TabsTrigger value="activity" className="min-h-[44px]">Activity</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -221,7 +221,7 @@ export default function DashboardPage() {
         )}
 
         {/* Leagues Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {currentYearLeagues.map((league) => (
             <LeagueCard
               key={league.league_id}
