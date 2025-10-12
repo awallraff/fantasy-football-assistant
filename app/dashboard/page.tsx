@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { RefreshCw } from "lucide-react"
 import { LeagueOverview } from "@/components/league-overview"
 import { EnhancedTeamRoster } from "@/components/enhanced-team-roster"
@@ -163,10 +164,43 @@ export default function DashboardPage() {
 
             <TabsContent value="teams">
               <div className="grid gap-6">
+                {/* Debug info - remove after fixing */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded text-xs">
+                    <div>Rosters: {rosters.length}</div>
+                    <div>Sorted Rosters: {sortedRosters.length}</div>
+                    <div>League Users: {leagueUsers.length}</div>
+                    <div>User IDs: {leagueUsers.map(u => u.user_id).join(', ')}</div>
+                    <div>Roster Owner IDs: {rosters.map(r => r.owner_id).join(', ')}</div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
-                  {sortedRosters.map((roster) => {
+                  {sortedRosters.length === 0 ? (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>No Teams Found</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">
+                          {rosters.length === 0
+                            ? "No rosters loaded for this league. Try refreshing the page."
+                            : leagueUsers.length === 0
+                            ? "League user data is missing. Try refreshing the page."
+                            : "Unable to match rosters with league users. Contact support if this persists."}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    sortedRosters.map((roster) => {
                       const owner = leagueUsers.find((u) => u.user_id === roster.owner_id)
-                      if (!owner) return null
+
+                      // Log when owner is not found
+                      if (!owner) {
+                        console.warn(`No owner found for roster ${roster.roster_id} with owner_id ${roster.owner_id}`)
+                        console.warn('Available users:', leagueUsers.map(u => ({ id: u.user_id, name: u.display_name || u.username })))
+                        return null
+                      }
 
                       return (
                         <EnhancedTeamRoster
@@ -176,7 +210,8 @@ export default function DashboardPage() {
                           isCurrentUser={owner.user_id === user?.user_id}
                         />
                       )
-                    })}
+                    })
+                  )}
                 </div>
               </div>
             </TabsContent>

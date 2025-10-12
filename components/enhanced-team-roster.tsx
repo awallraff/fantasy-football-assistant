@@ -22,7 +22,8 @@ interface EnhancedTeamRosterProps {
 export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: EnhancedTeamRosterProps) {
   const [players, setPlayers] = useState<DisplayPlayer[]>([])
   const [selectedPlayer, setSelectedPlayer] = useState<DisplayPlayer | null>(null)
-  const [isCollapsed, setIsCollapsed] = useState(true)
+  // Default to expanded for current user, collapsed for others
+  const [isCollapsed, setIsCollapsed] = useState(!isCurrentUser)
 
   const { getPlayer, getPlayerName, isLoading: playersLoading } = usePlayerData()
   const { getProjection, loadProjectionsForPlayers, isLoading: projectionsLoading } = useProjections()
@@ -101,6 +102,9 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
   const starters = players.filter((p) => roster.starters?.includes(p.player_id))
   const bench = players.filter((p) => roster.players?.includes(p.player_id) && !roster.starters?.includes(p.player_id))
 
+  // Defensive check - ensure roster has player data
+  const hasPlayers = (roster.players?.length ?? 0) > 0 || (roster.starters?.length ?? 0) > 0
+
   if (playersLoading) {
     return (
       <Card>
@@ -114,6 +118,28 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">Loading player data...</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show message if no players in roster
+  if (!hasPlayers) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>{user.display_name?.charAt(0) || user.username.charAt(0)}</AvatarFallback>
+            </Avatar>
+            {user.display_name || user.username}
+            {isCurrentUser && <Badge variant="secondary">Your Team</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            No players found on this roster.
+          </div>
         </CardContent>
       </Card>
     )
@@ -151,27 +177,39 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
               </TabsList>
 
               <TabsContent value="starters" className="space-y-2">
-                {starters.map((player) => (
-                  <PlayerCard
-                    key={player.player_id}
-                    player={player}
-                    isStarter={true}
-                    onClick={() => setSelectedPlayer(player)}
-                    projectionsLoading={projectionsLoading}
-                  />
-                ))}
+                {starters.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    No starters found
+                  </div>
+                ) : (
+                  starters.map((player) => (
+                    <PlayerCard
+                      key={player.player_id}
+                      player={player}
+                      isStarter={true}
+                      onClick={() => setSelectedPlayer(player)}
+                      projectionsLoading={projectionsLoading}
+                    />
+                  ))
+                )}
               </TabsContent>
 
               <TabsContent value="bench" className="space-y-2">
-                {bench.map((player) => (
-                  <PlayerCard
-                    key={player.player_id}
-                    player={player}
-                    isStarter={false}
-                    onClick={() => setSelectedPlayer(player)}
-                    projectionsLoading={projectionsLoading}
-                  />
-                ))}
+                {bench.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    No bench players found
+                  </div>
+                ) : (
+                  bench.map((player) => (
+                    <PlayerCard
+                      key={player.player_id}
+                      player={player}
+                      isStarter={false}
+                      onClick={() => setSelectedPlayer(player)}
+                      projectionsLoading={projectionsLoading}
+                    />
+                  ))
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
