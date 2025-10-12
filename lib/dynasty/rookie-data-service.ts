@@ -16,191 +16,64 @@ import type {
 } from './rookie-draft-types';
 import type { SleeperPlayer } from '@/lib/sleeper-api';
 
+import { rookieNFLDataService } from './rookie-nfl-data-service'
+
 // ============================================================================
-// 2025 Rookie Class Data (Hardcoded - Will be replaced with API/Database)
+// 2025 Rookie Class Data (Fetched from NFL Data API)
 // ============================================================================
 
 /**
- * 2025 NFL Draft - Top Rookie Prospects
- * This is a simplified dataset. In production, this would come from:
- * - External API (FantasyPros, Dynasty Nerds, etc.)
- * - Database with admin management interface
- * - Regular updates during draft season
+ * 2025 NFL Draft - Real Draft Data
+ * Data is fetched from nfl_data_py Python library via rookie-nfl-data-service.ts
+ *
+ * Data Sources:
+ * - nfl_data_py.import_draft_picks() - 2025 NFL Draft results (static after draft)
+ * - nfl_data_py.import_seasonal_rosters() - Current roster status (updated weekly)
+ * - nfl_data_py.import_weekly_data() - Performance data (real-time during season)
+ *
+ * Update Frequency:
+ * - Draft capital: Static (April 2025)
+ * - Roster status: Weekly
+ * - Performance stats: Live during games
+ * - Landing spot grades: Manual updates based on team analysis
  */
-const ROOKIE_CLASS_2025: RookiePlayer[] = [
-  // Top QBs
-  {
-    player_id: 'rookie_2025_shedeur_sanders',
-    first_name: 'Shedeur',
-    last_name: 'Sanders',
-    full_name: 'Shedeur Sanders',
-    position: 'QB',
-    team: 'TBD', // Pre-draft
-    age: 23,
-    height: '6\'2"',
-    weight: '215',
-    years_exp: 0,
-    college: 'Colorado', // Note: This is the string from Sleeper, not CollegeProduction object
-    fantasy_positions: ['QB'],
-    nflDraft: {
-      year: 2025,
-      round: 1,
-      overallPick: 1, // Projected
-      draftedBy: 'TBD',
-    },
-    projection: {
-      year1PPG: 18.5,
-      year3PPG: 24.0,
-      ceiling: 'Top 3 QB (Josh Allen tier)',
-      floor: 'QB20-25 (Inconsistent starter)',
-      mostLikely: 'QB10-15 (Solid QB1)',
-      bustRisk: 25,
-    },
-    consensusRank: 3,
-    positionRank: 1,
-    tier: 1,
-    landingSpotGrade: 'B',
-    strengths: [
-      'Elite arm talent and accuracy',
-      'Advanced pocket presence and processing',
-      'High football IQ and leadership',
-    ],
-    concerns: [
-      'Limited experience against elite competition',
-      'Needs to improve under pressure',
-      'Landing spot uncertainty',
-    ],
-  },
-  // Top RBs
-  {
-    player_id: 'rookie_2025_ashton_jeanty',
-    first_name: 'Ashton',
-    last_name: 'Jeanty',
-    full_name: 'Ashton Jeanty',
-    position: 'RB',
-    team: 'TBD',
-    age: 21,
-    height: '5\'9"',
-    weight: '215',
-    years_exp: 0,
-    college: 'Boise State',
-    fantasy_positions: ['RB'],
-    nflDraft: {
-      year: 2025,
-      round: 1,
-      overallPick: 8, // Projected
-      draftedBy: 'TBD',
-    },
-    projection: {
-      year1PPG: 15.2,
-      year3PPG: 18.5,
-      ceiling: 'Elite RB1 (CMC tier)',
-      floor: 'RB25-30 (Backup/Committee)',
-      mostLikely: 'RB8-12 (Low-end RB1)',
-      bustRisk: 30,
-    },
-    consensusRank: 1,
-    positionRank: 1,
-    tier: 1,
-    landingSpotGrade: 'A-',
-    strengths: [
-      'Breakaway speed and explosiveness',
-      'Excellent vision and patience',
-      'Proven workhorse with 2,000+ yard season',
-    ],
-    concerns: [
-      'Smaller frame for workhorse role',
-      'Boise State competition level',
-      'RB position devaluation in dynasty',
-    ],
-  },
-  // Top WRs
-  {
-    player_id: 'rookie_2025_tetairoa_mcmillan',
-    first_name: 'Tetairoa',
-    last_name: 'McMillan',
-    full_name: 'Tetairoa McMillan',
-    position: 'WR',
-    team: 'TBD',
-    age: 21,
-    height: '6\'5"',
-    weight: '212',
-    years_exp: 0,
-    college: 'Arizona',
-    fantasy_positions: ['WR'],
-    nflDraft: {
-      year: 2025,
-      round: 1,
-      overallPick: 4, // Projected
-      draftedBy: 'TBD',
-    },
-    projection: {
-      year1PPG: 12.8,
-      year3PPG: 16.5,
-      ceiling: 'Elite WR1 (Justin Jefferson tier)',
-      floor: 'WR35-40 (Boom/bust WR3)',
-      mostLikely: 'WR12-18 (Solid WR2)',
-      bustRisk: 20,
-    },
-    consensusRank: 2,
-    positionRank: 1,
-    tier: 1,
-    landingSpotGrade: 'A',
-    strengths: [
-      'Elite size/speed combination',
-      'Dominant contested catch ability',
-      'High target share in college',
-    ],
-    concerns: [
-      'Route refinement needed',
-      'Occasional drops',
-      'Needs alpha QB to maximize value',
-    ],
-  },
-  // Top TEs
-  {
-    player_id: 'rookie_2025_tyler_warren',
-    first_name: 'Tyler',
-    last_name: 'Warren',
-    full_name: 'Tyler Warren',
-    position: 'TE',
-    team: 'TBD',
-    age: 23,
-    height: '6\'6"',
-    weight: '255',
-    years_exp: 0,
-    college: 'Penn State',
-    fantasy_positions: ['TE'],
-    nflDraft: {
-      year: 2025,
-      round: 2,
-      overallPick: 45, // Projected
-      draftedBy: 'TBD',
-    },
-    projection: {
-      year1PPG: 8.5,
-      year3PPG: 12.0,
-      ceiling: 'Top 5 TE (Travis Kelce tier)',
-      floor: 'TE20+ (Streaming option)',
-      mostLikely: 'TE8-12 (Low-end TE1)',
-      bustRisk: 35,
-    },
-    consensusRank: 15,
-    positionRank: 1,
-    tier: 2,
-    landingSpotGrade: 'B+',
-    strengths: [
-      'Versatile H-back/move TE',
-      'Excellent blocker and receiver',
-      'High football IQ',
-    ],
-    concerns: [
-      'Late breakout (age concern)',
-      'TE position takes 2-3 years to develop',
-      'Needs pass-heavy offense',
-    ],
-  },
-];
+let ROOKIE_CLASS_2025: RookiePlayer[] = []
+let lastFetchTime: Date | null = null
+const CACHE_DURATION_MS = 1000 * 60 * 60 * 24 // 24 hours (draft data is static)
+
+/**
+ * Fetch and cache 2025 rookie data from Python/NFL Data API
+ */
+async function fetch2025RookieData(): Promise<RookiePlayer[]> {
+  // Check cache validity
+  if (ROOKIE_CLASS_2025.length > 0 && lastFetchTime) {
+    const cacheAge = Date.now() - lastFetchTime.getTime()
+    if (cacheAge < CACHE_DURATION_MS) {
+      console.log(`[RookieDataService] Using cached data (age: ${Math.floor(cacheAge / 1000 / 60)} minutes)`)
+      return ROOKIE_CLASS_2025
+    }
+  }
+
+  try {
+    console.log('[RookieDataService] Fetching fresh 2025 rookie data...')
+    const rookies = await rookieNFLDataService.fetch2025RookieData()
+
+    if (rookies.length > 0) {
+      ROOKIE_CLASS_2025 = rookies
+      lastFetchTime = new Date()
+      console.log(`[RookieDataService] Successfully loaded ${rookies.length} rookies`)
+    } else {
+      console.warn('[RookieDataService] No rookie data returned from Python service')
+      // Keep existing cache if fetch fails
+    }
+
+    return ROOKIE_CLASS_2025
+  } catch (error) {
+    console.error('[RookieDataService] Error fetching rookie data:', error)
+    // Return cached data if available, otherwise empty array
+    return ROOKIE_CLASS_2025
+  }
+}
 
 // ============================================================================
 // Rookie Data Service
@@ -208,16 +81,19 @@ const ROOKIE_CLASS_2025: RookiePlayer[] = [
 
 /**
  * Get the complete rookie draft class for a given year
+ * Note: This is now async to support fetching real NFL data
  */
-export function getRookieDraftClass(year: number = 2025): RookieDraftClass {
-  // In production, this would fetch from API/database
+export async function getRookieDraftClass(year: number = 2025): Promise<RookieDraftClass> {
+  // Fetch 2025 data from NFL Data API
   if (year === 2025) {
+    const players = await fetch2025RookieData()
+
     return {
       year: 2025,
-      players: ROOKIE_CLASS_2025,
-      rankings: generateRankingsFromPlayers(ROOKIE_CLASS_2025),
-      updatedAt: new Date(),
-      sources: ['internal'], // Would include multiple sources in production
+      players,
+      rankings: generateRankingsFromPlayers(players),
+      updatedAt: lastFetchTime || new Date(),
+      sources: ['nfl_data_py', 'nflverse'], // Real data sources
     };
   }
 
@@ -262,8 +138,8 @@ function generateRankingsFromPlayers(players: RookiePlayer[]): RookieRanking[] {
 /**
  * Get rookie player by ID
  */
-export function getRookiePlayer(playerId: string, year: number = 2025): RookiePlayer | null {
-  const draftClass = getRookieDraftClass(year);
+export async function getRookiePlayer(playerId: string, year: number = 2025): Promise<RookiePlayer | null> {
+  const draftClass = await getRookieDraftClass(year);
   return draftClass.players.find((p) => p.player_id === playerId) || null;
 }
 
@@ -357,11 +233,11 @@ export function sortRookies(
 /**
  * Get rookies by position
  */
-export function getRookiesByPosition(
+export async function getRookiesByPosition(
   position: string,
   year: number = 2025
-): RookiePlayer[] {
-  const draftClass = getRookieDraftClass(year);
+): Promise<RookiePlayer[]> {
+  const draftClass = await getRookieDraftClass(year);
   return draftClass.players
     .filter((p) => p.position === position)
     .sort((a, b) => a.positionRank - b.positionRank);
@@ -370,11 +246,11 @@ export function getRookiesByPosition(
 /**
  * Get top rookies (by consensus rank)
  */
-export function getTopRookies(
+export async function getTopRookies(
   count: number = 10,
   year: number = 2025
-): RookiePlayer[] {
-  const draftClass = getRookieDraftClass(year);
+): Promise<RookiePlayer[]> {
+  const draftClass = await getRookieDraftClass(year);
   return draftClass.players
     .sort((a, b) => a.consensusRank - b.consensusRank)
     .slice(0, count);
@@ -383,11 +259,11 @@ export function getTopRookies(
 /**
  * Get rookies by tier
  */
-export function getRookiesByTier(
+export async function getRookiesByTier(
   tier: number,
   year: number = 2025
-): RookiePlayer[] {
-  const draftClass = getRookieDraftClass(year);
+): Promise<RookiePlayer[]> {
+  const draftClass = await getRookieDraftClass(year);
   return draftClass.players
     .filter((p) => p.tier === tier)
     .sort((a, b) => a.consensusRank - b.consensusRank);
@@ -396,11 +272,11 @@ export function getRookiesByTier(
 /**
  * Search rookies by name
  */
-export function searchRookies(
+export async function searchRookies(
   query: string,
   year: number = 2025
-): RookiePlayer[] {
-  const draftClass = getRookieDraftClass(year);
+): Promise<RookiePlayer[]> {
+  const draftClass = await getRookieDraftClass(year);
   const lowerQuery = query.toLowerCase();
 
   return draftClass.players.filter((p) => {
@@ -422,14 +298,14 @@ export function searchRookies(
 /**
  * Get rookie draft class statistics
  */
-export function getRookieClassStats(year: number = 2025): {
+export async function getRookieClassStats(year: number = 2025): Promise<{
   totalPlayers: number;
   byPosition: Record<string, number>;
   byTier: Record<number, number>;
   averageAge: number;
   averageNFLDraftPosition: number;
-} {
-  const draftClass = getRookieDraftClass(year);
+}> {
+  const draftClass = await getRookieDraftClass(year);
   const players = draftClass.players;
 
   const byPosition: Record<string, number> = {};
@@ -456,11 +332,11 @@ export function getRookieClassStats(year: number = 2025): {
 /**
  * Compare two rookies side-by-side
  */
-export function compareRookies(
+export async function compareRookies(
   playerId1: string,
   playerId2: string,
   year: number = 2025
-): {
+): Promise<{
   player1: RookiePlayer | null;
   player2: RookiePlayer | null;
   comparison: {
@@ -469,9 +345,9 @@ export function compareRookies(
     projection: { winner: 1 | 2 | 'tie'; diff: number };
     landingSpot: { winner: 1 | 2 | 'tie' };
   };
-} | null {
-  const player1 = getRookiePlayer(playerId1, year);
-  const player2 = getRookiePlayer(playerId2, year);
+} | null> {
+  const player1 = await getRookiePlayer(playerId1, year);
+  const player2 = await getRookiePlayer(playerId2, year);
 
   if (!player1 || !player2) {
     return null;
