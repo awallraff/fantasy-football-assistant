@@ -12,7 +12,11 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  Database,
+  ArrowLeftRight,
+  ThumbsUp,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function MorePage() {
   return (
@@ -41,6 +45,59 @@ export default function MorePage() {
               </div>
               <ChevronRight className="w-5 h-5 text-text-secondary" />
             </button>
+          </div>
+        </Card>
+
+        {/* Tools & Features Section */}
+        <Card className="bg-background-elevated border-border">
+          <div className="divide-y divide-border">
+            {/* NFL Data */}
+            <div className="p-4">
+              <Link href="/nfl-data" className="w-full flex items-center justify-between py-2 rounded-lg hover:bg-muted active:scale-95 transition-all touch-target">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Database className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-ios-body font-medium">NFL Data</p>
+                    <p className="text-ios-caption text-text-secondary">Player stats & analytics</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-secondary" />
+              </Link>
+            </div>
+
+            {/* Trade Analysis */}
+            <div className="p-4">
+              <Link href="/trades" className="w-full flex items-center justify-between py-2 rounded-lg hover:bg-muted active:scale-95 transition-all touch-target">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <ArrowLeftRight className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-ios-body font-medium">Trade Analysis</p>
+                    <p className="text-ios-caption text-text-secondary">League trade history</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-secondary" />
+              </Link>
+            </div>
+
+            {/* Recommendations */}
+            <div className="p-4">
+              <Link href="/recommendations" className="w-full flex items-center justify-between py-2 rounded-lg hover:bg-muted active:scale-95 transition-all touch-target">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <ThumbsUp className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-ios-body font-medium">Recommendations</p>
+                    <p className="text-ios-caption text-text-secondary">Trade suggestions</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-secondary" />
+              </Link>
+            </div>
           </div>
         </Card>
 

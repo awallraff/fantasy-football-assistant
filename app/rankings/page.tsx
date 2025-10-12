@@ -412,37 +412,37 @@ export default function RankingsPage() {
     return (
       <>
         {/* Mobile: Card layout */}
-        <div className="md:hidden space-y-2">
+        <div className="md:hidden space-y-2 overflow-hidden">
           {sortedData.map((player) => (
             <Card
               key={player.playerId}
-              className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+              className="p-4 cursor-pointer hover:bg-muted/30 transition-colors overflow-hidden"
               onClick={() => setSelectedPlayerForModal(player)}
             >
-              <div className="space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
+              <div className="space-y-3 min-w-0">
+                <div className="flex justify-between items-start gap-2 min-w-0">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className={`w-10 h-10 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)} shrink-0`}>
                       {player.rank}
                     </div>
-                    <div>
-                      <div className="font-semibold">{player.playerName}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold truncate">{player.playerName}</div>
                       <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">{player.position}</Badge>
-                        <span className="text-sm text-muted-foreground">{player.team}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">{player.position}</Badge>
+                        <span className="text-sm text-muted-foreground truncate">{player.team}</span>
                       </div>
                     </div>
                   </div>
                   {player.tier && (
-                    <Badge variant="secondary" className="text-xs">Tier {player.tier}</Badge>
+                    <Badge variant="secondary" className="text-xs shrink-0">Tier {player.tier}</Badge>
                   )}
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <div>
+                <div className="flex justify-between items-center text-sm gap-2 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <span className="text-muted-foreground">Projected: </span>
                     <span className="font-medium">{player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}</span>
                   </div>
-                  <div>
+                  <div className="shrink-0">
                     {player.injuryStatus && player.injuryStatus !== "Healthy" ? (
                       <Badge variant="destructive" className="text-xs">{player.injuryStatus}</Badge>
                     ) : (
@@ -451,7 +451,7 @@ export default function RankingsPage() {
                   </div>
                 </div>
                 {player.notes && (
-                  <div className="text-xs text-muted-foreground border-t pt-2">
+                  <div className="text-xs text-muted-foreground border-t pt-2 break-words">
                     {player.notes}
                   </div>
                 )}
@@ -613,17 +613,17 @@ export default function RankingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-full">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div className="min-w-0">
             <h1 className="text-ios-title-1 font-bold text-foreground">Player Rankings</h1>
-            <p className="text-ios-body text-text-secondary">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
+            <p className="text-ios-body text-text-secondary break-words">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={refreshRankings} disabled={isLoading} className="min-h-[44px]">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              {isLoading ? "Loading..." : "Refresh Rankings"}
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Button onClick={refreshRankings} disabled={isLoading} className="min-h-[44px] min-w-[44px]">
+              <TrendingUp className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">{isLoading ? "Loading..." : "Refresh Rankings"}</span>
             </Button>
             <Button
               variant="outline"
@@ -634,12 +634,16 @@ export default function RankingsPage() {
                 debugLog('All systems count:', getAllSystems().length)
                 debugLog('================')
               }}
-              className="min-h-[44px]"
+              className="min-h-[44px] min-w-[44px]"
             >
-              Debug Info
+              <span className="hidden md:inline">Debug Info</span>
+              <span className="md:hidden">Debug</span>
             </Button>
-            <Button asChild variant="outline" className="min-h-[44px]">
-              <a href="/dashboard">Back to Dashboard</a>
+            <Button asChild variant="outline" className="min-h-[44px] min-w-[44px]">
+              <a href="/dashboard">
+                <span className="hidden md:inline">Back to Dashboard</span>
+                <span className="md:hidden">Back</span>
+              </a>
             </Button>
           </div>
         </div>
@@ -714,14 +718,14 @@ export default function RankingsPage() {
           </Card>
         )}
 
-        <Card className="mb-6">
+        <Card className="mb-6 overflow-hidden">
           <CardHeader>
             <CardTitle>Ranking Filters & Sorting</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Ranking Source</label>
+              <div className="min-w-0">
+                <label className="text-sm font-medium mb-2 block truncate">Ranking Source</label>
                 <Select value={selectedSource} onValueChange={(value: RankingSource) => {
                   setSelectedSource(value);
                   // Auto-select the most recent/relevant system for the new source
@@ -738,7 +742,7 @@ export default function RankingsPage() {
                     setSelectedSystem(null);
                   }
                 }}>
-                  <SelectTrigger className="min-h-[44px]">
+                  <SelectTrigger className="min-h-[44px] w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -749,10 +753,10 @@ export default function RankingsPage() {
                 </Select>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Position</label>
+              <div className="min-w-0">
+                <label className="text-sm font-medium mb-2 block truncate">Position</label>
                 <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-                  <SelectTrigger className="min-h-[44px]">
+                  <SelectTrigger className="min-h-[44px] w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -766,8 +770,8 @@ export default function RankingsPage() {
                 </Select>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Ranking System</label>
+              <div className="min-w-0">
+                <label className="text-sm font-medium mb-2 block truncate">Ranking System</label>
                 <Select
                   value={selectedSystem?.id || undefined}
                   onValueChange={(value) => {
@@ -775,7 +779,7 @@ export default function RankingsPage() {
                     setSelectedSystem(system || null)
                   }}
                 >
-                  <SelectTrigger className="min-h-[44px]">
+                  <SelectTrigger className="min-h-[44px] w-full">
                     <SelectValue placeholder={getAllSystems().length > 0 ? "Select system" : "No systems available"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -796,14 +800,14 @@ export default function RankingsPage() {
                 </Select>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">AI Projection Type</label>
+              <div className="min-w-0">
+                <label className="text-sm font-medium mb-2 block truncate">AI Projection Type</label>
                 <Select
                   value={projectionType}
                   onValueChange={(value: "season" | "weekly") => handleProjectionTypeChange(value)}
                   disabled={selectedSource !== "ai" || isLoading}
                 >
-                  <SelectTrigger className="min-h-[44px]">
+                  <SelectTrigger className="min-h-[44px] w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -818,14 +822,14 @@ export default function RankingsPage() {
 
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
-          <Card>
+          <Card className="overflow-hidden">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <div>
+              <div className="flex items-center justify-between min-w-0">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <BarChart3 className="h-5 w-5 text-primary shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-2xl font-bold">{userRankingSystems.length}</p>
-                    <p className="text-sm text-muted-foreground">User Imported</p>
+                    <p className="text-sm text-muted-foreground truncate">User Imported</p>
                   </div>
                 </div>
               </div>
@@ -833,30 +837,30 @@ export default function RankingsPage() {
           </Card>
 
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <div>
+              <div className="flex items-center justify-between min-w-0">
+                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  <TrendingUp className="h-5 w-5 text-primary shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-2xl font-bold">0</p>
-                    <p className="text-sm text-muted-foreground">External APIs</p>
+                    <p className="text-sm text-muted-foreground truncate">External APIs</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs shrink-0 ml-2">
                   {isLoading ? "Loading..." : "Available"}
                 </Badge>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-primary" />
-                <div>
+              <div className="flex items-center space-x-2 min-w-0">
+                <Brain className="h-5 w-5 text-primary shrink-0" />
+                <div className="min-w-0">
                   <p className="text-2xl font-bold">{filteredRankings.length}</p>
-                  <p className="text-sm text-muted-foreground">Filtered Players</p>
+                  <p className="text-sm text-muted-foreground truncate">Filtered Players</p>
                 </div>
               </div>
             </CardContent>
@@ -865,14 +869,14 @@ export default function RankingsPage() {
 
         {/* Rankings Data Display */}
         {selectedSystem && (
-          <Card className="mb-6">
+          <Card className="mb-6 overflow-hidden">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Player Rankings Results
+                  <BarChart3 className="h-5 w-5 shrink-0" />
+                  <span className="truncate">Player Rankings Results</span>
                 </CardTitle>
-                <Badge variant="outline">
+                <Badge variant="outline" className="shrink-0 w-fit">
                   {selectedSystem.source} • {filteredRankings.length} players
                 </Badge>
               </div>
@@ -880,30 +884,30 @@ export default function RankingsPage() {
             <CardContent>
               {/* Summary Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-                <Card>
+                <Card className="overflow-hidden">
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold">{filteredRankings.length}</div>
-                    <p className="text-sm text-muted-foreground">Total Players</p>
+                    <p className="text-sm text-muted-foreground truncate">Total Players</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="overflow-hidden">
                   <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold truncate">
                       {selectedSystem.source === 'AI' && selectedYear ? `${selectedYear}${selectedWeek ? ` W${selectedWeek}` : ''}` : selectedSystem.season}
                     </div>
-                    <p className="text-sm text-muted-foreground">{selectedSystem.source === 'AI' ? 'Prediction Target' : 'Season/Year'}</p>
+                    <p className="text-sm text-muted-foreground truncate">{selectedSystem.source === 'AI' ? 'Prediction Target' : 'Season/Year'}</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="overflow-hidden">
                   <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{selectedSystem.scoringFormat.toUpperCase()}</div>
-                    <p className="text-sm text-muted-foreground">Scoring Format</p>
+                    <div className="text-2xl font-bold truncate">{selectedSystem.scoringFormat.toUpperCase()}</div>
+                    <p className="text-sm text-muted-foreground truncate">Scoring Format</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="overflow-hidden">
                   <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{selectedPosition === "all" ? "All" : selectedPosition}</div>
-                    <p className="text-sm text-muted-foreground">Position Filter</p>
+                    <div className="text-2xl font-bold truncate">{selectedPosition === "all" ? "All" : selectedPosition}</div>
+                    <p className="text-sm text-muted-foreground truncate">Position Filter</p>
                   </CardContent>
                 </Card>
               </div>
@@ -957,13 +961,13 @@ export default function RankingsPage() {
           </Card>
         )}
 
-        <Tabs defaultValue="import" className="space-y-6">
+        <Tabs defaultValue="import" className="space-y-6 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[44px]">
-            <TabsTrigger value="import" className="min-h-[44px]">Import</TabsTrigger>
-            <TabsTrigger value="manage" className="min-h-[44px]">Manage</TabsTrigger>
-            <TabsTrigger value="search" className="min-h-[44px]">Search</TabsTrigger>
-            <TabsTrigger value="compare" className="min-h-[44px]">Compare</TabsTrigger>
-            <TabsTrigger value="api-keys" className="min-h-[44px]">API Keys</TabsTrigger>
+            <TabsTrigger value="import" className="min-h-[44px] truncate px-2">Import</TabsTrigger>
+            <TabsTrigger value="manage" className="min-h-[44px] truncate px-2">Manage</TabsTrigger>
+            <TabsTrigger value="search" className="min-h-[44px] truncate px-2">Search</TabsTrigger>
+            <TabsTrigger value="compare" className="min-h-[44px] truncate px-2">Compare</TabsTrigger>
+            <TabsTrigger value="api-keys" className="min-h-[44px] truncate px-2">API Keys</TabsTrigger>
           </TabsList>
 
           <TabsContent value="import">

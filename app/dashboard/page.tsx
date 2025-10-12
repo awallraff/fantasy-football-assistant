@@ -193,12 +193,12 @@ export default function DashboardPage() {
                     </Card>
                   ) : (
                     sortedRosters.map((roster) => {
+                      // sortedRosters is now pre-filtered to only include rosters with matching owners
                       const owner = leagueUsers.find((u) => u.user_id === roster.owner_id)
 
-                      // Log when owner is not found
+                      // This should never happen now, but keep as defensive check
                       if (!owner) {
-                        console.warn(`No owner found for roster ${roster.roster_id} with owner_id ${roster.owner_id}`)
-                        console.warn('Available users:', leagueUsers.map(u => ({ id: u.user_id, name: u.display_name || u.username })))
+                        console.error(`CRITICAL: No owner found for roster ${roster.roster_id} despite filtering`)
                         return null
                       }
 

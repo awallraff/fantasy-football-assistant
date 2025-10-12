@@ -38,10 +38,10 @@ export function useLeagueSelection({
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
-    
+
     const controller = new AbortController()
     abortControllerRef.current = controller
-    
+
     try {
       const [rostersData, usersData] = await Promise.all([
         sleeperAPI.getLeagueRosters(league.league_id),
@@ -49,9 +49,21 @@ export function useLeagueSelection({
       ])
 
       if (!controller.signal.aborted) {
+        // Set data atomically to avoid timing issues
+        // This ensures rosters and users are always in sync
+        setSelectedLeague(league)
         setRosters(rostersData)
         setLeagueUsers(usersData)
-        setSelectedLeague(league)
+
+        // Debug logging for data mismatch issues
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Loaded league ${league.name}:`, {
+            rostersCount: rostersData.length,
+            usersCount: usersData.length,
+            rosterOwnerIds: rostersData.map(r => r.owner_id),
+            userIds: usersData.map(u => u.user_id),
+          })
+        }
       }
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
@@ -86,7 +98,26 @@ export function useLeagueSelection({
 
   // Memoize sorted rosters for performance
   const sortedRosters = useMemo(() => {
-    return [...rosters].sort((a, b) => {
+    // If no league users loaded yet, return empty array
+    if (leagueUsers.length === 0) {
+      if (rosters.length > 0 && process.env.NODE_ENV === 'development') {
+        console.warn('Rosters loaded but no league users available yet')
+      }
+      return []
+    }
+
+    // Only include rosters that have a matching owner in leagueUsers
+    const rostersWithOwners = rosters.filter(roster => {
+      const hasOwner = leagueUsers.some(u => u.user_id === roster.owner_id)
+      if (!hasOwner && process.env.NODE_ENV === 'development') {
+        console.warn(`Roster ${roster.roster_id} has no matching owner. owner_id: ${roster.owner_id}`)
+        console.warn('Available user IDs:', leagueUsers.map(u => u.user_id))
+      }
+      return hasOwner
+    })
+
+    // Sort filtered rosters - current user first
+    return [...rostersWithOwners].sort((a, b) => {
       const aOwner = leagueUsers.find((u) => u.user_id === a.owner_id)
       const bOwner = leagueUsers.find((u) => u.user_id === b.owner_id)
 
