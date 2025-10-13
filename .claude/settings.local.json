@@ -84,7 +84,9 @@
       "Bash(tee:*)",
       "Bash(npx tsx:*)",
       "Bash(pnpm tsc:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(awk:*)",
+      "mcp__chrome-devtools__hover"
     ],
     "deny": [],
     "ask": [],

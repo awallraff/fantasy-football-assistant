@@ -30,15 +30,6 @@ This guide provides step-by-step instructions for testing the Fantasy Football A
 - **Use Case:** Primary test account with real league data
 - **Why This Account:** Active leagues with roster data, trades, and historical activity
 
-### Alternative Test Accounts
-
-If `Wallreezy` is unavailable or you need to test edge cases:
-
-**Username:** `[Your Sleeper Username]`
-- Create a test account on Sleeper.com
-- Join at least 1 league to test league loading
-- Recommended: Join both dynasty and redraft leagues
-
 ---
 
 ## Initial Setup
