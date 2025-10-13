@@ -17,7 +17,7 @@ import { z } from 'zod';
  */
 export const SleeperUserSchema = z.object({
   user_id: z.string(),
-  username: z.string(),
+  username: z.string().optional(),
   display_name: z.string(),
   avatar: z.string().nullable(),
 });
@@ -90,8 +90,8 @@ export const SleeperRosterSchema = z.object({
   owner_id: z.string(),
   players: z.array(z.string()),
   starters: z.array(z.string()),
-  reserve: z.array(z.string()).optional(),
-  taxi: z.array(z.string()).optional(),
+  reserve: z.array(z.string()).nullable().optional(),
+  taxi: z.array(z.string()).nullable().optional(),
   settings: SleeperRosterSettingsSchema,
 });
 

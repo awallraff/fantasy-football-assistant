@@ -16,7 +16,7 @@ const SLEEPER_BASE_URL = "https://api.sleeper.app/v1"
 
 export interface SleeperUser {
   user_id: string
-  username: string
+  username?: string
   display_name: string
   avatar: string | null
 }
@@ -51,8 +51,8 @@ export interface SleeperRoster {
   owner_id: string
   players: string[]
   starters: string[]
-  reserve?: string[]
-  taxi?: string[]
+  reserve?: string[] | null
+  taxi?: string[] | null
   settings: {
     wins: number
     losses: number
