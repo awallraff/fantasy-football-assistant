@@ -167,7 +167,7 @@ export default function DynastyStatusDemoPage() {
               <div>
                 <dt className="font-medium text-destructive">Declining Asset</dt>
                 <dd className="text-sm text-muted-foreground">
-                  Player's dynasty value declining due to age, decreased production, or loss of
+                  Player&apos;s dynasty value declining due to age, decreased production, or loss of
                   role/opportunity.
                 </dd>
               </div>

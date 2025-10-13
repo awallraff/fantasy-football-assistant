@@ -412,14 +412,14 @@ export default function RankingsPage() {
     return (
       <>
         {/* Mobile: Card layout */}
-        <div className="md:hidden space-y-compact-sm overflow-hidden">
+        <div className="md:hidden space-y-3 overflow-hidden">
           {sortedData.map((player) => (
             <Card
               key={player.playerId}
-              className="p-compact-md cursor-pointer hover:bg-muted/30 transition-colors overflow-hidden"
+              className="p-4 cursor-pointer hover:bg-muted/30 transition-colors overflow-hidden"
               onClick={() => setSelectedPlayerForModal(player)}
             >
-              <div className="space-y-compact-sm min-w-0">
+              <div className="space-y-3 min-w-0">
                 <div className="flex justify-between items-start gap-2 min-w-0">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
                     <div className={`w-10 h-10 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)} shrink-0`}>
@@ -614,8 +614,8 @@ export default function RankingsPage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <div className="container mx-auto px-4 py-compact-lg md:py-compact-xl max-w-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-compact-md mb-compact-lg md:mb-compact-xl">
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-full">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 md:mb-12">
           <div className="min-w-0">
             <h1 className="text-ios-title-1 font-bold text-foreground">Player Rankings</h1>
             <p className="text-ios-body text-text-secondary break-words">Auto-generated AI predictions for the next upcoming NFL week, plus real data from user imports and external sources</p>
@@ -821,7 +821,7 @@ export default function RankingsPage() {
         </Card>
 
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-compact-md md:gap-compact-lg mb-compact-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6">
           <Card className="overflow-hidden">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between min-w-0">
@@ -961,7 +961,7 @@ export default function RankingsPage() {
           </Card>
         )}
 
-        <Tabs defaultValue="import" className="space-y-compact-md md:space-y-compact-lg overflow-hidden">
+        <Tabs defaultValue="import" className="space-y-6 md:space-y-8 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[44px]">
             <TabsTrigger value="import" className="min-h-[44px] truncate px-2">Import</TabsTrigger>
             <TabsTrigger value="manage" className="min-h-[44px] truncate px-2">Manage</TabsTrigger>
