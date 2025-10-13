@@ -33,7 +33,7 @@ This file contains project-specific instructions for Claude Code interactions.
 1. Review the user's request and identify the domain (React, Python, DevOps, code review, etc.)
 2. Check available custom agents (`.claude/agents/`) and plugin agents
 3. Determine if specialized expertise would benefit the task:
-   - **Custom agents:** `react-architect`, `dynasty-feature-planner`, `python-nfl-data-specialist`
+   - **Custom agents:** `react-architect`, `dynasty-feature-planner`, `python-nfl-data-specialist`, `principal-sdet`
    - **Plugin agents:** `pr-review-toolkit`, `claude-code-essentials`, `feature-dev`, etc.
 4. If applicable, proactively launch the appropriate agent(s) using the Task tool
 5. For complex tasks, consider using multiple agents in parallel
