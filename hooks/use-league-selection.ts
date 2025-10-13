@@ -49,11 +49,12 @@ export function useLeagueSelection({
       ])
 
       if (!controller.signal.aborted) {
-        // Set data atomically to avoid timing issues
-        // This ensures rosters and users are always in sync
-        setSelectedLeague(league)
+        // Set data BEFORE league to prevent race condition
+        // Setting selectedLeague last ensures tabs render with data ready
+        // If we set selectedLeague first, React renders tabs with empty rosters/users
         setRosters(rostersData)
         setLeagueUsers(usersData)
+        setSelectedLeague(league)
 
         // Debug logging for data mismatch issues
         if (process.env.NODE_ENV === 'development') {

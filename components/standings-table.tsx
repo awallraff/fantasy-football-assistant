@@ -61,15 +61,15 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
         <CardDescription>Current season rankings and playoff picture</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {/* Header */}
-          <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground pb-2 border-b border-border">
-            <div className="col-span-1">Rank</div>
-            <div className="col-span-4">Team</div>
-            <div className="col-span-2">Record</div>
-            <div className="col-span-2">Points For</div>
-            <div className="col-span-2">Points Against</div>
-            <div className="col-span-1">Status</div>
+        <div className="space-y-2 overflow-x-hidden">
+          {/* Header - Mobile shows only essential columns */}
+          <div className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-12 gap-2 md:gap-4 text-sm font-medium text-muted-foreground pb-2 border-b border-border">
+            <div className="md:col-span-1">Rank</div>
+            <div className="md:col-span-4 truncate">Team</div>
+            <div className="md:col-span-2">Record</div>
+            <div className="hidden md:block md:col-span-2">Points For</div>
+            <div className="hidden md:block md:col-span-2">Points Against</div>
+            <div className="md:col-span-1">Status</div>
           </div>
 
           {/* Standings Rows */}
@@ -83,33 +83,33 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
             return (
               <div
                 key={roster.roster_id}
-                className="grid grid-cols-12 gap-4 py-3 text-sm hover:bg-accent rounded-lg px-2"
+                className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-12 gap-2 md:gap-4 py-3 text-sm hover:bg-accent rounded-lg px-2"
               >
-                <div className="col-span-1 flex items-center">{getRankIcon(rank)}</div>
+                <div className="md:col-span-1 flex items-center flex-shrink-0">{getRankIcon(rank)}</div>
 
-                <div className="col-span-4 flex items-center">
-                  <div>
-                    <p className="font-medium">{getOwnerName(roster.owner_id)}</p>
-                    <p className="text-xs text-muted-foreground">{winPercentage.toFixed(1)}% win rate</p>
+                <div className="md:col-span-4 flex items-center min-w-0">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{getOwnerName(roster.owner_id)}</p>
+                    <p className="text-xs text-muted-foreground truncate">{winPercentage.toFixed(1)}% win rate</p>
                   </div>
                 </div>
 
-                <div className="col-span-2 flex items-center">
-                  <span className="font-medium">
+                <div className="md:col-span-2 flex items-center flex-shrink-0">
+                  <span className="font-medium whitespace-nowrap">
                     {roster.settings.wins}-{roster.settings.losses}
                     {roster.settings.ties > 0 && `-${roster.settings.ties}`}
                   </span>
                 </div>
 
-                <div className="col-span-2 flex items-center">
+                <div className="hidden md:flex md:col-span-2 items-center">
                   <span className="font-medium">{(roster.settings.fpts || 0).toFixed(1)}</span>
                 </div>
 
-                <div className="col-span-2 flex items-center">
+                <div className="hidden md:flex md:col-span-2 items-center">
                   <span className="font-medium">{(roster.settings.fpts_against || 0).toFixed(1)}</span>
                 </div>
 
-                <div className="col-span-1 flex items-center">{getPlayoffStatus(rank)}</div>
+                <div className="md:col-span-1 flex items-center flex-shrink-0">{getPlayoffStatus(rank)}</div>
               </div>
             )
           })}

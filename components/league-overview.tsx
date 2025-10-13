@@ -15,14 +15,21 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
   // Calculate league stats
   const totalPoints = rosters.reduce((sum, roster) => sum + (roster.settings.fpts || 0), 0)
   const avgPoints = rosters.length > 0 ? totalPoints / rosters.length : 0
-  const highestScorer = rosters.reduce(
-    (highest, roster) => ((roster.settings.fpts || 0) > (highest.settings.fpts || 0) ? roster : highest),
-    rosters[0],
-  )
-  const lowestScorer = rosters.reduce(
-    (lowest, roster) => ((roster.settings.fpts || 0) < (lowest.settings.fpts || 0) ? roster : lowest),
-    rosters[0],
-  )
+
+  // Defensive checks to prevent crash on empty rosters array
+  const highestScorer = rosters.length > 0
+    ? rosters.reduce(
+        (highest, roster) => ((roster.settings.fpts || 0) > (highest.settings.fpts || 0) ? roster : highest),
+        rosters[0],
+      )
+    : null
+
+  const lowestScorer = rosters.length > 0
+    ? rosters.reduce(
+        (lowest, roster) => ((roster.settings.fpts || 0) < (lowest.settings.fpts || 0) ? roster : lowest),
+        rosters[0],
+      )
+    : null
 
   const getOwnerName = (ownerId: string) => {
     const owner = users.find((u) => u.user_id === ownerId)
@@ -140,7 +147,7 @@ export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) 
       </Card>
 
       {/* Performance Leaders */}
-      {rosters.length > 0 && (
+      {rosters.length > 0 && highestScorer && lowestScorer && (
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>

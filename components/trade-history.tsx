@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RefreshCw, ArrowRightLeft, Filter, TrendingUp, Users, Calendar } from "lucide-react"
 import { sleeperAPI, type SleeperTransaction, type SleeperUser } from "@/lib/sleeper-api"
+import { usePlayerData } from "@/contexts/player-data-context"
 
 interface TradeHistoryProps {
   leagueId: string
@@ -44,6 +45,9 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
   const [selectedSeason, setSelectedSeason] = useState<string>("2024")
   const [weekFilter, setWeekFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<"date" | "players" | "teams">("date")
+
+  // Get player name resolution functions
+  const { getPlayerName, getPlayer } = usePlayerData()
 
   const availableSeasons = ["2024", "2023", "2022", "2021", "2020"]
 
@@ -331,11 +335,11 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
             </TabsList>
 
             <TabsContent value="history" className="space-y-6">
-              <div className="flex gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
                   <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -349,10 +353,10 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
+                <div className="flex items-center gap-2 min-w-0">
+                  <Filter className="h-4 w-4 flex-shrink-0" />
                   <Select value={weekFilter} onValueChange={setWeekFilter}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -367,7 +371,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                 </div>
 
                 <Select value={sortBy} onValueChange={(value: "date" | "players" | "teams") => setSortBy(value)}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40 min-h-[44px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -425,27 +429,37 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                         </div>
 
                         {/* Trade Details */}
-                        <div className="grid md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
-                          <div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                          <div className="min-w-0">
                             <h4 className="font-medium text-sm mb-2">Players Added</h4>
                             <div className="space-y-1">
-                              {Object.entries(trade.transaction.adds || {}).map(([playerId, rosterId]) => (
-                                <div key={playerId} className="text-sm flex justify-between">
-                                  <span>Player {playerId}</span>
-                                  <span className="text-gray-500">→ Team {rosterId}</span>
-                                </div>
-                              ))}
+                              {Object.entries(trade.transaction.adds || {}).map(([playerId, rosterId]) => {
+                                const player = getPlayer(playerId)
+                                return (
+                                  <div key={playerId} className="text-sm flex justify-between gap-2 min-w-0">
+                                    <span className="font-medium truncate">{getPlayerName(playerId)}</span>
+                                    <span className="text-gray-500 flex-shrink-0">
+                                      {player?.team || 'FA'} {player?.position || ''} → Team {rosterId}
+                                    </span>
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h4 className="font-medium text-sm mb-2">Players Dropped</h4>
                             <div className="space-y-1">
-                              {Object.entries(trade.transaction.drops || {}).map(([playerId, rosterId]) => (
-                                <div key={playerId} className="text-sm flex justify-between">
-                                  <span>Player {playerId}</span>
-                                  <span className="text-gray-500">← Team {rosterId}</span>
-                                </div>
-                              ))}
+                              {Object.entries(trade.transaction.drops || {}).map(([playerId, rosterId]) => {
+                                const player = getPlayer(playerId)
+                                return (
+                                  <div key={playerId} className="text-sm flex justify-between gap-2 min-w-0">
+                                    <span className="font-medium truncate">{getPlayerName(playerId)}</span>
+                                    <span className="text-gray-500 flex-shrink-0">
+                                      {player?.team || 'FA'} {player?.position || ''} ← Team {rosterId}
+                                    </span>
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
                         </div>
@@ -512,9 +526,9 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                           <div className="space-y-1 text-sm">
                             <p>Avg players per trade: {owner.avgPlayersPerTrade.toFixed(1)}</p>
                             <p>Preferred types: {owner.preferredTradeTypes.join(", ")}</p>
-                            <div className="flex gap-1 mt-2">
+                            <div className="flex flex-wrap gap-1 mt-2">
                               {Object.entries(owner.seasonalPatterns).map(([season, count]) => (
-                                <Badge key={season} variant="outline" className="text-xs">
+                                <Badge key={season} variant="outline" className="text-xs flex-shrink-0">
                                   {season}: {count}
                                 </Badge>
                               ))}
