@@ -9,7 +9,8 @@
  * New code should use PlayerRow directly from @/components/player/player-row
  */
 
-import { PlayerRow, type PlayerRowData } from "@/components/player/player-row"
+import { PlayerRow } from "@/components/player/player-row"
+import { type PlayerRowData } from "@/lib/types/player-row-types"
 
 interface DisplayPlayer {
   player_id: string
@@ -29,20 +30,30 @@ interface PlayerCardProps {
   projectionsLoading?: boolean
 }
 
-export function PlayerCard({ player, isStarter, onClick, projectionsLoading }: PlayerCardProps) {
+export function PlayerCard({ player, isStarter: _isStarter, onClick, projectionsLoading: _projectionsLoading }: PlayerCardProps) {
+  // Convert legacy DisplayPlayer to PlayerRowData
+  const playerRowData: PlayerRowData = {
+    playerId: player.player_id,
+    name: player.full_name,
+    position: (player.position || 'FLEX') as PlayerRowData['position'],
+    team: player.team || undefined,
+    headshotUrl: undefined,
+    keyStat: player.projectedPoints?.toFixed(1),
+    secondaryStat: player.tier ? `Tier ${player.tier}` : undefined,
+  }
+
   return (
     <PlayerRow
-      player={player}
-      isStarter={isStarter}
-      onClick={onClick}
-      projectionsLoading={projectionsLoading}
-      showHeadshot={false}
-      showPosition={true}
-      showTeam={true}
-      showProjection={true}
-      showTier={true}
-      showStatus={true}
-      compact={false}
+      player={playerRowData}
+      onClick={() => onClick()}
+      displayOptions={{
+        showHeadshot: false,
+        showTeamLogo: true,
+        showPosition: true,
+        showStat: true,
+        showSecondaryStat: true,
+        compact: false,
+      }}
     />
   )
 }

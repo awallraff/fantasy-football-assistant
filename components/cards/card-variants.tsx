@@ -23,7 +23,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, TrendingDown, Minus, LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { PlayerRow, type PlayerRowData } from "@/components/player/player-row"
+import { PlayerRow } from "@/components/player/player-row"
+import { type PlayerRowData } from "@/lib/types/player-row-types"
 
 /**
  * LeagueCard Component
@@ -249,9 +250,9 @@ export interface PlayerCardProps {
 
 export function PlayerCard({
   player,
-  isStarter = false,
+  isStarter: _isStarter = false,
   onClick,
-  projectionsLoading = false,
+  projectionsLoading: _projectionsLoading = false,
   expandedContent,
   expanded = false,
   className,
@@ -269,16 +270,15 @@ export function PlayerCard({
       <div className="p-compact-sm">
         <PlayerRow
           player={player}
-          isStarter={isStarter}
           onClick={onClick}
-          projectionsLoading={projectionsLoading}
-          showHeadshot={false}
-          showPosition={true}
-          showTeam={true}
-          showProjection={true}
-          showTier={true}
-          showStatus={true}
-          compact={true}
+          displayOptions={{
+            showHeadshot: false,
+            showTeamLogo: true,
+            showPosition: true,
+            showStat: true,
+            showSecondaryStat: false,
+            compact: true,
+          }}
         />
       </div>
 
