@@ -82,7 +82,8 @@
       "Bash(vercel:*)",
       "WebFetch(domain:www.vercel-status.com)",
       "Bash(tee:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(pnpm tsc:*)"
     ],
     "deny": [],
     "ask": [],

@@ -5,7 +5,10 @@ import type { SleeperPlayer } from "@/lib/sleeper-api"
 import sleeperAPI from "@/lib/sleeper-api"
 import { formatPlayerName, normalizePosition } from "@/lib/player-utils"
 import { sleeperCache } from "@/lib/cache/sleeper-cache"
+import { indexedDBCache } from "@/lib/cache/indexeddb-cache"
+import { cacheMigration } from "@/lib/cache/cache-migration"
 import "@/lib/cache/cache-debug" // Initialize debug utilities
+import "@/lib/cache/indexeddb-debug" // Initialize IndexedDB debug utilities
 
 interface PlayerDataContextType {
   players: { [player_id: string]: SleeperPlayer }
@@ -36,18 +39,58 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
       setIsLoading(true)
       setError(null)
 
-      // Check cache first
-      const cachedPlayers = sleeperCache.get("allPlayers", "nfl")
+      // Auto-migrate from sessionStorage to IndexedDB if needed
+      await cacheMigration.autoMigrate()
 
-      if (cachedPlayers) {
-        console.log(`[PlayerData] ✅ Loaded ${Object.keys(cachedPlayers).length} players from cache`)
-        setPlayers(cachedPlayers)
+      // Cache Priority:
+      // 1. IndexedDB (persistent, fast)
+      // 2. sessionStorage (session-only, Phase 1 fallback)
+      // 3. API fetch (slow, always works)
+
+      // Try IndexedDB first
+      if (indexedDBCache.isAvailable()) {
+        try {
+          const indexedPlayers = await indexedDBCache.getAllPlayers()
+
+          if (indexedPlayers) {
+            console.log(
+              `[PlayerData] ✅ Loaded ${Object.keys(indexedPlayers).length} players from IndexedDB cache`
+            )
+            setPlayers(indexedPlayers)
+            setIsLoading(false)
+            return
+          }
+
+          console.log("[PlayerData] IndexedDB cache miss, trying sessionStorage...")
+        } catch (indexedError) {
+          console.warn("[PlayerData] IndexedDB error, falling back to sessionStorage:", indexedError)
+        }
+      } else {
+        console.log("[PlayerData] IndexedDB not available, using sessionStorage")
+      }
+
+      // Fallback to sessionStorage
+      const sessionPlayers = sleeperCache.get("allPlayers", "nfl")
+
+      if (sessionPlayers) {
+        console.log(
+          `[PlayerData] ✅ Loaded ${Object.keys(sessionPlayers).length} players from sessionStorage cache`
+        )
+        setPlayers(sessionPlayers)
         setIsLoading(false)
+
+        // Background: Try to populate IndexedDB for next time
+        if (indexedDBCache.isAvailable()) {
+          indexedDBCache.setPlayers(sessionPlayers).catch((err) => {
+            console.warn("[PlayerData] Failed to populate IndexedDB in background:", err)
+          })
+        }
+
         return
       }
 
       // Cache miss - fetch from API
-      console.log("[PlayerData] Cache miss - fetching from Sleeper API...")
+      console.log("[PlayerData] All caches missed - fetching from Sleeper API...")
       const startTime = Date.now()
 
       const playerData = await sleeperAPI.getAllPlayers("nfl")
@@ -55,12 +98,32 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
 
       console.log(`[PlayerData] ✅ Loaded ${Object.keys(playerData).length} players from API (${loadTime}ms)`)
 
-      // Save to cache
-      const cached = sleeperCache.set("allPlayers", playerData, "nfl")
-      if (cached) {
-        console.log("[PlayerData] ✅ Players cached successfully for 24 hours")
+      // Save to both caches (best effort, don't fail if caching fails)
+      // Try IndexedDB first
+      if (indexedDBCache.isAvailable()) {
+        try {
+          const indexedSuccess = await indexedDBCache.setPlayers(playerData)
+          if (indexedSuccess) {
+            console.log("[PlayerData] ✅ Players cached to IndexedDB for 24 hours")
+          } else {
+            console.warn("[PlayerData] ⚠️ Failed to cache to IndexedDB, trying sessionStorage...")
+            const sessionSuccess = sleeperCache.set("allPlayers", playerData, "nfl")
+            if (sessionSuccess) {
+              console.log("[PlayerData] ✅ Players cached to sessionStorage for 24 hours")
+            }
+          }
+        } catch (indexedError) {
+          console.warn("[PlayerData] IndexedDB caching error, falling back to sessionStorage:", indexedError)
+          sleeperCache.set("allPlayers", playerData, "nfl")
+        }
       } else {
-        console.warn("[PlayerData] ⚠️ Failed to cache player data")
+        // IndexedDB not available, use sessionStorage
+        const sessionSuccess = sleeperCache.set("allPlayers", playerData, "nfl")
+        if (sessionSuccess) {
+          console.log("[PlayerData] ✅ Players cached to sessionStorage for 24 hours")
+        } else {
+          console.warn("[PlayerData] ⚠️ Failed to cache player data")
+        }
       }
 
       setPlayers(playerData)
