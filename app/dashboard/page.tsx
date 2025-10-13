@@ -3,7 +3,7 @@
 import { useEffect, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, BarChart3, Users, Trophy, Activity } from "lucide-react"
 import { LeagueOverview } from "@/components/league-overview"
 import { EnhancedTeamRoster } from "@/components/enhanced-team-roster"
 import { StandingsTable } from "@/components/standings-table"
@@ -137,7 +137,7 @@ export default function DashboardPage() {
   if (selectedLeague) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-compact-lg md:py-compact-xl">
           <LeagueHeader
             selectedLeague={selectedLeague}
             selectedYear={selectedYear}
@@ -150,12 +150,24 @@ export default function DashboardPage() {
             onRefresh={() => handleLoadLeagueDetails(selectedLeague)}
           />
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 min-h-[44px]">
-              <TabsTrigger value="overview" className="min-h-[44px]">Overview</TabsTrigger>
-              <TabsTrigger value="teams" className="min-h-[44px]">Teams</TabsTrigger>
-              <TabsTrigger value="standings" className="min-h-[44px]">Standings</TabsTrigger>
-              <TabsTrigger value="activity" className="min-h-[44px]">Activity</TabsTrigger>
+          <Tabs defaultValue="overview" className="space-y-compact-md md:space-y-compact-lg">
+            <TabsList className="grid w-full grid-cols-4 min-h-[44px]">
+              <TabsTrigger value="overview" className="min-h-[44px] gap-2" title="Overview">
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden md:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="teams" className="min-h-[44px] gap-2" title="Teams">
+                <Users className="h-4 w-4" />
+                <span className="hidden md:inline">Teams</span>
+              </TabsTrigger>
+              <TabsTrigger value="standings" className="min-h-[44px] gap-2" title="Standings">
+                <Trophy className="h-4 w-4" />
+                <span className="hidden md:inline">Standings</span>
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="min-h-[44px] gap-2" title="Activity">
+                <Activity className="h-4 w-4" />
+                <span className="hidden md:inline">Activity</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -163,7 +175,7 @@ export default function DashboardPage() {
             </TabsContent>
 
             <TabsContent value="teams">
-              <div className="grid gap-6">
+              <div className="grid gap-compact-md md:gap-compact-lg">
                 {/* Debug info - remove after fixing */}
                 {process.env.NODE_ENV === 'development' && (
                   <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded text-xs">
@@ -175,7 +187,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-compact-md">
                   {sortedRosters.length === 0 ? (
                     <Card>
                       <CardHeader>
@@ -232,9 +244,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-compact-lg md:py-compact-xl">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-compact-lg md:mb-compact-xl">
           <h1 className="text-ios-title-1 font-bold text-foreground mb-2">
             Welcome back, {user.display_name || user.username}!
           </h1>
@@ -256,7 +268,7 @@ export default function DashboardPage() {
         )}
 
         {/* Leagues Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-compact-md md:gap-compact-lg">
           {currentYearLeagues.map((league) => (
             <LeagueCard
               key={league.league_id}

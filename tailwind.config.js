@@ -97,6 +97,13 @@ export default {
         'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
         'safe-left': 'env(safe-area-inset-left, 0px)',
         'safe-right': 'env(safe-area-inset-right, 0px)',
+        // 8px grid system for information density
+        // Compact spacing for data-dense layouts
+        'compact-xs': '4px',   // 0.5 (4px) - Minimal gap between related items
+        'compact-sm': '8px',   // 2 (8px) - Tight spacing for list items
+        'compact-md': '12px',  // 3 (12px) - Comfortable spacing for cards
+        'compact-lg': '16px',  // 4 (16px) - Section padding mobile
+        'compact-xl': '24px',  // 6 (24px) - Section padding desktop
       },
       transitionTimingFunction: {
         'ios': 'cubic-bezier(0.4, 0, 0.2, 1)',
