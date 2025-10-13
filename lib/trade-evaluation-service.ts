@@ -6,7 +6,6 @@
 import type { SleeperTransaction, SleeperPlayer } from './sleeper-api'
 import type { PlayerRanking, RankingSystem } from './rankings-types'
 import type { NFLWeeklyStats, NFLSeasonalStats } from './nfl-data-service'
-import { nflDataService } from './nfl-data-service'
 
 export interface TradeParticipant {
   rosterId: number
@@ -293,14 +292,26 @@ export class TradeEvaluationService {
         return this.calculatePerformanceMetrics(cached.weekly, cached.seasonal, currentWeek)
       }
 
-      // Fetch from NFL data service
-      const currentSeason = nflDataService.getCurrentSeason()
-      const { weekly, seasonal } = await nflDataService.getPlayerStats(playerId, [currentSeason])
+      // Only fetch NFL data on server-side (not in browser/build)
+      if (typeof window === 'undefined') {
+        try {
+          // Dynamic import to avoid bundling child_process in client
+          const { nflDataService } = await import('./nfl-data-service')
 
-      // Cache results
-      this.nflStatsCache.set(playerId, { weekly, seasonal })
+          const currentSeason = nflDataService.getCurrentSeason()
+          const { weekly, seasonal } = await nflDataService.getPlayerStats(playerId, [currentSeason])
 
-      return this.calculatePerformanceMetrics(weekly, seasonal, currentWeek)
+          // Cache results
+          this.nflStatsCache.set(playerId, { weekly, seasonal })
+
+          return this.calculatePerformanceMetrics(weekly, seasonal, currentWeek)
+        } catch (importError) {
+          console.warn(`NFL data service not available: ${importError}`)
+          return undefined
+        }
+      }
+
+      return undefined
     } catch (error) {
       console.error(`Error fetching performance for player ${playerId}:`, error)
       return undefined
