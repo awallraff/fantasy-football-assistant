@@ -111,7 +111,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarFallback>{user.display_name?.charAt(0) || user.username.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{user.display_name?.charAt(0) || user.username?.charAt(0) || '?'}</AvatarFallback>
             </Avatar>
             {user.display_name || user.username}
           </CardTitle>
@@ -130,7 +130,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarFallback>{user.display_name?.charAt(0) || user.username.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{user.display_name?.charAt(0) || user.username?.charAt(0) || '?'}</AvatarFallback>
             </Avatar>
             {user.display_name || user.username}
             {isCurrentUser && <Badge variant="secondary">Your Team</Badge>}
@@ -152,7 +152,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{user.display_name?.charAt(0) || user.username.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{user.display_name?.charAt(0) || user.username?.charAt(0) || '?'}</AvatarFallback>
               </Avatar>
               {user.display_name || user.username}
               {isCurrentUser && <Badge variant="secondary">Your Team</Badge>}
