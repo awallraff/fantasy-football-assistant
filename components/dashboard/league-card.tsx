@@ -15,12 +15,12 @@ interface LeagueCardProps {
 
 export function LeagueCard({ league, loading, onViewAnalytics, onRemoveLeague }: LeagueCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-shadow border-border">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg text-card-foreground">{league.name}</CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant={league.status === "in_season" ? "default" : "secondary"}>
+    <Card className="bg-background-elevated hover:shadow-lg transition-all duration-200 border-border/50 shadow-md rounded-lg">
+      <CardHeader className="pb-compact-sm">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-ios-title-3 text-foreground truncate">{league.name}</CardTitle>
+          <div className="flex items-center gap-2 shrink-0">
+            <Badge variant={league.status === "in_season" ? "default" : "secondary"} className="text-xs">
               {league.status.replace("_", " ")}
             </Badge>
             <Button
@@ -30,29 +30,29 @@ export function LeagueCard({ league, loading, onViewAnalytics, onRemoveLeague }:
                 e.stopPropagation()
                 onRemoveLeague(league.league_id, `${league.name} (${league.season})`)
               }}
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              className="h-[44px] w-[44px] p-0 text-text-secondary hover:text-destructive hover:bg-destructive/10 rounded-md"
               title={`Remove "${league.name}" from your leagues`}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
-        <CardDescription>
+        <CardDescription className="text-ios-subheadline text-text-secondary">
           {league.total_rosters} teams • {league.season} season
         </CardDescription>
       </CardHeader>
       <CardContent className="cursor-pointer" onClick={() => onViewAnalytics(league)}>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Sport</span>
+        <div className="space-y-compact-sm">
+          <div className="flex items-center justify-between text-ios-subheadline">
+            <span className="text-text-secondary">Sport</span>
             <span className="font-medium uppercase text-foreground">{league.sport}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Season Type</span>
+          <div className="flex items-center justify-between text-ios-subheadline">
+            <span className="text-text-secondary">Season Type</span>
             <span className="font-medium text-foreground">{league.season_type}</span>
           </div>
           <Button
-            className="w-full mt-4"
+            className="w-full mt-compact-md min-h-[44px]"
             disabled={loading}
             onClick={(e) => {
               e.stopPropagation()
@@ -62,12 +62,12 @@ export function LeagueCard({ league, loading, onViewAnalytics, onRemoveLeague }:
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
+                <span className="text-ios-body">Loading...</span>
               </>
             ) : (
               <>
                 <BarChart3 className="h-4 w-4 mr-2" />
-                View Analytics
+                <span className="text-ios-body">View Analytics</span>
               </>
             )}
           </Button>

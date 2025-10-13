@@ -29,22 +29,22 @@ export function LeagueHeader({
   onRefresh,
 }: LeagueHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-3 md:gap-4">
-        <Button variant="outline" onClick={onBackToLeagues} className="min-h-[44px] flex-shrink-0">
+    <div className="flex flex-col gap-compact-md mb-compact-xl md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center gap-compact-sm md:gap-compact-md">
+        <Button variant="outline" onClick={onBackToLeagues} className="min-h-[44px] flex-shrink-0 shadow-sm bg-background-elevated">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Back to Leagues</span>
-          <span className="sm:hidden">Back</span>
+          <span className="hidden sm:inline text-ios-body">Back to Leagues</span>
+          <span className="sm:hidden text-ios-body">Back</span>
         </Button>
         <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">{selectedLeague.name}</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">
+          <h1 className="text-ios-title-2 md:text-ios-title-1 font-bold text-foreground truncate">{selectedLeague.name}</h1>
+          <p className="text-ios-footnote md:text-ios-subheadline text-text-secondary">
             {selectedLeague.total_rosters} teams • {selectedLeague.season} season
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-compact-sm sm:flex-row sm:items-center">
         <LeagueYearSelector
           selectedYear={selectedYear}
           selectedLeagueId={selectedLeague.league_id}
@@ -54,11 +54,11 @@ export function LeagueHeader({
           onLeagueChange={onLeagueChange}
         />
 
-        <div className="hidden sm:block h-6 w-px bg-border"></div>
+        <div className="hidden sm:block h-6 w-px bg-separator"></div>
 
-        <Button variant="outline" onClick={onRefresh} disabled={loading} className="min-h-[44px] w-full sm:w-auto">
+        <Button variant="outline" onClick={onRefresh} disabled={loading} className="min-h-[44px] w-full sm:w-auto shadow-sm bg-background-elevated">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          <span className="text-ios-body">Refresh</span>
         </Button>
       </div>
     </div>

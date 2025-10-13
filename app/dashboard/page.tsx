@@ -1,13 +1,11 @@
 "use client"
 
 import { useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { RefreshCw, BarChart3, Users, Trophy, Activity } from "lucide-react"
-import { LeagueOverview } from "@/components/league-overview"
 import { EnhancedTeamRoster } from "@/components/enhanced-team-roster"
-import { StandingsTable } from "@/components/standings-table"
-import { RecentActivity } from "@/components/recent-activity"
 import { DashboardLoadingSkeleton } from "@/components/dashboard/loading-skeleton"
 import { NoLeaguesConnected } from "@/components/no-leagues-connected"
 import { LeagueCard } from "@/components/dashboard/league-card"
@@ -19,6 +17,17 @@ import { useLoadingStates } from "@/hooks/use-loading-states"
 import { useDebugInfo } from "@/hooks/use-debug-info"
 import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { SleeperLeague } from "@/lib/sleeper-api"
+
+// Lazy-load heavy tab components to reduce initial bundle size
+const LeagueOverview = dynamic(() => import("@/components/league-overview").then(mod => ({ default: mod.LeagueOverview })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const StandingsTable = dynamic(() => import("@/components/standings-table").then(mod => ({ default: mod.StandingsTable })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const RecentActivity = dynamic(() => import("@/components/recent-activity").then(mod => ({ default: mod.RecentActivity })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
 
 export default function DashboardPage() {
   const { isClient } = useSafeLocalStorage()
@@ -136,8 +145,8 @@ export default function DashboardPage() {
 
   if (selectedLeague) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:via-background-elevated/30 dark:to-background">
+        <div className="container mx-auto px-compact-lg md:px-compact-xl py-compact-lg md:py-compact-xl safe-area-inset-top safe-area-inset-bottom">
           <LeagueHeader
             selectedLeague={selectedLeague}
             selectedYear={selectedYear}
@@ -150,8 +159,8 @@ export default function DashboardPage() {
             onRefresh={() => handleLoadLeagueDetails(selectedLeague)}
           />
 
-          <Tabs defaultValue="overview" className="space-y-6 md:space-y-8">
-            <TabsList className="grid w-full grid-cols-4 min-h-[44px]">
+          <Tabs defaultValue="overview" className="space-y-compact-md md:space-y-compact-xl">
+            <TabsList className="grid w-full grid-cols-4 min-h-[44px] bg-background-elevated shadow-md rounded-lg">
               <TabsTrigger value="overview" className="min-h-[44px] gap-2" title="Overview">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden md:inline">Overview</span>
@@ -175,10 +184,10 @@ export default function DashboardPage() {
             </TabsContent>
 
             <TabsContent value="teams">
-              <div className="grid gap-6 md:gap-8">
+              <div className="grid gap-compact-md md:gap-compact-xl">
                 {/* Debug info - remove after fixing */}
                 {process.env.NODE_ENV === 'development' && (
-                  <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded text-xs">
+                  <div className="bg-yellow-100 dark:bg-yellow-900/20 p-compact-md rounded-lg text-xs shadow-sm">
                     <div>Rosters: {rosters.length}</div>
                     <div>Sorted Rosters: {sortedRosters.length}</div>
                     <div>League Users: {leagueUsers.length}</div>
@@ -187,14 +196,14 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-compact-md">
                   {sortedRosters.length === 0 ? (
-                    <Card>
+                    <Card className="bg-background-elevated shadow-md rounded-lg">
                       <CardHeader>
-                        <CardTitle>No Teams Found</CardTitle>
+                        <CardTitle className="text-ios-title-3">No Teams Found</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground">
+                        <p className="text-text-secondary text-ios-body">
                           {rosters.length === 0
                             ? "No rosters loaded for this league. Try refreshing the page."
                             : leagueUsers.length === 0
@@ -243,11 +252,11 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 md:py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:via-background-elevated/30 dark:to-background">
+      <div className="container mx-auto px-compact-lg md:px-compact-xl py-compact-lg md:py-compact-xl safe-area-inset-top safe-area-inset-bottom">
         {/* Header */}
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-ios-title-1 font-bold text-foreground mb-2">
+        <div className="text-center mb-compact-xl md:mb-compact-xl">
+          <h1 className="text-ios-title-1 font-bold text-foreground mb-compact-xs">
             Welcome back, {user.display_name || user.username}!
           </h1>
           <p className="text-ios-body text-text-secondary">Select a league to view detailed analytics and insights</p>
@@ -261,14 +270,14 @@ export default function DashboardPage() {
 
         {/* Loading State */}
         {loadingYears && (
-          <div className="text-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-            <p className="text-muted-foreground">Loading leagues for {selectedYear}...</p>
+          <div className="text-center py-compact-xl">
+            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-compact-xs text-primary" />
+            <p className="text-text-secondary text-ios-body">Loading leagues for {selectedYear}...</p>
           </div>
         )}
 
         {/* Leagues Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-compact-md md:gap-compact-xl">
           {currentYearLeagues.map((league) => (
             <LeagueCard
               key={league.league_id}
@@ -282,12 +291,12 @@ export default function DashboardPage() {
         
         {/* No Leagues Message */}
         {!loadingYears && currentYearLeagues.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg mb-4">
+          <div className="text-center py-compact-xl">
+            <p className="text-text-secondary text-ios-title-3 mb-compact-md">
               No leagues found for {selectedYear} season
             </p>
             {availableYears.length > 1 && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-ios-body text-text-tertiary">
                 Try selecting a different year above
               </p>
             )}

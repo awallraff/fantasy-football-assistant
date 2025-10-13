@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,12 +9,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRightLeft, TrendingUp, Users, Target } from "lucide-react"
 import Link from "next/link"
-import { TradeHistory } from "@/components/trade-history"
-import { TradeEvaluator } from "@/components/trade-evaluator"
-import { MarketTrends } from "@/components/market-trends"
-import { OpponentAnalysis } from "@/components/opponent-analysis"
 import { ErrorDisplay } from "@/components/ui/error-display"
 import type { SleeperLeague, SleeperUser } from "@/lib/sleeper-api"
+
+// Lazy-load heavy tab components to reduce initial bundle size
+const TradeHistory = dynamic(() => import("@/components/trade-history").then(mod => ({ default: mod.TradeHistory })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const TradeEvaluator = dynamic(() => import("@/components/trade-evaluator").then(mod => ({ default: mod.TradeEvaluator })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const MarketTrends = dynamic(() => import("@/components/market-trends").then(mod => ({ default: mod.MarketTrends })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const OpponentAnalysis = dynamic(() => import("@/components/opponent-analysis").then(mod => ({ default: mod.OpponentAnalysis })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
 
 export default function TradesPage() {
   const [user, setUser] = useState<SleeperUser | null>(null)
@@ -48,11 +59,11 @@ export default function TradesPage() {
   // Show loading state during hydration
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-compact-lg py-compact-xl">
+          <div className="animate-pulse space-y-compact-md">
+            <div className="h-8 bg-muted rounded-md w-1/4"></div>
+            <div className="h-4 bg-muted rounded-md w-1/2"></div>
           </div>
         </div>
       </div>
@@ -61,9 +72,9 @@ export default function TradesPage() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Trade Analysis</h1>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-compact-lg py-compact-xl">
+          <h1 className="text-ios-title-1 text-foreground mb-compact-md">Trade Analysis</h1>
           <ErrorDisplay
             type="validation"
             title="Failed to Load League Data"
@@ -71,7 +82,7 @@ export default function TradesPage() {
             showRetry={true}
             onRetry={() => window.location.reload()}
             actions={
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="min-h-[44px]">
                 <Link href="/">Return Home</Link>
               </Button>
             }
@@ -83,13 +94,13 @@ export default function TradesPage() {
 
   if (!user || leagues.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-md mx-auto">
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No leagues connected</p>
-                <Button asChild>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-compact-lg py-compact-xl">
+          <Card className="max-w-md mx-auto bg-background-elevated shadow-md rounded-md">
+            <CardContent className="pt-compact-md">
+              <div className="text-center py-compact-xl">
+                <p className="text-ios-body text-text-secondary mb-compact-lg">No leagues connected</p>
+                <Button asChild className="min-h-[44px]">
                   <Link href="/">Connect Account</Link>
                 </Button>
               </div>
@@ -101,17 +112,17 @@ export default function TradesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-compact-lg py-compact-xl">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-compact-lg mb-compact-xl">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Trade Analysis</h1>
-            <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
+            <h1 className="text-ios-title-1 text-foreground mb-compact-xs">Trade Analysis</h1>
+            <p className="text-ios-body text-text-secondary">
               Analyze trade patterns, evaluate proposals, and track market trends
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-compact-sm sm:gap-compact-lg">
             <Select
               value={selectedLeague?.league_id || ""}
               onValueChange={(value) => {
@@ -137,50 +148,50 @@ export default function TradesPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <ArrowRightLeft className="h-5 w-5 text-blue-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-compact-sm md:gap-compact-md mb-compact-xl">
+          <Card className="bg-background-elevated shadow-sm rounded-md border-0">
+            <CardContent className="pt-compact-md">
+              <div className="flex items-center gap-compact-sm">
+                <ArrowRightLeft className="h-5 w-5 text-primary shrink-0" />
                 <div>
-                  <p className="text-2xl font-bold">-</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Trades</p>
+                  <p className="text-ios-title-2 text-foreground">-</p>
+                  <p className="text-ios-footnote text-text-secondary">Total Trades</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+          <Card className="bg-background-elevated shadow-sm rounded-md border-0">
+            <CardContent className="pt-compact-md">
+              <div className="flex items-center gap-compact-sm">
+                <TrendingUp className="h-5 w-5 text-success shrink-0" />
                 <div>
-                  <p className="text-2xl font-bold">-</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Traders</p>
+                  <p className="text-ios-title-2 text-foreground">-</p>
+                  <p className="text-ios-footnote text-text-secondary">Active Traders</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-purple-600" />
+          <Card className="bg-background-elevated shadow-sm rounded-md border-0">
+            <CardContent className="pt-compact-md">
+              <div className="flex items-center gap-compact-sm">
+                <Users className="h-5 w-5 text-secondary shrink-0" />
                 <div>
-                  <p className="text-2xl font-bold">-</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Per Week</p>
+                  <p className="text-ios-title-2 text-foreground">-</p>
+                  <p className="text-ios-footnote text-text-secondary">Avg Per Week</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-orange-600" />
+          <Card className="bg-background-elevated shadow-sm rounded-md border-0">
+            <CardContent className="pt-compact-md">
+              <div className="flex items-center gap-compact-sm">
+                <Target className="h-5 w-5 text-warning shrink-0" />
                 <div>
-                  <p className="text-2xl font-bold">-</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Market Value</p>
+                  <p className="text-ios-title-2 text-foreground">-</p>
+                  <p className="text-ios-footnote text-text-secondary">Market Value</p>
                 </div>
               </div>
             </CardContent>
@@ -188,12 +199,12 @@ export default function TradesPage() {
         </div>
 
         {selectedLeague && (
-          <Tabs defaultValue="history" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 min-h-[44px]">
-              <TabsTrigger value="history" className="min-h-[44px]">Trade History</TabsTrigger>
-              <TabsTrigger value="evaluator" className="min-h-[44px]">Trade Evaluator</TabsTrigger>
-              <TabsTrigger value="trends" className="min-h-[44px]">Market Trends</TabsTrigger>
-              <TabsTrigger value="opponents" className="min-h-[44px]">Opponent Analysis</TabsTrigger>
+          <Tabs defaultValue="history" className="space-y-compact-md">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 min-h-[44px] gap-compact-xs">
+              <TabsTrigger value="history" className="min-h-[44px] text-ios-body">Trade History</TabsTrigger>
+              <TabsTrigger value="evaluator" className="min-h-[44px] text-ios-body">Trade Evaluator</TabsTrigger>
+              <TabsTrigger value="trends" className="min-h-[44px] text-ios-body">Market Trends</TabsTrigger>
+              <TabsTrigger value="opponents" className="min-h-[44px] text-ios-body">Opponent Analysis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="history">

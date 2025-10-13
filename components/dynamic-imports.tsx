@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 
 // Dynamic imports for components that may cause hydration issues
 export const DynamicPlayerDetailModal = dynamic(
-  () => import('./player-detail-modal').then(mod => ({ default: mod.PlayerDetailModal })),
+  () => import('./player/player-detail-modal').then(mod => ({ default: mod.PlayerDetailModal })),
   {
     ssr: false,
     loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-96 w-full" />

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,12 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { BarChart3, Brain, TrendingUp, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
-import { RankingsImporter } from "@/components/rankings-importer"
-import { RankingsManager } from "@/components/rankings-manager"
-import { RankingsComparison } from "@/components/rankings-comparison"
-import { PlayerSearch } from "@/components/player-search"
-import { PlayerDetailModal } from "@/components/player-detail-modal"
-import { APIKeyManager } from "@/components/api-key-manager"
+import type { PlayerDetailModalData } from "@/components/player/player-detail-modal"
 import type { RankingSystem } from "@/lib/rankings-types";
 import { usePlayerData } from "@/contexts/player-data-context"
 import { normalizePosition } from "@/lib/player-utils"
@@ -22,6 +18,27 @@ import { getNextUpcomingWeek } from "@/lib/nfl-season-utils"
 import { getTierColor } from "@/lib/ranking-utils"
 import { debugLog, debugInfo, debugError } from "@/lib/debug-utils"
 import { API_DEBOUNCE_TIMEOUT_MS } from "@/lib/constants/rankings"
+
+// Lazy-load heavy tab components to reduce initial bundle size
+const RankingsImporter = dynamic(() => import("@/components/rankings-importer").then(mod => ({ default: mod.RankingsImporter })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const RankingsManager = dynamic(() => import("@/components/rankings-manager").then(mod => ({ default: mod.RankingsManager })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const RankingsComparison = dynamic(() => import("@/components/rankings-comparison").then(mod => ({ default: mod.RankingsComparison })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const PlayerSearch = dynamic(() => import("@/components/player-search").then(mod => ({ default: mod.PlayerSearch })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const PlayerDetailModal = dynamic(() => import("@/components/player/player-detail-modal").then(mod => ({ default: mod.PlayerDetailModal })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>,
+  ssr: false
+})
+const APIKeyManager = dynamic(() => import("@/components/api-key-manager").then(mod => ({ default: mod.APIKeyManager })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
 
 type RankingSource = "all" | "user" | "ai"
 
@@ -44,7 +61,7 @@ export default function RankingsPage() {
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
   const [selectedSource, setSelectedSource] = useState<RankingSource>("ai")
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<SimplePlayerRanking | null>(null)
+  const [selectedPlayerForModal, setSelectedPlayerForModal] = useState<PlayerDetailModalData | null>(null)
   const [apiKeys, setApiKeys] = useState<{ [key: string]: string }>({})
   const [selectedYear, setSelectedYear] = useState<number>(2025)
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
@@ -417,7 +434,15 @@ export default function RankingsPage() {
             <Card
               key={player.playerId}
               className="p-4 cursor-pointer hover:bg-muted/30 transition-colors overflow-hidden"
-              onClick={() => setSelectedPlayerForModal(player)}
+              onClick={() => setSelectedPlayerForModal({
+                player_id: player.playerId,
+                full_name: player.playerName,
+                position: player.position,
+                team: player.team,
+                injury_status: player.injuryStatus || null,
+                weeklyProjection: player.projectedPoints,
+                tier: player.tier,
+              })}
             >
               <div className="space-y-3 min-w-0">
                 <div className="flex justify-between items-start gap-2 min-w-0">
@@ -544,7 +569,15 @@ export default function RankingsPage() {
                 {sortedData.map((player) => (
                   <tr key={player.playerId}
                       className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                      onClick={() => setSelectedPlayerForModal(player)}>
+                      onClick={() => setSelectedPlayerForModal({
+                player_id: player.playerId,
+                full_name: player.playerName,
+                position: player.position,
+                team: player.team,
+                injury_status: player.injuryStatus || null,
+                weeklyProjection: player.projectedPoints,
+                tier: player.tier,
+              })}>
                     <td className="p-2">
                       <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
                         {player.rank}
@@ -928,7 +961,7 @@ export default function RankingsPage() {
                 {playersLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                       <p className="text-sm text-muted-foreground">Loading player data...</p>
                     </div>
                   </div>
@@ -1009,7 +1042,11 @@ export default function RankingsPage() {
       </div>
 
       {selectedPlayerForModal && (
-        <PlayerDetailModal player={selectedPlayerForModal} onClose={() => setSelectedPlayerForModal(null)} />
+        <PlayerDetailModal
+          player={selectedPlayerForModal}
+          onClose={() => setSelectedPlayerForModal(null)}
+          showCrossLeagueContext={false}
+        />
       )}
     </div>
   )
