@@ -34,7 +34,7 @@ describe('AIRankingsService Integration Tests', () => {
             team: 'BUF',
             projectedPoints: 25.5,
             tier: 1,
-            analysis: 'Top QB'
+            notes: 'Top QB'
           },
           {
             rank: 2,
@@ -44,7 +44,7 @@ describe('AIRankingsService Integration Tests', () => {
             team: 'SF',
             projectedPoints: 22.8,
             tier: 1,
-            analysis: 'Elite RB'
+            notes: 'Elite RB'
           }
         ],
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -68,7 +68,7 @@ describe('AIRankingsService Integration Tests', () => {
             team: 'BAL',
             projectedPoints: 24.2,
             tier: 1,
-            analysis: 'Dual-threat QB'
+            notes: 'Dual-threat QB'
           },
           {
             rank: 2,
@@ -78,7 +78,7 @@ describe('AIRankingsService Integration Tests', () => {
             team: 'SF',
             projectedPoints: 23.1,
             tier: 1,
-            analysis: 'Consistent RB1'
+            notes: 'Consistent RB1'
           }
         ],
         createdAt: '2024-01-01T00:00:00.000Z',

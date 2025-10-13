@@ -42,7 +42,7 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
               <div className="text-sm text-muted-foreground">College</div>
             </div>
             <div className="text-center">
-              <Badge variant={getInjuryBadgeColor(player.injury_status)}>
+              <Badge variant={getInjuryBadgeColor(player.injury_status || undefined)}>
                 {player.injury_status || "Healthy"}
               </Badge>
               <div className="text-sm text-muted-foreground">Status</div>
@@ -59,10 +59,10 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
                 <span className="font-medium">Weight:</span> {detailedPlayer.weight || "N/A"}
               </div>
               <div>
-                <span className="font-medium">Team:</span> {detailedPlayer.team}
+                <span className="font-medium">Team:</span> {detailedPlayer.team || "FA"}
               </div>
               <div>
-                <span className="font-medium">Position:</span> {detailedPlayer.position}
+                <span className="font-medium">Position:</span> {detailedPlayer.position || "N/A"}
               </div>
             </div>
           )}

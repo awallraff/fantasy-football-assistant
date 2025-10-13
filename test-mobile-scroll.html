@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile Scroll Test</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial; }
+        iframe { border: 1px solid #ccc; margin: 20px 0; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Rankings Page - Mobile Scroll Test (375px)</h1>
+    <div class="info">
+        <p><strong>Testing:</strong> Rankings page at 375px width (iPhone SE)</p>
+        <p><strong>Expected:</strong> No horizontal scroll</p>
+    </div>
+    <iframe src="http://localhost:3002/rankings" width="375" height="667"></iframe>
+    <script>
+        const iframe = document.querySelector('iframe');
+        iframe.onload = () => {
+            setTimeout(() => {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const scrollWidth = iframeDoc.documentElement.scrollWidth;
+                const clientWidth = iframeDoc.documentElement.clientWidth;
+                const hasScroll = scrollWidth > clientWidth;
+                
+                const result = document.createElement('div');
+                result.className = 'info';
+                result.style.backgroundColor = hasScroll ? '#ffcccc' : '#ccffcc';
+                result.innerHTML = `
+                    <p><strong>Test Result:</strong> ${hasScroll ? 'FAIL ❌' : 'PASS ✅'}</p>
+                    <p>Viewport Width: ${clientWidth}px</p>
+                    <p>Scroll Width: ${scrollWidth}px</p>
+                    <p>Horizontal Scroll: ${hasScroll ? 'YES (overflow by ' + (scrollWidth - clientWidth) + 'px)' : 'NO'}</p>
+                `;
+                document.body.appendChild(result);
+            }, 2000);
+        };
+    </script>
+</body>
+</html>

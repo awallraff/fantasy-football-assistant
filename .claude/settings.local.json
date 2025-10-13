@@ -77,7 +77,12 @@
       "mcp__chrome-devtools__wait_for",
       "mcp__chrome-devtools__evaluate_script",
       "WebFetch(domain:ui.shadcn.com)",
-      "WebFetch(domain:www.radix-ui.com)"
+      "WebFetch(domain:www.radix-ui.com)",
+      "mcp__chrome-devtools__emulate_cpu",
+      "Bash(vercel:*)",
+      "WebFetch(domain:www.vercel-status.com)",
+      "Bash(tee:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": [],

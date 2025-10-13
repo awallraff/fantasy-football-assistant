@@ -66,18 +66,18 @@ export interface SleeperRoster {
 
 export interface SleeperPlayer {
   player_id: string
-  first_name: string
-  last_name: string
-  full_name: string
-  position: string
-  team: string
-  age?: number
-  height?: string
-  weight?: string
-  years_exp?: number
-  college?: string
-  injury_status?: string
-  fantasy_positions?: string[]
+  first_name?: string
+  last_name?: string
+  full_name?: string
+  position: string | null
+  team: string | null
+  age?: number | null
+  height?: string | null
+  weight?: string | null
+  years_exp?: number | null
+  college?: string | null
+  injury_status?: string | null
+  fantasy_positions?: string[] | null
 }
 
 export interface SleeperTransaction {

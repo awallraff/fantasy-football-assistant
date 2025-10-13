@@ -106,18 +106,18 @@ export type SleeperRosterValidated = z.infer<typeof SleeperRosterSchema>;
  */
 export const SleeperPlayerSchema = z.object({
   player_id: z.string(),
-  first_name: z.string(),
-  last_name: z.string(),
-  full_name: z.string(),
-  position: z.string(),
-  team: z.string(),
-  age: z.number().optional(),
-  height: z.string().optional(),
-  weight: z.string().optional(),
-  years_exp: z.number().optional(),
-  college: z.string().optional(),
-  injury_status: z.string().optional(),
-  fantasy_positions: z.array(z.string()).optional(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  full_name: z.string().optional(),
+  position: z.string().nullable(),
+  team: z.string().nullable(),
+  age: z.number().nullable().optional(),
+  height: z.string().nullable().optional(),
+  weight: z.string().nullable().optional(),
+  years_exp: z.number().nullable().optional(),
+  college: z.string().nullable().optional(),
+  injury_status: z.string().nullable().optional(),
+  fantasy_positions: z.array(z.string()).nullable().optional(),
 });
 
 export type SleeperPlayerValidated = z.infer<typeof SleeperPlayerSchema>;

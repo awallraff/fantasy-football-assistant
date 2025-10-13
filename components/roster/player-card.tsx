@@ -7,9 +7,9 @@ import { getInjuryBadgeColor } from "@/lib/player-utils"
 interface DisplayPlayer {
   player_id: string
   full_name: string
-  position: string
-  team: string
-  injury_status?: string
+  position: string | null
+  team: string | null
+  injury_status?: string | null
   projectedPoints?: number
   tier?: number
   weeklyProjection?: number
@@ -33,10 +33,10 @@ export function PlayerCard({ player, isStarter, onClick, projectionsLoading }: P
           <div className="flex items-center gap-2">
             <span className="font-medium">{player.full_name}</span>
             <Badge variant="outline" className="text-xs">
-              {player.position}
+              {player.position || 'N/A'}
             </Badge>
             <Badge variant="secondary" className="text-xs">
-              {player.team}
+              {player.team || 'FA'}
             </Badge>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

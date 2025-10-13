@@ -168,7 +168,7 @@ function calculateProductionScore(
   player: SleeperPlayer,
   recentPPG: number = 15.0 // Would come from stats API
 ): number {
-  const position = player.position;
+  const position = player.position || 'WR';
 
   // Position-specific PPG thresholds for scoring
   const thresholds = {
@@ -192,7 +192,8 @@ function calculateProductionScore(
  */
 function calculateAgeCurveScore(player: SleeperPlayer): number {
   const age = player.age || 25;
-  const phase = getCareerPhase(player.position, age);
+  const position = player.position || 'WR';
+  const phase = getCareerPhase(position, age);
 
   switch (phase) {
     case 'emerging':
@@ -246,7 +247,7 @@ function calculateScarcityScore(position: string): number {
  */
 function calculateUpsideScore(player: SleeperPlayer): number {
   const age = player.age || 25;
-  const position = player.position;
+  const position = player.position || 'WR';
 
   // Young players have more upside
   if (age < 24) return 90;
@@ -263,7 +264,7 @@ export function calculateDynastyValue(
   player: SleeperPlayer,
   recentPPG: number = 15.0
 ): DynastyPlayerValue {
-  const position = player.position;
+  const position = player.position || 'WR';
   const age = player.age || 25;
 
   // Get position-specific weights
@@ -309,7 +310,7 @@ export function calculateDynastyValue(
 
   return {
     playerId: player.player_id,
-    playerName: player.full_name,
+    playerName: player.full_name || 'Unknown Player',
     position,
     age,
     team: player.team || 'FA',

@@ -55,9 +55,9 @@ export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
   const displayName = actualPlayer
     ? actualPlayer.full_name || `${actualPlayer.first_name} ${actualPlayer.last_name}` || (player.playerId ? getPlayerName(player.playerId) : "Unknown Player")
     : player.realPlayerName || player.playerName || "Unknown Player"
-  const displayPosition = actualPlayer ? actualPlayer.position : player.realPosition || player.position || "UNKNOWN"
-  const displayTeam = actualPlayer ? actualPlayer.team : player.realTeam || player.team || "FA"
-  const displayInjuryStatus = actualPlayer ? actualPlayer.injury_status : player.injuryStatus || "Healthy"
+  const displayPosition = actualPlayer ? (actualPlayer.position || "UNKNOWN") : player.realPosition || player.position || "UNKNOWN"
+  const displayTeam = actualPlayer ? (actualPlayer.team || "FA") : player.realTeam || player.team || "FA"
+  const displayInjuryStatus = actualPlayer ? (actualPlayer.injury_status || "Healthy") : player.injuryStatus || "Healthy"
 
   const generatePlayerSpecificNews = useCallback(async (
     playerName: string,

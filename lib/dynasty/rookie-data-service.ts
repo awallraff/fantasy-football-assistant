@@ -115,9 +115,9 @@ function generateRankingsFromPlayers(players: RookiePlayer[]): RookieRanking[] {
     .sort((a, b) => a.consensusRank - b.consensusRank)
     .map((player) => ({
       playerId: player.player_id,
-      playerName: player.full_name,
-      position: player.position,
-      team: player.team,
+      playerName: player.full_name || 'Unknown Player',
+      position: player.position || 'UNKNOWN',
+      team: player.team || 'FA',
       consensusRank: player.consensusRank,
       positionRank: player.positionRank,
       tier: player.tier,
@@ -153,7 +153,7 @@ export function filterRookies(
   let filtered = players;
 
   if (options.position?.length) {
-    filtered = filtered.filter((p) => options.position!.includes(p.position));
+    filtered = filtered.filter((p) => p.position && options.position!.includes(p.position));
   }
 
   if (options.tier?.length) {
@@ -161,7 +161,7 @@ export function filterRookies(
   }
 
   if (options.team?.length) {
-    filtered = filtered.filter((p) => options.team!.includes(p.team));
+    filtered = filtered.filter((p) => p.team && options.team!.includes(p.team));
   }
 
   if (options.landingSpotGrade?.length) {
@@ -201,8 +201,10 @@ export function sortRookies(
 
     case 'position-rank':
       return sorted.sort((a, b) => {
-        if (a.position !== b.position) {
-          return a.position.localeCompare(b.position);
+        const aPos = a.position || 'UNKNOWN';
+        const bPos = b.position || 'UNKNOWN';
+        if (aPos !== bPos) {
+          return aPos.localeCompare(bPos);
         }
         return a.positionRank - b.positionRank;
       });
@@ -287,9 +289,9 @@ export async function searchRookies(
       : '';
 
     return (
-      p.full_name.toLowerCase().includes(lowerQuery) ||
-      p.first_name.toLowerCase().includes(lowerQuery) ||
-      p.last_name.toLowerCase().includes(lowerQuery) ||
+      (p.full_name || '').toLowerCase().includes(lowerQuery) ||
+      (p.first_name || '').toLowerCase().includes(lowerQuery) ||
+      (p.last_name || '').toLowerCase().includes(lowerQuery) ||
       collegeString.toLowerCase().includes(lowerQuery)
     );
   });
@@ -314,7 +316,8 @@ export async function getRookieClassStats(year: number = 2025): Promise<{
   let totalNFLPick = 0;
 
   players.forEach((p) => {
-    byPosition[p.position] = (byPosition[p.position] || 0) + 1;
+    const position = p.position || 'UNKNOWN';
+    byPosition[position] = (byPosition[position] || 0) + 1;
     byTier[p.tier] = (byTier[p.tier] || 0) + 1;
     totalAge += p.age || 0;
     totalNFLPick += p.nflDraft.overallPick;

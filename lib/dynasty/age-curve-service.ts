@@ -327,7 +327,7 @@ export function calculatePlayerTrajectory(
   yearsToProject: number = 3
 ): PlayerTrajectory {
   const age = player.age || 25; // Default age if not available
-  const position = player.position;
+  const position = player.position || 'WR'; // Default to WR if not available
   const curve = getAgeCurve(position);
   const currentPhase = getCareerPhase(position, age);
 
@@ -395,7 +395,7 @@ export function calculatePlayerTrajectory(
 
   return {
     playerId: player.player_id,
-    playerName: player.full_name,
+    playerName: player.full_name || 'Unknown Player',
     position,
     currentAge: age,
     phase: currentPhase,
@@ -429,10 +429,13 @@ export function comparePlayerTrajectories(
 
   let recommendation: string;
 
+  const player1Name = player1.full_name || 'Player 1';
+  const player2Name = player2.full_name || 'Player 2';
+
   if (player1Year3 > player2Year3 * 1.1) {
-    recommendation = `${player1.full_name} has superior dynasty outlook. Projected ${Math.round((player1Year3 - player2Year3) * 10) / 10} more PPG in Year 3.`;
+    recommendation = `${player1Name} has superior dynasty outlook. Projected ${Math.round((player1Year3 - player2Year3) * 10) / 10} more PPG in Year 3.`;
   } else if (player2Year3 > player1Year3 * 1.1) {
-    recommendation = `${player2.full_name} has superior dynasty outlook. Projected ${Math.round((player2Year3 - player1Year3) * 10) / 10} more PPG in Year 3.`;
+    recommendation = `${player2Name} has superior dynasty outlook. Projected ${Math.round((player2Year3 - player1Year3) * 10) / 10} more PPG in Year 3.`;
   } else {
     recommendation = `Similar dynasty outlook. Consider team situations and personal preferences.`;
   }
@@ -454,7 +457,8 @@ export function getPlayersApproachingDecline(
   return players
     .map((player) => {
       const age = player.age || 25;
-      const curve = getAgeCurve(player.position);
+      const position = player.position || 'WR';
+      const curve = getAgeCurve(position);
       const yearsToDecline = Math.max(0, curve.declineAge - age);
 
       return { player, yearsToDecline };
@@ -469,6 +473,7 @@ export function getPlayersApproachingDecline(
 export function getPlayersInPeak(players: SleeperPlayer[]): SleeperPlayer[] {
   return players.filter((player) => {
     const age = player.age || 25;
-    return getCareerPhase(player.position, age) === 'peak';
+    const position = player.position || 'WR';
+    return getCareerPhase(position, age) === 'peak';
   });
 }
