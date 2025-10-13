@@ -33,6 +33,7 @@ import {
   filterRookies,
   sortRookies,
 } from '@/lib/dynasty/rookie-data-service';
+import { getCurrentRookieSeasonYear } from '@/lib/dynasty/rookie-season-utils';
 
 // ============================================================================
 // Component Props
@@ -57,11 +58,13 @@ export interface RookieRankingsProps {
 // ============================================================================
 
 export function RookieRankings({
-  year = 2025,
+  year,
   onPlayerClick,
   showFilters = true,
   compact = false,
 }: RookieRankingsProps) {
+  // Use dynamic rookie season if year not specified
+  const rookieYear = year ?? getCurrentRookieSeasonYear();
   // Load rookie class data
   const [draftClass, setDraftClass] = useState<RookieDraftClass | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +78,7 @@ export function RookieRankings({
     let mounted = true;
     setLoading(true);
 
-    getRookieDraftClass(year)
+    getRookieDraftClass(rookieYear)
       .then((data) => {
         if (mounted) {
           setDraftClass(data);
@@ -85,7 +88,7 @@ export function RookieRankings({
       .catch((err) => {
         console.error('Error loading rookie draft class:', err);
         if (mounted) {
-          setDraftClass({ year, players: [], rankings: [], updatedAt: new Date(), sources: [] });
+          setDraftClass({ year: rookieYear, players: [], rankings: [], updatedAt: new Date(), sources: [] });
           setLoading(false);
         }
       });
@@ -93,7 +96,7 @@ export function RookieRankings({
     return () => {
       mounted = false;
     };
-  }, [year]);
+  }, [rookieYear]);
 
   // Apply filters and sorting
   const filteredAndSortedRookies = useMemo(() => {
@@ -138,7 +141,7 @@ export function RookieRankings({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold">{year} Rookie Rankings</h2>
+            <h2 className="text-2xl font-bold">{rookieYear} Rookie Rankings</h2>
             <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </div>
@@ -154,7 +157,7 @@ export function RookieRankings({
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">{year} Rookie Rankings</h2>
+          <h2 className="text-2xl font-bold">{rookieYear} Rookie Rankings</h2>
           <p className="text-sm text-muted-foreground">
             {filteredAndSortedRookies.length} players
             {filters.position && ` • ${filters.position[0]}`}

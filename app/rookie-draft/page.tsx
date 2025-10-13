@@ -5,12 +5,12 @@
  *
  * Main page for rookie draft management and player evaluation.
  * Features:
- * - Rookie rankings display
+ * - Rookie rankings display (dynamically calculated based on NFL calendar)
  * - Player detail modal with dynasty insights
  * - Mobile-first responsive design
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { RookieRankings } from '@/components/dynasty/rookie-rankings';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,10 +23,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { RookiePlayer } from '@/lib/dynasty/rookie-draft-types';
+import {
+  getCurrentRookieSeasonYear,
+  getRookieSeasonDescription,
+  getRookieHeaderText,
+} from '@/lib/dynasty/rookie-season-utils';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function RookieDraftPage() {
+  // Dynamically calculate current rookie season based on NFL calendar
+  const rookieYear = useMemo(() => getCurrentRookieSeasonYear(), []);
+  const seasonDescription = useMemo(() => getRookieSeasonDescription(rookieYear), [rookieYear]);
+  const headerText = useMemo(() => getRookieHeaderText(rookieYear), [rookieYear]);
+
   const [selectedPlayer, setSelectedPlayer] = useState<RookiePlayer | null>(null);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
 
@@ -49,7 +59,7 @@ export default function RookieDraftPage() {
             <h1 className="text-ios-title-1 font-bold">Rookie Draft</h1>
           </div>
           <p className="text-ios-body text-text-secondary">
-            Dynasty rookie rankings and draft management for the 2024 class
+            Dynasty rookie rankings and draft management for the {rookieYear} class
           </p>
         </div>
       </div>
@@ -77,11 +87,11 @@ export default function RookieDraftPage() {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-              2024 Rookie Class
+              {headerText}
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              Current season rookies with live NFL stats. Rankings based on consensus dynasty values from FantasyPros, Dynasty Nerds, and DLF.
-              Click any player to view detailed analysis, age curves, and dynasty projections.
+              {seasonDescription}
+              {' '}Click any player to view detailed analysis, age curves, and dynasty projections.
             </p>
           </div>
         </div>
@@ -89,7 +99,7 @@ export default function RookieDraftPage() {
 
       {/* Rookie Rankings */}
       <RookieRankings
-        year={2024}
+        year={rookieYear}
         onPlayerClick={handlePlayerClick}
         showFilters={true}
       />

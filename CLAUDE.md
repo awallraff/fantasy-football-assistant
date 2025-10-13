@@ -389,3 +389,5 @@ Pending:
 - Replace `any` types with specific types
 - Extract inline styles to Tailwind classes
 - Always confirm when creating new tasks, completing task, or when doing any task-related work, that there is no conflicting tasks with duplicate numbers.
+- Always have an agent(s) that are specialized with testing, review changes prior to pushing to main to trigger a deployment.
+- when pushing to main, always check the deployment afterwards with the Vercel CLI tool to confirm if the deployment was successful. If not, make sure to resolve and determine if you can fix forward.

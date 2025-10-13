@@ -16,7 +16,8 @@ import type {
 } from './rookie-draft-types';
 import type { SleeperPlayer } from '@/lib/sleeper-api';
 
-import { rookieNFLDataService } from './rookie-nfl-data-service'
+import { rookieNFLDataService } from './rookie-nfl-data-service';
+import { getCurrentRookieSeasonYear } from './rookie-season-utils';
 
 // ============================================================================
 // 2025 Rookie Class Data (Fetched from NFL Data API)
@@ -82,10 +83,15 @@ async function fetch2025RookieData(): Promise<RookiePlayer[]> {
 /**
  * Get the complete rookie draft class for a given year
  * Note: This is now async to support fetching real NFL data
+ *
+ * @param year - Rookie season year (defaults to dynamically calculated current season)
  */
-export async function getRookieDraftClass(year: number = 2025): Promise<RookieDraftClass> {
+export async function getRookieDraftClass(year?: number): Promise<RookieDraftClass> {
+  // Use dynamic rookie season if not specified
+  const rookieYear = year ?? getCurrentRookieSeasonYear();
+
   // Fetch 2025 data from NFL Data API
-  if (year === 2025) {
+  if (rookieYear === 2025) {
     const players = await fetch2025RookieData()
 
     return {
@@ -99,7 +105,7 @@ export async function getRookieDraftClass(year: number = 2025): Promise<RookieDr
 
   // Return empty class for other years (not yet implemented)
   return {
-    year,
+    year: rookieYear,
     players: [],
     rankings: [],
     updatedAt: new Date(),
@@ -138,7 +144,7 @@ function generateRankingsFromPlayers(players: RookiePlayer[]): RookieRanking[] {
 /**
  * Get rookie player by ID
  */
-export async function getRookiePlayer(playerId: string, year: number = 2025): Promise<RookiePlayer | null> {
+export async function getRookiePlayer(playerId: string, year?: number): Promise<RookiePlayer | null> {
   const draftClass = await getRookieDraftClass(year);
   return draftClass.players.find((p) => p.player_id === playerId) || null;
 }
@@ -237,7 +243,7 @@ export function sortRookies(
  */
 export async function getRookiesByPosition(
   position: string,
-  year: number = 2025
+  year?: number
 ): Promise<RookiePlayer[]> {
   const draftClass = await getRookieDraftClass(year);
   return draftClass.players
@@ -250,7 +256,7 @@ export async function getRookiesByPosition(
  */
 export async function getTopRookies(
   count: number = 10,
-  year: number = 2025
+  year?: number
 ): Promise<RookiePlayer[]> {
   const draftClass = await getRookieDraftClass(year);
   return draftClass.players
@@ -263,7 +269,7 @@ export async function getTopRookies(
  */
 export async function getRookiesByTier(
   tier: number,
-  year: number = 2025
+  year?: number
 ): Promise<RookiePlayer[]> {
   const draftClass = await getRookieDraftClass(year);
   return draftClass.players
@@ -276,7 +282,7 @@ export async function getRookiesByTier(
  */
 export async function searchRookies(
   query: string,
-  year: number = 2025
+  year?: number
 ): Promise<RookiePlayer[]> {
   const draftClass = await getRookieDraftClass(year);
   const lowerQuery = query.toLowerCase();
@@ -300,7 +306,7 @@ export async function searchRookies(
 /**
  * Get rookie draft class statistics
  */
-export async function getRookieClassStats(year: number = 2025): Promise<{
+export async function getRookieClassStats(year?: number): Promise<{
   totalPlayers: number;
   byPosition: Record<string, number>;
   byTier: Record<number, number>;
@@ -338,7 +344,7 @@ export async function getRookieClassStats(year: number = 2025): Promise<{
 export async function compareRookies(
   playerId1: string,
   playerId2: string,
-  year: number = 2025
+  year?: number
 ): Promise<{
   player1: RookiePlayer | null;
   player2: RookiePlayer | null;
