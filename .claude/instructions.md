@@ -26,6 +26,74 @@ This file contains project-specific instructions for Claude Code interactions.
 - Main components are in `/components/` directory
 - Core services are in `/lib/` directory
 
+### Documentation Structure
+
+The project uses a hierarchical documentation structure in `docs/` organized by purpose:
+
+```
+docs/
+├── README.md                 # Main documentation index (start here)
+├── integrations/             # External system integrations (Bark, Vercel, Sleeper)
+├── architecture/             # Architecture reviews, data layer, design system
+├── sprints/                  # Sprint-specific docs and roadmaps
+├── features/                 # Feature-specific implementation docs
+├── operations/               # SRE, runbooks, operational guides
+└── planning/                 # Project status and roadmaps
+```
+
+**When to use each folder:**
+
+1. **integrations/** - Documentation for external systems
+   - Bark push notifications setup
+   - Vercel deployment and database setup
+   - Sleeper API caching implementation
+   - Add new docs here when integrating third-party services
+
+2. **architecture/** - System design and technical reviews
+   - `reviews/` - Architectural reviews and technical analyses
+   - `data-layer/` - Data architecture (PlayerDataContext, IndexedDB cache)
+   - `design-system/` - UI/UX design system, iOS dark mode, component specs
+   - Add new docs here for architectural decisions or design system updates
+
+3. **sprints/** - Sprint planning and tracking
+   - Contains `DYNASTY_FEATURE_ROADMAP.md` (6-sprint roadmap)
+   - Sprint-specific folders (`sprint-2/`, `sprint-3/`, etc.)
+   - Add new sprint folders with STATUS, PROCESS, and COMPLETE docs
+
+4. **features/** - Feature implementation documentation
+   - `nfl-data/` - NFL data integration docs
+   - `rankings/` - Player rankings feature docs
+   - `mobile-fixes/` - Mobile-specific bug fixes and improvements
+   - Add new feature folders when implementing major features
+
+5. **operations/** - Operational and SRE documentation
+   - SRE action items and reviews
+   - `runbooks/` - Troubleshooting and operational procedures (future)
+   - Add runbooks, incident reports, and operational guides here
+
+6. **planning/** - Project status and planning
+   - `PROJECT_STATUS.md` - Current status, priorities, technical debt
+   - Roadmaps and planning documents
+   - Update PROJECT_STATUS.md regularly with project changes
+
+**Finding Documentation:**
+- Start at `docs/README.md` for navigation links
+- Each category folder has its own README for quick reference
+- Use category-based navigation: integrations, architecture, sprints, features, operations, planning
+
+**Creating New Documentation:**
+1. Identify the appropriate category folder
+2. Create the document with `UPPERCASE_WITH_UNDERSCORES.md` naming
+3. Add entry to the category's README.md
+4. Add entry to `docs/README.md` main index
+5. Include metadata: title, last updated date, ownership
+
+**Claude-Specific Configuration:**
+- `CLAUDE.md` (project root) - Primary AI assistant instructions
+- `.claude/instructions.md` (this file) - Additional Claude Code instructions
+- `.claude/agents/` - Custom agent definitions
+- These files should NOT be moved to `docs/` folder
+
 ## AI Assistant Behavior
 
 ### Before Starting Any Task
