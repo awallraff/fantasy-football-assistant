@@ -79,7 +79,7 @@ describe('NflDataFetcherService', () => {
       })
 
       const callUrl = mockFetch.mock.calls[0][0] as string
-      expect(callUrl).toContain('years=2024') // Always uses 2024 for historical analysis
+      expect(callUrl).toContain('years=2025') // Updated to 2025 in Phase 1
       expect(callUrl).toContain('positions=QB%2CRB')
       expect(callUrl).toContain('action=extract')
     })

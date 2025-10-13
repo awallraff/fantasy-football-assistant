@@ -35,6 +35,43 @@ npm run test:integration # Run Jest integration tests
 
 **Important:** Playwright was removed from this project. Do not attempt to add or use Playwright testing.
 
+### Testing Requirements
+
+**CRITICAL: All code changes MUST be tested before deployment.**
+
+1. **Always Run Unit Tests:**
+   - Run `npm run test:unit` after implementing any feature
+   - Verify all tests pass before committing
+   - Do NOT skip this step - test failures must be addressed
+
+2. **Large Features Require Additional Testing:**
+   - **Browser Testing**: For UI changes, cache implementations, or user-facing features
+     - Test in Chrome DevTools (Application tab for cache/storage)
+     - Verify functionality works as expected in real browser
+     - Test mobile viewport (375px) for mobile-first features
+
+   - **Performance Testing**: For performance-critical changes (caching, API calls, data processing)
+     - Measure actual performance improvements (not theoretical)
+     - Use browser console debug tools (`indexedDBDebug.test()`, etc.)
+     - Compare before/after metrics with real data
+
+   - **Integration Testing**: For multi-service features
+     - Test service interactions work correctly
+     - Verify fallback chains function as designed
+     - Test error handling paths
+
+3. **Testing Checklist Before Deployment:**
+   - [ ] `npm run test:unit` passes
+   - [ ] `npm run build` passes with no errors
+   - [ ] Browser testing completed (for UI/cache/user-facing changes)
+   - [ ] Performance benchmarks measured (for performance changes)
+   - [ ] Integration tests validated (for multi-service features)
+
+**Do NOT claim code is "fully tested" unless:**
+- Unit tests have been executed and pass
+- Browser/performance testing completed (if applicable)
+- All relevant test types for the change have been performed
+
 ## Critical Build Requirements
 
 1. **TypeScript Strict Mode:** The build pipeline uses strict type checking. Avoid union types that make array methods uncallable (e.g., `Type[] | OtherType[]`). Let TypeScript infer types when working with conditional arrays.
