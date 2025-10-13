@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { RefreshCw, ArrowRightLeft, Filter, TrendingUp, Users, Calendar } from "lucide-react"
-import { sleeperAPI, type SleeperTransaction, type SleeperUser } from "@/lib/sleeper-api"
+import { RefreshCw, ArrowRightLeft, Filter, TrendingUp, Users, Calendar, ArrowRight, ArrowDown, Trophy } from "lucide-react"
+import { sleeperAPI, type SleeperTransaction, type SleeperUser, type SleeperPlayer } from "@/lib/sleeper-api"
 import { usePlayerData } from "@/contexts/player-data-context"
+import { tradeEvaluationService, type TradeEvaluation } from "@/lib/trade-evaluation-service"
 
 interface TradeHistoryProps {
   leagueId: string
@@ -23,6 +24,7 @@ interface ProcessedTrade {
   date: string
   week?: number
   season: string
+  evaluation?: TradeEvaluation
 }
 
 interface OwnerBehavior {
@@ -39,15 +41,16 @@ interface OwnerBehavior {
 
 export function TradeHistory({ leagueId }: TradeHistoryProps) {
   const [trades, setTrades] = useState<ProcessedTrade[]>([])
-  const [users, setUsers] = useState<SleeperUser[]>([])
   const [ownerBehaviors, setOwnerBehaviors] = useState<OwnerBehavior[]>([])
   const [loading, setLoading] = useState(false)
+  const [evaluating, setEvaluating] = useState(false)
   const [selectedSeason, setSelectedSeason] = useState<string>("2024")
   const [weekFilter, setWeekFilter] = useState<string>("all")
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<"date" | "players" | "teams">("date")
 
   // Get player name resolution functions
-  const { getPlayerName, getPlayer } = usePlayerData()
+  const { getPlayerName, getPlayer, players } = usePlayerData()
 
   const availableSeasons = ["2024", "2023", "2022", "2021", "2020"]
 
@@ -134,49 +137,107 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
     setOwnerBehaviors(behaviors.filter((b) => b.totalTrades > 0))
   }, [])
 
+  const evaluateTrades = useCallback(async (processedTrades: ProcessedTrade[], leagueUsers: SleeperUser[], leagueRosters: { roster_id: number; owner_id: string }[]) => {
+    if (processedTrades.length === 0) return processedTrades
+
+    setEvaluating(true)
+    console.log("Evaluating trades with NFL data and rankings...")
+
+    try {
+      // Build roster ID to owner name map
+      const rosterIdToOwnerName = new Map<number, string>()
+      leagueRosters.forEach(roster => {
+        const user = leagueUsers.find(u => u.user_id === roster.owner_id)
+        if (user) {
+          rosterIdToOwnerName.set(roster.roster_id, user.display_name || user.username || `Team ${roster.roster_id}`)
+        }
+      })
+
+      // Build player cache for evaluation service
+      const playerCache = new Map<string, SleeperPlayer>()
+      if (players) {
+        Object.entries(players).forEach(([playerId, player]) => {
+          playerCache.set(playerId, player)
+        })
+      }
+
+      tradeEvaluationService.setPlayerCache(playerCache)
+
+      // Evaluate each trade
+      const evaluatedTrades = await Promise.all(
+        processedTrades.map(async (trade) => {
+          try {
+            const evaluation = await tradeEvaluationService.evaluateTransaction(
+              trade.transaction,
+              rosterIdToOwnerName,
+              trade.week
+            )
+            return { ...trade, evaluation }
+          } catch (error) {
+            console.error(`Error evaluating trade ${trade.transaction.transaction_id}:`, error)
+            return trade
+          }
+        })
+      )
+
+      console.log("Trade evaluation complete")
+      return evaluatedTrades
+    } catch (error) {
+      console.error("Error during trade evaluation:", error)
+      return processedTrades
+    } finally {
+      setEvaluating(false)
+    }
+  }, [players])
+
   const loadTradeHistory = useCallback(async () => {
     setLoading(true)
     try {
       console.log("Loading trade history for league:", leagueId)
 
-      const transactions = await sleeperAPI.getTradeHistory(leagueId)
-      console.log("Raw transactions:", transactions)
+      // Fetch all transactions (not just trades - we want waivers and FA adds too)
+      const allTransactions = await sleeperAPI.getTransactions(leagueId)
+      console.log("Raw transactions:", allTransactions)
 
       const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
+      const leagueRosters = await sleeperAPI.getLeagueRosters(leagueId)
       console.log("League users:", leagueUsers)
-      setUsers(leagueUsers)
 
-      let allTrades = transactions
+      let transactions = allTransactions
       if (!transactions || transactions.length === 0) {
-        console.log("No real trades found, using mock data for demonstration")
-        allTrades = generateMockTrades()
+        console.log("No real transactions found, using mock data for demonstration")
+        transactions = generateMockTrades()
       }
 
-      // Process trades with season information
-      const processedTrades: ProcessedTrade[] = allTrades.map((trade, index) => {
-        const playersTraded = Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length
-        const picksTraded = trade.draft_picks?.length || 0
+      // Process all transactions (trades, waivers, free agents)
+      const processedTrades: ProcessedTrade[] = transactions.map((transaction, index) => {
+        const playersTraded = Object.keys(transaction.adds || {}).length + Object.keys(transaction.drops || {}).length
+        const picksTraded = transaction.draft_picks?.length || 0
 
         return {
-          transaction: trade,
-          participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
+          transaction,
+          participants: transaction.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
           playersTraded,
           picksTraded,
-          date: new Date(trade.created || Date.now()).toLocaleDateString(),
-          week: getWeekFromTimestamp(trade.created || Date.now()),
+          date: new Date(transaction.created || Date.now()).toLocaleDateString(),
+          week: getWeekFromTimestamp(transaction.created || Date.now()),
           season: selectedSeason,
         }
       })
 
       console.log("Processed trades:", processedTrades)
-      setTrades(processedTrades)
 
-      analyzeOwnerBehavior(processedTrades, leagueUsers)
+      // Evaluate trades with NFL data and rankings
+      const evaluatedTrades = await evaluateTrades(processedTrades, leagueUsers, leagueRosters)
+      setTrades(evaluatedTrades)
+
+      analyzeOwnerBehavior(evaluatedTrades, leagueUsers)
     } catch (error) {
       console.error("Error loading trade history:", error)
 
       try {
         const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
+        const leagueRosters = await sleeperAPI.getLeagueRosters(leagueId)
         const mockTrades = generateMockTrades()
         const processedTrades: ProcessedTrade[] = mockTrades.map((trade, index) => ({
           transaction: trade,
@@ -188,16 +249,16 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
           season: selectedSeason,
         }))
 
-        setTrades(processedTrades)
-        setUsers(leagueUsers)
-        analyzeOwnerBehavior(processedTrades, leagueUsers)
+        const evaluatedTrades = await evaluateTrades(processedTrades, leagueUsers, leagueRosters)
+        setTrades(evaluatedTrades)
+        analyzeOwnerBehavior(evaluatedTrades, leagueUsers)
       } catch (fallbackError) {
         console.error("Fallback error:", fallbackError)
       }
     } finally {
       setLoading(false)
     }
-  }, [leagueId, analyzeOwnerBehavior, selectedSeason])
+  }, [leagueId, analyzeOwnerBehavior, selectedSeason, evaluateTrades])
 
   const getPreferredTradeTypes = (types: Record<string, number>) => {
     const preferences = []
@@ -222,16 +283,17 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
     return Math.max(1, Math.min(18, diffWeeks))
   }
 
-  const getUserName = (rosterId: string) => {
-    const user = users.find((u) => u.user_id === rosterId)
-    return user?.display_name || user?.username || `Team ${rosterId}`
-  }
-
   const filteredTrades = trades
     .filter((trade) => {
       if (selectedSeason !== "all" && trade.season !== selectedSeason) return false
-      if (weekFilter === "all") return true
-      return trade.week?.toString() === weekFilter
+      if (weekFilter !== "all" && trade.week?.toString() !== weekFilter) return false
+
+      // Filter by transaction type
+      if (transactionTypeFilter === "trades" && trade.transaction.type !== "trade") return false
+      if (transactionTypeFilter === "waivers" && trade.transaction.type !== "waiver") return false
+      if (transactionTypeFilter === "free_agents" && trade.transaction.type !== "free_agent") return false
+
+      return true
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -247,19 +309,6 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
   useEffect(() => {
     loadTradeHistory()
   }, [leagueId, loadTradeHistory])
-
-  const getTradeTypeColor = (trade: ProcessedTrade) => {
-    if (trade.participants.length > 2) return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-    if (trade.picksTraded > 0) return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-    return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-  }
-
-  const getTradeDescription = (trade: ProcessedTrade) => {
-    const parts = []
-    if (trade.playersTraded > 0) parts.push(`${trade.playersTraded} players`)
-    if (trade.picksTraded > 0) parts.push(`${trade.picksTraded} picks`)
-    return parts.join(" + ") || "Unknown trade"
-  }
 
   const generateMockTrades = (): SleeperTransaction[] => {
     const mockTrades: SleeperTransaction[] = [
@@ -335,51 +384,82 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
             </TabsList>
 
             <TabsContent value="history" className="space-y-6">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Calendar className="h-4 w-4 flex-shrink-0" />
-                  <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-                    <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Seasons</SelectItem>
-                      {availableSeasons.map((season) => (
-                        <SelectItem key={season} value={season}>
-                          {season}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {evaluating && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Evaluating trades with NFL data and rankings...</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                      <SelectTrigger className="w-full min-h-[44px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Seasons</SelectItem>
+                        {availableSeasons.map((season) => (
+                          <SelectItem key={season} value={season}>
+                            {season}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Filter className="h-4 w-4 flex-shrink-0" />
+                    <Select value={weekFilter} onValueChange={setWeekFilter}>
+                      <SelectTrigger className="w-full min-h-[44px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Weeks</SelectItem>
+                        {Array.from({ length: 18 }, (_, i) => i + 1).map((week) => (
+                          <SelectItem key={week} value={week.toString()}>
+                            Week {week}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 min-w-0">
-                  <Filter className="h-4 w-4 flex-shrink-0" />
-                  <Select value={weekFilter} onValueChange={setWeekFilter}>
-                    <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Weeks</SelectItem>
-                      {Array.from({ length: 18 }, (_, i) => i + 1).map((week) => (
-                        <SelectItem key={week} value={week.toString()}>
-                          Week {week}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <ArrowRightLeft className="h-4 w-4 flex-shrink-0" />
+                    <Select value={transactionTypeFilter} onValueChange={setTransactionTypeFilter}>
+                      <SelectTrigger className="w-full min-h-[44px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Transactions</SelectItem>
+                        <SelectItem value="trades">Owner Trades Only</SelectItem>
+                        <SelectItem value="waivers">Waiver Adds Only</SelectItem>
+                        <SelectItem value="free_agents">Free Agent Adds Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <Select value={sortBy} onValueChange={(value: "date" | "players" | "teams") => setSortBy(value)}>
-                  <SelectTrigger className="w-full sm:w-40 min-h-[44px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date">Most Recent</SelectItem>
-                    <SelectItem value="players">Most Players</SelectItem>
-                    <SelectItem value="teams">Most Teams</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <TrendingUp className="h-4 w-4 flex-shrink-0" />
+                    <Select value={sortBy} onValueChange={(value: "date" | "players" | "teams") => setSortBy(value)}>
+                      <SelectTrigger className="w-full min-h-[44px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">Most Recent</SelectItem>
+                        <SelectItem value="players">Most Players</SelectItem>
+                        <SelectItem value="teams">Most Teams</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
               {/* Trade List - existing code with season badge added */}
@@ -402,89 +482,221 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredTrades.map((trade, index) => (
-                    <Card key={trade.transaction.transaction_id} className="border-l-4 border-l-blue-500">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="secondary">{trade.season}</Badge>
-                              <Badge className={getTradeTypeColor(trade)}>
-                                {trade.participants.length === 2
-                                  ? "2-Team Trade"
-                                  : `${trade.participants.length}-Team Trade`}
-                              </Badge>
-                              <Badge variant="outline">Week {trade.week}</Badge>
-                              <span className="text-sm text-gray-500">{trade.date}</span>
-                            </div>
-                            <p className="font-medium mb-2">{getTradeDescription(trade)}</p>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              <p>Teams involved: {trade.participants.map((id) => getUserName(id)).join(", ")}</p>
-                              <p>Status: {trade.transaction.status}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-gray-500">Trade #{index + 1}</div>
-                          </div>
-                        </div>
+                  {filteredTrades.map((trade, index) => {
+                    const evaluation = trade.evaluation
+                    const isOwnerTrade = trade.transaction.type === "trade"
+                    const typeLabel = trade.transaction.type === "trade" ? "Owner Trade" : trade.transaction.type === "waiver" ? "Waiver Add" : "Free Agent Add"
+                    const borderColor = isOwnerTrade ? "border-l-blue-500" : trade.transaction.type === "waiver" ? "border-l-orange-500" : "border-l-green-500"
 
-                        {/* Trade Details */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
-                          <div className="min-w-0">
-                            <h4 className="font-medium text-sm mb-2">Players Added</h4>
-                            <div className="space-y-1">
-                              {Object.entries(trade.transaction.adds || {}).map(([playerId, rosterId]) => {
-                                const player = getPlayer(playerId)
-                                return (
-                                  <div key={playerId} className="text-sm flex justify-between gap-2 min-w-0">
-                                    <span className="font-medium truncate">{getPlayerName(playerId)}</span>
-                                    <span className="text-gray-500 flex-shrink-0">
-                                      {player?.team || 'FA'} {player?.position || ''} → Team {rosterId}
-                                    </span>
-                                  </div>
-                                )
-                              })}
+                    return (
+                      <Card key={trade.transaction.transaction_id} className={`border-l-4 ${borderColor}`}>
+                        <CardContent className="pt-4">
+                          {/* Header */}
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center flex-wrap gap-2 mb-2">
+                                <Badge variant="secondary">{trade.season}</Badge>
+                                <Badge className={
+                                  isOwnerTrade
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                    : trade.transaction.type === "waiver"
+                                    ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                                    : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                }>
+                                  {typeLabel}
+                                </Badge>
+                                <Badge variant="outline">Week {trade.week}</Badge>
+                                <span className="text-sm text-gray-500">{trade.date}</span>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-sm text-gray-500">#{index + 1}</div>
                             </div>
                           </div>
-                          <div className="min-w-0">
-                            <h4 className="font-medium text-sm mb-2">Players Dropped</h4>
-                            <div className="space-y-1">
-                              {Object.entries(trade.transaction.drops || {}).map(([playerId, rosterId]) => {
-                                const player = getPlayer(playerId)
-                                return (
-                                  <div key={playerId} className="text-sm flex justify-between gap-2 min-w-0">
-                                    <span className="font-medium truncate">{getPlayerName(playerId)}</span>
-                                    <span className="text-gray-500 flex-shrink-0">
-                                      {player?.team || 'FA'} {player?.position || ''} ← Team {rosterId}
-                                    </span>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        </div>
 
-                        {/* Draft Picks */}
-                        {trade.transaction.draft_picks && trade.transaction.draft_picks.length > 0 && (
-                          <div className="mt-4 pt-4 border-t">
-                            <h4 className="font-medium text-sm mb-2">Draft Picks</h4>
-                            <div className="space-y-1">
-                              {trade.transaction.draft_picks.map((pick, idx) => (
-                                <div key={idx} className="text-sm flex justify-between">
-                                  <span>
-                                    {pick.season} Round {pick.round}
-                                  </span>
-                                  <span className="text-gray-500">
-                                    Team {pick.previous_owner_id} → Team {pick.owner_id}
-                                  </span>
+                          {/* Evaluation Summary (for owner trades) */}
+                          {evaluation && isOwnerTrade && evaluation.winner && (
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 mb-4">
+                              <div className="flex items-start gap-2">
+                                <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm mb-1">Trade Analysis</p>
+                                  <p className="text-sm text-gray-700 dark:text-gray-300">{evaluation.analysis}</p>
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    <Badge variant={
+                                      evaluation.overallFairness === 'very_fair' ? 'default' :
+                                      evaluation.overallFairness === 'fair' ? 'secondary' :
+                                      'destructive'
+                                    }>
+                                      {evaluation.overallFairness.replace('_', ' ').toUpperCase()}
+                                    </Badge>
+                                    {evaluation.winnerAdvantage > 0 && (
+                                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                                        +{evaluation.winnerAdvantage.toFixed(1)} value advantage
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Trade Participants */}
+                          {evaluation && evaluation.participants.length > 0 ? (
+                            <div className="space-y-4">
+                              {evaluation.participants.map((participant) => (
+                                <div key={participant.rosterId} className="border rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-semibold flex items-center gap-2">
+                                      {participant.ownerName}
+                                      {evaluation.winner === participant.rosterId.toString() && (
+                                        <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                                      )}
+                                    </h4>
+                                    <Badge variant={participant.netValue >= 0 ? 'default' : 'destructive'}>
+                                      {participant.netValue >= 0 ? '+' : ''}{participant.netValue.toFixed(1)} value
+                                    </Badge>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Players Received (GETS) */}
+                                    {participant.playersReceived.length > 0 && (
+                                      <div>
+                                        <div className="flex items-center gap-1 mb-2">
+                                          <ArrowDown className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                          <span className="text-sm font-medium text-green-700 dark:text-green-400">GETS</span>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                          {participant.playersReceived.map((player) => (
+                                            <div key={player.playerId} className="text-sm bg-green-50 dark:bg-green-900/20 rounded p-2">
+                                              <div className="flex justify-between items-start gap-2">
+                                                <span className="font-medium">{player.playerName}</span>
+                                                <Badge variant="outline" className="text-xs flex-shrink-0">
+                                                  {player.tradeValue.toFixed(0)}
+                                                </Badge>
+                                              </div>
+                                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                                {player.position} • {player.team}
+                                                {player.currentRank && ` • Rank ${player.currentRank}`}
+                                                {player.recentPerformance && (
+                                                  <span className="ml-1">
+                                                    • {player.recentPerformance.last4WeeksAvg.toFixed(1)} PPG
+                                                    {player.recentPerformance.trend === 'improving' && ' 📈'}
+                                                    {player.recentPerformance.trend === 'declining' && ' 📉'}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Players Given (GIVES) */}
+                                    {participant.playersGiven.length > 0 && (
+                                      <div>
+                                        <div className="flex items-center gap-1 mb-2">
+                                          <ArrowRight className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                          <span className="text-sm font-medium text-red-700 dark:text-red-400">GIVES</span>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                          {participant.playersGiven.map((player) => (
+                                            <div key={player.playerId} className="text-sm bg-red-50 dark:bg-red-900/20 rounded p-2">
+                                              <div className="flex justify-between items-start gap-2">
+                                                <span className="font-medium">{player.playerName}</span>
+                                                <Badge variant="outline" className="text-xs flex-shrink-0">
+                                                  {player.tradeValue.toFixed(0)}
+                                                </Badge>
+                                              </div>
+                                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                                {player.position} • {player.team}
+                                                {player.currentRank && ` • Rank ${player.currentRank}`}
+                                                {player.recentPerformance && (
+                                                  <span className="ml-1">
+                                                    • {player.recentPerformance.last4WeeksAvg.toFixed(1)} PPG
+                                                    {player.recentPerformance.trend === 'improving' && ' 📈'}
+                                                    {player.recentPerformance.trend === 'declining' && ' 📉'}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Draft Picks */}
+                                  {(participant.picksReceived.length > 0 || participant.picksGiven.length > 0) && (
+                                    <div className="mt-3 pt-3 border-t">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {participant.picksReceived.length > 0 && (
+                                          <div>
+                                            <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">Picks Received</p>
+                                            {participant.picksReceived.map((pick, idx) => (
+                                              <div key={idx} className="text-xs text-gray-600 dark:text-gray-400">
+                                                {pick.season} Rd {pick.round} (Value: {pick.estimatedValue})
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                        {participant.picksGiven.length > 0 && (
+                                          <div>
+                                            <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">Picks Given</p>
+                                            {participant.picksGiven.map((pick, idx) => (
+                                              <div key={idx} className="text-xs text-gray-600 dark:text-gray-400">
+                                                {pick.season} Rd {pick.round} (Value: {pick.estimatedValue})
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                          ) : (
+                            /* Fallback to old display if no evaluation */
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="min-w-0">
+                                <h4 className="font-medium text-sm mb-2">Players Added</h4>
+                                <div className="space-y-1">
+                                  {Object.entries(trade.transaction.adds || {}).map(([playerId, rosterId]) => {
+                                    const player = getPlayer(playerId)
+                                    return (
+                                      <div key={playerId} className="text-sm flex justify-between gap-2 min-w-0">
+                                        <span className="font-medium truncate">{getPlayerName(playerId)}</span>
+                                        <span className="text-gray-500 flex-shrink-0">
+                                          {player?.team || 'FA'} {player?.position || ''} → Team {rosterId}
+                                        </span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="font-medium text-sm mb-2">Players Dropped</h4>
+                                <div className="space-y-1">
+                                  {Object.entries(trade.transaction.drops || {}).map(([playerId, rosterId]) => {
+                                    const player = getPlayer(playerId)
+                                    return (
+                                      <div key={playerId} className="text-sm flex justify-between gap-2 min-w-0">
+                                        <span className="font-medium truncate">{getPlayerName(playerId)}</span>
+                                        <span className="text-gray-500 flex-shrink-0">
+                                          {player?.team || 'FA'} {player?.position || ''} ← Team {rosterId}
+                                        </span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
                 </div>
               )}
             </TabsContent>
