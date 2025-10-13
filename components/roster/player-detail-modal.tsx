@@ -1,9 +1,15 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { usePlayerData } from "@/contexts/player-data-context"
-import { getInjuryBadgeColor } from "@/lib/player-utils"
+/**
+ * PlayerDetailModal Component (Legacy Wrapper)
+ *
+ * This component now wraps the enhanced PlayerDetailModal component (TASK-012)
+ * for backward compatibility with existing code.
+ *
+ * New code should use PlayerDetailModal directly from @/components/player/player-detail-modal
+ */
+
+import { PlayerDetailModal as EnhancedPlayerDetailModal } from "@/components/player/player-detail-modal"
 import type { DisplayPlayer } from "./player-card"
 
 interface PlayerDetailModalProps {
@@ -12,66 +18,12 @@ interface PlayerDetailModalProps {
 }
 
 export function PlayerDetailModal({ player, onClose }: PlayerDetailModalProps) {
-  const { getPlayer } = usePlayerData()
-  const detailedPlayer = getPlayer(player.player_id)
-
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-auto" showCloseButton={true}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-wrap">
-            {player.full_name}
-            <Badge variant="outline">{player.position}</Badge>
-            <Badge variant="secondary">{player.team}</Badge>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Player Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{detailedPlayer?.years_exp || "N/A"}</div>
-              <div className="text-sm text-muted-foreground">Years Exp</div>
-            </div>
-            <div className="text-center">
-              <div className="font-medium">{detailedPlayer?.age || "N/A"}</div>
-              <div className="text-sm text-muted-foreground">Age</div>
-            </div>
-            <div className="text-center">
-              <div className="font-medium">{detailedPlayer?.college || "N/A"}</div>
-              <div className="text-sm text-muted-foreground">College</div>
-            </div>
-            <div className="text-center">
-              <Badge variant={getInjuryBadgeColor(player.injury_status || undefined)}>
-                {player.injury_status || "Healthy"}
-              </Badge>
-              <div className="text-sm text-muted-foreground">Status</div>
-            </div>
-          </div>
-
-          {/* Player Details */}
-          {detailedPlayer && (
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Height:</span> {detailedPlayer.height || "N/A"}
-              </div>
-              <div>
-                <span className="font-medium">Weight:</span> {detailedPlayer.weight || "N/A"}
-              </div>
-              <div>
-                <span className="font-medium">Team:</span> {detailedPlayer.team || "FA"}
-              </div>
-              <div>
-                <span className="font-medium">Position:</span> {detailedPlayer.position || "N/A"}
-              </div>
-            </div>
-          )}
-
-          <div className="text-center py-4 text-muted-foreground">
-            Real player data loaded from Sleeper API
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <EnhancedPlayerDetailModal
+      player={player}
+      onClose={onClose}
+      leagueOwnership={[]}
+      showCrossLeagueContext={false}
+    />
   )
 }
