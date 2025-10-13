@@ -29,7 +29,7 @@ export function LeagueHeader({
   onRefresh,
 }: LeagueHeaderProps) {
   return (
-    <div className="flex flex-col gap-compact-md mb-compact-xl md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-compact-md mb-compact-lg md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-compact-sm md:gap-compact-md">
         <Button variant="outline" onClick={onBackToLeagues} className="min-h-[44px] flex-shrink-0 shadow-sm bg-background-elevated">
           <ArrowLeft className="h-4 w-4 mr-2" />

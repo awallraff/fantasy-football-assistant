@@ -159,7 +159,7 @@ export default function DashboardPage() {
             onRefresh={() => handleLoadLeagueDetails(selectedLeague)}
           />
 
-          <Tabs defaultValue="overview" className="space-y-compact-md md:space-y-compact-xl">
+          <Tabs defaultValue="overview" className="space-y-compact-lg">
             <TabsList className="grid w-full grid-cols-4 min-h-[44px] bg-background-elevated shadow-md rounded-lg">
               <TabsTrigger value="overview" className="min-h-[44px] gap-2" title="Overview">
                 <BarChart3 className="h-4 w-4" />
@@ -255,7 +255,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:via-background-elevated/30 dark:to-background">
       <div className="container mx-auto px-compact-lg md:px-compact-xl py-compact-lg md:py-compact-xl safe-area-inset-top safe-area-inset-bottom">
         {/* Header */}
-        <div className="text-center mb-compact-xl md:mb-compact-xl">
+        <div className="text-center mb-compact-lg">
           <h1 className="text-ios-title-1 font-bold text-foreground mb-compact-xs">
             Welcome back, {user.display_name || user.username}!
           </h1>
