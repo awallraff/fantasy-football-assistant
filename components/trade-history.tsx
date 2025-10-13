@@ -72,7 +72,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
     leagueUsers.forEach((user) => {
       ownerStats[user.user_id] = {
         userId: user.user_id,
-        username: user.display_name || user.username,
+        username: user.display_name || user.username || `User ${user.user_id}`,
         totalTrades: 0,
         tradesAsGiver: 0,
         tradesAsReceiver: 0,

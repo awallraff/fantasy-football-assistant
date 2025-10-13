@@ -46,7 +46,7 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
         recommendations.push({
           id: `trade_${roster.roster_id}`,
           targetTeam: `Team ${roster.roster_id}`,
-          targetOwner: opponent.display_name || opponent.username,
+          targetOwner: opponent.display_name || opponent.username || `Owner ${opponent.user_id}`,
           confidence: tradeOpportunity.confidence,
           projectedGain: tradeOpportunity.projectedGain,
           reasoning: tradeOpportunity.reasoning,
