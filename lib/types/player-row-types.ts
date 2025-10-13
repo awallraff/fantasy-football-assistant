@@ -5,7 +5,8 @@
  * roster displays, rankings tables, and search results.
  */
 
-export type PlayerPosition = 'QB' | 'RB' | 'WR' | 'TE' | 'K' | 'DEF'
+// Player positions - includes both NFL positions and Sleeper roster slots
+export type PlayerPosition = 'QB' | 'RB' | 'WR' | 'TE' | 'K' | 'DEF' | 'FLEX' | 'SUPER_FLEX' | 'BN' | 'TAXI' | 'IR'
 
 export interface PlayerRowData {
   /** Player ID (from Sleeper API) */

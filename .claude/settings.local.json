@@ -86,7 +86,10 @@
       "Bash(pnpm tsc:*)",
       "Bash(tree:*)",
       "Bash(awk:*)",
-      "mcp__chrome-devtools__hover"
+      "mcp__chrome-devtools__hover",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $id ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": [],

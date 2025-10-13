@@ -221,11 +221,12 @@ export function StatCard({ icon: Icon, label, value, trend, variant = "default",
 }
 
 /**
- * PlayerCard Component (Enhanced)
+ * PlayerRowCard Component (Enhanced)
  *
  * Card wrapping PlayerRow with optional expanded information
+ * Note: Renamed from PlayerCard to avoid conflict with legacy components/roster/player-card.tsx
  */
-export interface PlayerCardProps {
+export interface PlayerRowCardProps {
   /** Player data */
   player: PlayerRowData
 
@@ -248,7 +249,7 @@ export interface PlayerCardProps {
   className?: string
 }
 
-export function PlayerCard({
+export function PlayerRowCard({
   player,
   isStarter: _isStarter = false,
   onClick,
@@ -256,7 +257,7 @@ export function PlayerCard({
   expandedContent,
   expanded = false,
   className,
-}: PlayerCardProps) {
+}: PlayerRowCardProps) {
   return (
     <Card
       className={cn(

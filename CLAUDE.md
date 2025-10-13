@@ -388,3 +388,4 @@ Pending:
 - Improve API error handling with retry/exponential backoff
 - Replace `any` types with specific types
 - Extract inline styles to Tailwind classes
+- Always confirm when creating new tasks, completing task, or when doing any task-related work, that there is no conflicting tasks with duplicate numbers.

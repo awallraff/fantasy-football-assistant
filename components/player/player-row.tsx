@@ -1,207 +1,174 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { TrendingUp, User } from "lucide-react"
-import { getInjuryBadgeColor } from "@/lib/player-utils"
-import { cn } from "@/lib/utils"
-
 /**
- * Standardized Player Row Component (TASK-011)
+ * PlayerRow Component
  *
- * A compact, scannable player row optimized for roster/rankings display.
- *
- * Design Specs:
- * - 44px minimum height (touch target compliance)
- * - Mobile-optimized (works on 375px viewport)
- * - High information density with icon-first design
- * - Position badge, team logo, key stats
- * - Tappable (opens player detail modal)
- *
- * Acceptance Criteria:
- * ✅ Props: player data, show controls (headshot, position, team, stats)
- * ✅ 44px minimum height (touch target)
- * ✅ Mobile-optimized (works on 375px)
- * ✅ Includes position badge, team badge, key stat
- * ✅ Tappable (opens player detail modal)
+ * Standardized player row for roster/rankings display.
+ * Mobile-first design with 44px minimum touch target.
  */
 
-export interface PlayerRowData {
-  player_id: string
-  full_name: string
-  position: string | null
-  team: string | null
-  injury_status?: string | null
-  weeklyProjection?: number
-  tier?: number
-  projectedPoints?: number
+import * as React from 'react'
+import { cn } from '@/lib/utils'
+import {
+  PlayerRowProps,
+  DEFAULT_DISPLAY_OPTIONS,
+  PlayerPosition,
+} from '@/lib/types/player-row-types'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+
+// Position color mapping from tailwind config
+const POSITION_COLORS: Record<PlayerPosition, string> = {
+  QB: 'bg-qb text-qb-foreground',
+  RB: 'bg-rb text-rb-foreground',
+  WR: 'bg-wr text-wr-foreground',
+  TE: 'bg-te text-te-foreground',
+  K: 'bg-k text-k-foreground',
+  DEF: 'bg-def text-def-foreground',
+  FLEX: 'bg-muted text-muted-foreground',
+  SUPER_FLEX: 'bg-muted text-muted-foreground',
+  BN: 'bg-muted text-muted-foreground',
+  TAXI: 'bg-muted text-muted-foreground',
+  IR: 'bg-muted text-muted-foreground',
 }
 
-export interface PlayerRowProps {
-  /** Player data to display */
-  player: PlayerRowData
+// Get initials from player name
+function getInitials(name: string): string {
+  const parts = name.split(' ')
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+  }
+  return name.substring(0, 2).toUpperCase()
+}
 
-  /** Whether this player is in starting lineup */
-  isStarter?: boolean
-
-  /** Callback when row is clicked */
-  onClick?: () => void
-
-  /** Show loading state for projections */
-  projectionsLoading?: boolean
-
-  /** Show player headshot (avatar) */
-  showHeadshot?: boolean
-
-  /** Show position badge */
-  showPosition?: boolean
-
-  /** Show team badge */
-  showTeam?: boolean
-
-  /** Show weekly projection */
-  showProjection?: boolean
-
-  /** Show tier badge */
-  showTier?: boolean
-
-  /** Show starter/bench status */
-  showStatus?: boolean
-
-  /** Additional CSS classes */
-  className?: string
-
-  /** Compact mode (reduces padding for dense lists) */
-  compact?: boolean
+// Get team logo URL (placeholder - can be replaced with real team logo service)
+function getTeamLogoUrl(teamAbbr: string): string {
+  // Using ESPN's team logo API as placeholder
+  return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/${teamAbbr.toLowerCase()}.png&h=40&w=40`
 }
 
 export function PlayerRow({
   player,
-  isStarter = false,
+  displayOptions = DEFAULT_DISPLAY_OPTIONS,
   onClick,
-  projectionsLoading = false,
-  showHeadshot = false,
-  showPosition = true,
-  showTeam = true,
-  showProjection = true,
-  showTier = true,
-  showStatus = true,
   className,
-  compact = false,
+  showHover = true,
+  selected = false,
 }: PlayerRowProps) {
+  const options = { ...DEFAULT_DISPLAY_OPTIONS, ...displayOptions }
+  const isClickable = !!onClick
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(player)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault()
+      onClick(player)
+    }
+  }
+
   return (
     <div
       className={cn(
-        "flex items-center justify-between border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors",
-        "min-h-[44px]", // WCAG 2.1 AA touch target
-        compact ? "p-2 md:p-2.5" : "p-2.5 md:p-3",
+        // Base styles - 44px minimum height for touch target
+        'flex items-center gap-3 min-h-[44px] w-full',
+        // Padding
+        options.compact ? 'px-2 py-1' : 'px-3 py-2',
+        // Interactive states
+        isClickable && 'cursor-pointer',
+        isClickable && showHover && 'hover:bg-accent/50 transition-colors',
+        selected && 'bg-accent/70',
+        isClickable && 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        // Rounded corners
+        'rounded-md',
         className
       )}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onClick?.()
-        }
-      }}
-      aria-label={`View details for ${player.full_name}, ${player.position}, ${player.team}`}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      aria-label={isClickable ? `View details for ${player.name}` : undefined}
     >
-      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-        {/* Optional Player Headshot */}
-        {showHeadshot && (
-          <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-muted flex items-center justify-center shrink-0">
-            <User className="h-5 w-5 text-muted-foreground" />
-          </div>
-        )}
+      {/* Player Headshot */}
+      {options.showHeadshot && (
+        <Avatar className={cn(options.compact ? 'h-8 w-8' : 'h-10 w-10', 'flex-shrink-0')}>
+          <AvatarImage src={player.headshotUrl} alt={`${player.name} headshot`} />
+          <AvatarFallback className="text-xs font-medium">
+            {getInitials(player.name)}
+          </AvatarFallback>
+        </Avatar>
+      )}
 
-        {/* Player Info */}
-        <div className="flex flex-col min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-            <span className="font-medium truncate">{player.full_name}</span>
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 flex items-center gap-2">
+        {/* Player Info (Name + Team) */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {/* Player Name */}
+            <span
+              className={cn(
+                'font-medium truncate',
+                options.compact ? 'text-sm' : 'text-base'
+              )}
+            >
+              {player.name}
+            </span>
 
             {/* Position Badge */}
-            {showPosition && (
-              <Badge
-                variant="outline"
-                className="text-[10px] md:text-xs px-1.5 py-0.5 shrink-0"
-              >
-                {player.position || 'N/A'}
-              </Badge>
-            )}
-
-            {/* Team Badge */}
-            {showTeam && (
+            {options.showPosition && (
               <Badge
                 variant="secondary"
-                className="text-[10px] md:text-xs px-1.5 py-0.5 shrink-0"
+                className={cn(
+                  'flex-shrink-0 font-semibold',
+                  options.compact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5',
+                  POSITION_COLORS[player.position]
+                )}
               >
-                {player.team || 'FA'}
+                {player.position}
               </Badge>
             )}
           </div>
 
-          {/* Injury Status */}
-          {player.injury_status && (
+          {/* Team Logo + Abbreviation */}
+          {options.showTeamLogo && player.team && (
             <div className="flex items-center gap-1.5 mt-0.5">
-              <Badge
-                variant={getInjuryBadgeColor(player.injury_status)}
-                className="text-[10px] md:text-xs px-1.5 py-0.5"
-              >
-                {player.injury_status}
-              </Badge>
+              <img
+                src={getTeamLogoUrl(player.team)}
+                alt={`${player.team} logo`}
+                className={cn('flex-shrink-0', options.compact ? 'h-4 w-4' : 'h-5 w-5')}
+                onError={(e) => {
+                  // Fallback to text if image fails
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+              <span className="text-xs text-muted-foreground font-medium">{player.team}</span>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Right Side: Stats & Status */}
-      <div className="flex items-center gap-2 shrink-0">
-        <div className="text-right">
-          {/* Projection Loading State */}
-          {projectionsLoading ? (
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" />
-              <span className="text-xs text-muted-foreground hidden md:inline">Loading...</span>
+        {/* Key Stat */}
+        {options.showStat && player.keyStat && (
+          <div className="flex-shrink-0 text-right">
+            <div
+              className={cn(
+                'font-semibold tabular-nums',
+                options.compact ? 'text-sm' : 'text-base'
+              )}
+            >
+              {player.keyStat}
             </div>
-          ) : (
-            <>
-              {/* Weekly Projection */}
-              {showProjection && player.weeklyProjection && (
-                <div className="flex items-center gap-1 mb-0.5">
-                  <TrendingUp className="h-3 w-3 text-blue-500 shrink-0" />
-                  <span className="text-sm font-medium text-blue-600">
-                    {player.weeklyProjection.toFixed(1)}
-                  </span>
-
-                  {/* Tier Badge */}
-                  {showTier && player.tier && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 ml-1">
-                      T{player.tier}
-                    </Badge>
-                  )}
-                </div>
-              )}
-
-              {/* Starter/Bench Status */}
-              {showStatus && (
-                <Badge
-                  variant={isStarter ? "default" : "secondary"}
-                  className="text-[10px] md:text-xs px-1.5 py-0.5"
-                >
-                  {isStarter ? "S" : "B"}
-                </Badge>
-              )}
-            </>
-          )}
-        </div>
+            {options.showSecondaryStat && player.secondaryStat && (
+              <div className="text-xs text-muted-foreground tabular-nums">
+                {player.secondaryStat}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
-/**
- * Export DisplayPlayer type alias for backward compatibility
- * with existing components (player-card.tsx)
- */
-export type DisplayPlayer = PlayerRowData
