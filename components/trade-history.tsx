@@ -210,13 +210,19 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
       }
 
       // Process all transactions (trades, waivers, free agents)
-      const processedTrades: ProcessedTrade[] = transactions.map((transaction, index) => {
+      const processedTrades: ProcessedTrade[] = transactions.map((transaction) => {
         const playersTraded = Object.keys(transaction.adds || {}).length + Object.keys(transaction.drops || {}).length
         const picksTraded = transaction.draft_picks?.length || 0
 
+        // Map roster IDs to owner user IDs for proper matching
+        const participantUserIds = (transaction.roster_ids || []).map(rosterId => {
+          const roster = leagueRosters.find(r => r.roster_id === rosterId)
+          return roster?.owner_id || rosterId.toString()
+        })
+
         return {
           transaction,
-          participants: transaction.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
+          participants: participantUserIds,
           playersTraded,
           picksTraded,
           date: new Date(transaction.created || Date.now()).toLocaleDateString(),
@@ -239,15 +245,23 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
         const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
         const leagueRosters = await sleeperAPI.getLeagueRosters(leagueId)
         const mockTrades = generateMockTrades()
-        const processedTrades: ProcessedTrade[] = mockTrades.map((trade, index) => ({
-          transaction: trade,
-          participants: trade.roster_ids?.map((id) => id.toString()) || [`${index + 1}`, `${index + 2}`],
-          playersTraded: Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length,
-          picksTraded: trade.draft_picks?.length || 0,
-          date: new Date(trade.created || Date.now()).toLocaleDateString(),
-          week: getWeekFromTimestamp(trade.created || Date.now()),
-          season: selectedSeason,
-        }))
+        const processedTrades: ProcessedTrade[] = mockTrades.map((trade) => {
+          // Map roster IDs to owner user IDs for proper matching (same as above)
+          const participantUserIds = (trade.roster_ids || []).map(rosterId => {
+            const roster = leagueRosters.find(r => r.roster_id === rosterId)
+            return roster?.owner_id || rosterId.toString()
+          })
+
+          return {
+            transaction: trade,
+            participants: participantUserIds,
+            playersTraded: Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length,
+            picksTraded: trade.draft_picks?.length || 0,
+            date: new Date(trade.created || Date.now()).toLocaleDateString(),
+            week: getWeekFromTimestamp(trade.created || Date.now()),
+            season: selectedSeason,
+          }
+        })
 
         const evaluatedTrades = await evaluateTrades(processedTrades, leagueUsers, leagueRosters)
         setTrades(evaluatedTrades)
@@ -370,7 +384,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
               </CardTitle>
               <CardDescription>Complete trade history and behavioral analysis across multiple seasons</CardDescription>
             </div>
-            <Button variant="outline" onClick={loadTradeHistory} disabled={loading}>
+            <Button variant="outline" onClick={loadTradeHistory} disabled={loading} className="min-h-[44px]">
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
