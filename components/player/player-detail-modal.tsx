@@ -93,7 +93,9 @@ export function PlayerDetailModal({
           // Mobile: bottom-sheet style
           "sm:max-h-[90vh]",
           // Animation: slide up from bottom on mobile
-          "animate-slide-up"
+          "animate-slide-up",
+          // Add more padding for better spacing
+          "p-6 md:p-8"
         )}
         showCloseButton={true}
       >

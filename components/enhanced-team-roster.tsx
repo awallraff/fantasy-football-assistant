@@ -169,7 +169,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
           </CardTitle>
         </CardHeader>
         {!isCollapsed && (
-          <CardContent>
+          <CardContent className="pt-6">
             <Tabs defaultValue="starters" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="starters">Starters ({starters.length})</TabsTrigger>
