@@ -176,7 +176,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
                 <TabsTrigger value="bench">Bench ({bench.length})</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="starters" className="space-y-2">
+              <TabsContent value="starters" className="space-y-compact-sm">
                 {starters.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
                     No starters found
@@ -194,7 +194,7 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
                 )}
               </TabsContent>
 
-              <TabsContent value="bench" className="space-y-2">
+              <TabsContent value="bench" className="space-y-compact-sm">
                 {bench.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
                     No bench players found

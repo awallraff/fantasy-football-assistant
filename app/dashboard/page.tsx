@@ -196,7 +196,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="space-y-compact-md">
+                <div className="space-y-compact-lg">
                   {sortedRosters.length === 0 ? (
                     <Card className="bg-background-elevated shadow-md rounded-lg">
                       <CardHeader>
