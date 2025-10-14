@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Force CSS cache bust for Tailwind v4 spacing utilities */
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
