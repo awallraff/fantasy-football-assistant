@@ -240,7 +240,7 @@ export function PlayerDetailModal({
           )}
 
           {/* Weekly Projection (if available) */}
-          {player.weeklyProjection && (
+          {player.weeklyProjection ? (
             <div className="p-compact-md bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -256,6 +256,13 @@ export function PlayerDetailModal({
                     <Badge variant="outline" className="text-xs">Tier {player.tier}</Badge>
                   )}
                 </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-compact-md bg-muted/20 border border-muted rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <TrendingUp className="h-4 w-4" />
+                <span>No projections available. Import rankings on the Rankings page to see projections.</span>
               </div>
             </div>
           )}
