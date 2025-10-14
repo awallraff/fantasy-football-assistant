@@ -153,12 +153,16 @@
   --radius-xl: 20px;
   --radius-2xl: 24px;
 
-  /* Custom spacing (8px grid system) */
+  /* Custom spacing (8px grid system) - defines compact-* utilities */
   --spacing-compact-xs: 4px;
   --spacing-compact-sm: 8px;
   --spacing-compact-md: 12px;
   --spacing-compact-lg: 16px;
   --spacing-compact-xl: 24px;
+  --spacing-safe-top: env(safe-area-inset-top, 0px);
+  --spacing-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --spacing-safe-left: env(safe-area-inset-left, 0px);
+  --spacing-safe-right: env(safe-area-inset-right, 0px);
 }
 
 @layer base {
