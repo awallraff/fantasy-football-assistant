@@ -159,8 +159,8 @@ export default function DashboardPage() {
             onRefresh={() => handleLoadLeagueDetails(selectedLeague)}
           />
 
-          <Tabs defaultValue="overview" className="space-y-compact-lg">
-            <TabsList className="grid w-full grid-cols-4 min-h-[44px] bg-background-elevated shadow-md rounded-lg">
+          <Tabs defaultValue="overview" className="space-y-0">
+            <TabsList className="grid w-full grid-cols-4 min-h-[44px] bg-background-elevated shadow-md rounded-lg mb-8">
               <TabsTrigger value="overview" className="min-h-[44px] gap-2" title="Overview">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden md:inline">Overview</span>
@@ -179,11 +179,11 @@ export default function DashboardPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview">
+            <TabsContent value="overview" className="mt-0">
               <LeagueOverview league={selectedLeague} rosters={rosters} users={leagueUsers} />
             </TabsContent>
 
-            <TabsContent value="teams">
+            <TabsContent value="teams" className="mt-0">
               <div className="grid gap-compact-md md:gap-compact-xl">
                 {/* Debug info - remove after fixing */}
                 {process.env.NODE_ENV === 'development' && (
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="space-y-compact-lg">
+                <div className="space-y-compact-xl">
                   {sortedRosters.length === 0 ? (
                     <Card className="bg-background-elevated shadow-md rounded-lg">
                       <CardHeader>
@@ -237,11 +237,11 @@ export default function DashboardPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="standings">
+            <TabsContent value="standings" className="mt-0">
               <StandingsTable rosters={rosters} users={leagueUsers} league={selectedLeague} />
             </TabsContent>
 
-            <TabsContent value="activity">
+            <TabsContent value="activity" className="mt-0">
               <RecentActivity leagueId={selectedLeague.league_id} users={leagueUsers} rosters={rosters} />
             </TabsContent>
           </Tabs>
