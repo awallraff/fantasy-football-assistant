@@ -146,7 +146,7 @@ export default function DashboardPage() {
   if (selectedLeague) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:via-background-elevated/30 dark:to-background">
-        <div className="container mx-auto px-compact-lg md:px-compact-xl py-compact-lg md:py-compact-xl safe-area-inset-top safe-area-inset-bottom">
+        <div className="container mx-auto px-compact-lg md:px-compact-xl pt-8 pb-compact-xl md:pt-12 md:pb-16 safe-area-inset-top safe-area-inset-bottom">
           <LeagueHeader
             selectedLeague={selectedLeague}
             selectedYear={selectedYear}
@@ -253,7 +253,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:via-background-elevated/30 dark:to-background">
-      <div className="container mx-auto px-compact-lg md:px-compact-xl py-compact-lg md:py-compact-xl safe-area-inset-top safe-area-inset-bottom">
+      <div className="container mx-auto px-compact-lg md:px-compact-xl pt-8 pb-compact-xl md:pt-12 md:pb-16 safe-area-inset-top safe-area-inset-bottom">
         {/* Header */}
         <div className="text-center mb-compact-lg">
           <h1 className="text-ios-title-1 font-bold text-foreground mb-compact-xs">
