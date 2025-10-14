@@ -136,9 +136,9 @@ export function PlayerDetailModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-compact-lg">
+        <div className="space-y-compact-xl">
           {/* Dynasty Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-compact-md">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-compact-lg">
             <div className="text-center p-compact-md bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Calendar className="h-4 w-4 text-primary" />
@@ -217,7 +217,7 @@ export function PlayerDetailModal({
 
           {/* Player Physical Details */}
           {detailedPlayer && (
-            <div className="grid grid-cols-2 gap-compact-md text-sm">
+            <div className="grid grid-cols-2 gap-compact-lg text-sm">
               <div className="p-compact-sm bg-muted/20 rounded-lg">
                 <span className="font-medium">Height:</span>{" "}
                 <span className="text-muted-foreground">{detailedPlayer.height || "N/A"}</span>
