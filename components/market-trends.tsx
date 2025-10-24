@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
+import { LineChart, Line, XAxis as LineXAxis, YAxis as LineYAxis, CartesianGrid as LineCartesianGrid, Tooltip as LineTooltip, ResponsiveContainer as LineResponsiveContainer } from "@/components/charts/dynamic-line-chart"
+import { BarChart, Bar, XAxis as BarXAxis, YAxis as BarYAxis, CartesianGrid as BarCartesianGrid, Tooltip as BarTooltip, ResponsiveContainer as BarResponsiveContainer } from "@/components/charts/dynamic-bar-chart"
 import { TrendingUp, TrendingDown, Activity, Target } from "lucide-react"
 
 interface MarketTrendsProps {
@@ -139,12 +140,12 @@ export function MarketTrends({ leagueId }: MarketTrendsProps) {
             </div>
           ) : (
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
+              <LineResponsiveContainer width="100%" height="100%">
                 <LineChart>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="week" />
-                  <YAxis />
-                  <Tooltip />
+                  <LineCartesianGrid strokeDasharray="3 3" />
+                  <LineXAxis dataKey="week" />
+                  <LineYAxis />
+                  <LineTooltip />
                   {positionTrends.map((position, index) => (
                     <Line
                       key={position.position}
@@ -157,7 +158,7 @@ export function MarketTrends({ leagueId }: MarketTrendsProps) {
                     />
                   ))}
                 </LineChart>
-              </ResponsiveContainer>
+              </LineResponsiveContainer>
             </div>
           )}
         </CardContent>
@@ -246,15 +247,15 @@ export function MarketTrends({ leagueId }: MarketTrendsProps) {
         </CardHeader>
         <CardContent>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <BarResponsiveContainer width="100%" height="100%">
               <BarChart data={positionTrends}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="position" />
-                <YAxis />
-                <Tooltip />
+                <BarCartesianGrid strokeDasharray="3 3" />
+                <BarXAxis dataKey="position" />
+                <BarYAxis />
+                <BarTooltip />
                 <Bar dataKey="totalTrades" fill="hsl(var(--chart-1))" />
               </BarChart>
-            </ResponsiveContainer>
+            </BarResponsiveContainer>
           </div>
         </CardContent>
       </Card>

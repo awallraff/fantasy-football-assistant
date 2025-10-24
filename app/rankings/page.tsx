@@ -13,7 +13,6 @@ import type { PlayerDetailModalData } from "@/components/player/player-detail-mo
 import type { RankingSystem } from "@/lib/rankings-types";
 import { usePlayerData } from "@/contexts/player-data-context"
 import { normalizePosition } from "@/lib/player-utils"
-import { AIRankingsService } from "@/lib/ai-rankings-service"
 import { getNextUpcomingWeek } from "@/lib/nfl-season-utils"
 import { getTierColor } from "@/lib/ranking-utils"
 import { debugLog, debugInfo, debugError } from "@/lib/debug-utils"
@@ -172,16 +171,20 @@ export default function RankingsPage() {
     const { year: nextYear, week: nextWeek } = getNextUpcomingWeek();
     const targetYear = customYear || nextYear;
     const currentProjectionType = forceProjectionType || projectionType;
-    
+
     // For season projections, don't specify a week
     const targetWeek = currentProjectionType === "season" ? undefined : (customWeek || nextWeek);
-    
+
     setIsLoading(true);
     try {
       const projectionDesc = currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`;
       debugInfo(`Generating AI rankings predictions for ${projectionDesc}`);
       const allRankings = getAllSystems();
+
+      // Lazy-load AIRankingsService to reduce initial bundle size
+      const { AIRankingsService } = await import("@/lib/ai-rankings-service");
       const aiService = new AIRankingsService();
+
       const aiSystem = await aiService.generateAIRankings(allRankings, {
         year: targetYear,
         week: targetWeek,
@@ -190,7 +193,7 @@ export default function RankingsPage() {
       setAiRankingSystem(aiSystem);
       setSelectedSource("ai");
       setSelectedSystem(aiSystem);
-      
+
       // Update the state to reflect what we generated
       setSelectedYear(targetYear);
       setSelectedWeek(targetWeek || null);
@@ -270,7 +273,11 @@ export default function RankingsPage() {
 
           debugInfo(`Generating AI rankings predictions for ${currentProjectionType === "season" ? `${targetYear} season` : `Week ${targetWeek} of ${targetYear}`}`);
           const allRankings = getAllSystems();
+
+          // Lazy-load AIRankingsService to reduce initial bundle size
+          const { AIRankingsService } = await import("@/lib/ai-rankings-service");
           const aiService = new AIRankingsService();
+
           const aiSystem = await aiService.generateAIRankings(allRankings, {
             year: targetYear,
             week: targetWeek,
@@ -279,7 +286,7 @@ export default function RankingsPage() {
           setAiRankingSystem(aiSystem);
           setSelectedSource("ai");
           setSelectedSystem(aiSystem);
-          
+
           // Update the state to reflect what we generated
           setSelectedYear(targetYear);
           setSelectedWeek(targetWeek || null);
