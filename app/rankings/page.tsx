@@ -41,6 +41,7 @@ const APIKeyManager = dynamic(() => import("@/components/api-key-manager").then(
 
 // Import skeleton components for CLS prevention
 import { RankingCardsSkeletonList } from "@/components/rankings/ranking-card-skeleton"
+import { VirtualizedRankingList } from "@/components/rankings/virtualized-ranking-list"
 
 type RankingSource = "all" | "user" | "ai"
 
@@ -438,66 +439,22 @@ export default function RankingsPage() {
 
     return (
       <>
-        {/* Mobile: Card layout */}
+        {/* Mobile: Virtualized Card layout */}
         {loading ? (
           <RankingCardsSkeletonList count={10} />
         ) : (
-          <div className="md:hidden space-y-3 overflow-hidden">
-            {sortedData.map((player) => (
-            <Card
-              key={player.playerId}
-              className="p-4 cursor-pointer hover:bg-muted/30 transition-colors overflow-hidden"
-              style={{ contentVisibility: 'auto', containIntrinsicSize: '140px' }}
-              onClick={() => setSelectedPlayerForModal({
-                player_id: player.playerId,
-                full_name: player.playerName,
-                position: player.position,
-                team: player.team,
-                injury_status: player.injuryStatus || null,
-                weeklyProjection: player.projectedPoints,
-                tier: player.tier,
-              })}
-            >
-              <div className="space-y-3 min-w-0">
-                <div className="flex justify-between items-start gap-2 min-w-0">
-                  <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <div className={`w-10 h-10 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)} shrink-0`}>
-                      {player.rank}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold truncate">{player.playerName}</div>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs shrink-0">{player.position}</Badge>
-                        <span className="text-sm text-muted-foreground truncate">{player.team}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {player.tier && (
-                    <Badge variant="secondary" className="text-xs shrink-0">Tier {player.tier}</Badge>
-                  )}
-                </div>
-                <div className="flex justify-between items-center text-sm gap-2 min-w-0">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-muted-foreground">Projected: </span>
-                    <span className="font-medium">{player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}</span>
-                  </div>
-                  <div className="shrink-0">
-                    {player.injuryStatus && player.injuryStatus !== "Healthy" ? (
-                      <Badge variant="destructive" className="text-xs">{player.injuryStatus}</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">Healthy</Badge>
-                    )}
-                  </div>
-                </div>
-                {player.notes && (
-                  <div className="text-xs text-muted-foreground border-t pt-2 break-words">
-                    {player.notes}
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-          </div>
+          <VirtualizedRankingList
+            data={sortedData}
+            onPlayerClick={(player) => setSelectedPlayerForModal({
+              player_id: player.playerId,
+              full_name: player.playerName,
+              position: player.position,
+              team: player.team,
+              injury_status: player.injuryStatus || null,
+              weeklyProjection: player.projectedPoints,
+              tier: player.tier,
+            })}
+          />
         )}
 
         {/* Desktop: Table layout */}
