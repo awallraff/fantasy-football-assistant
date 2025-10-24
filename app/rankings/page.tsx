@@ -39,6 +39,9 @@ const APIKeyManager = dynamic(() => import("@/components/api-key-manager").then(
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
 })
 
+// Import skeleton components for CLS prevention
+import { RankingCardsSkeletonList } from "@/components/rankings/ranking-card-skeleton"
+
 type RankingSource = "all" | "user" | "ai"
 
 interface SimplePlayerRanking {
@@ -430,17 +433,21 @@ export default function RankingsPage() {
     });
   };
 
-  const renderRankingsTable = (rankings: SimplePlayerRanking[]) => {
+  const renderRankingsTable = (rankings: SimplePlayerRanking[], loading = false) => {
     const sortedData = sortTableData(rankings);
 
     return (
       <>
         {/* Mobile: Card layout */}
-        <div className="md:hidden space-y-3 overflow-hidden">
-          {sortedData.map((player) => (
+        {loading ? (
+          <RankingCardsSkeletonList count={10} />
+        ) : (
+          <div className="md:hidden space-y-3 overflow-hidden">
+            {sortedData.map((player) => (
             <Card
               key={player.playerId}
               className="p-4 cursor-pointer hover:bg-muted/30 transition-colors overflow-hidden"
+              style={{ contentVisibility: 'auto', containIntrinsicSize: '140px' }}
               onClick={() => setSelectedPlayerForModal({
                 player_id: player.playerId,
                 full_name: player.playerName,
@@ -490,7 +497,8 @@ export default function RankingsPage() {
               </div>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Desktop: Table layout */}
         <div className="hidden md:block border rounded-md overflow-hidden">
@@ -965,15 +973,10 @@ export default function RankingsPage() {
                   )}
                 </div>
 
-                {playersLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">Loading player data...</p>
-                    </div>
-                  </div>
+                {playersLoading || isLoading ? (
+                  renderRankingsTable([], true)
                 ) : filteredRankings.length > 0 ? (
-                  renderRankingsTable(filteredRankings)
+                  renderRankingsTable(filteredRankings, false)
                 ) : (
                   <div className="text-center py-8 space-y-4">
                     <p className="text-muted-foreground">
