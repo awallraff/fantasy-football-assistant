@@ -1,5 +1,5 @@
 
-> my-v0-project@0.1.0 build C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant
+> my-v0-project@0.1.0 build
 > next build
 
    ▲ Next.js 15.2.4
@@ -69,51 +69,16 @@
 216:13  Warning: 'promise' is assigned a value but never used.  @typescript-eslint/no-unused-vars
 
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
-   Collecting page data ...
-   Generating static pages (0/19) ...
-[v0] Layout rendering...
-[v0] HomePage rendering...
-[v0] Layout rendering...
-[v0] Layout rendering...
-[v0] Layout rendering...
-[v0] Layout rendering...
-   Generating static pages (4/19) 
-[v0] Layout rendering...
-[v0] Layout rendering...
-[v0] Layout rendering...
-[v0] Layout rendering...
-[v0] Layout rendering...
-   Generating static pages (9/19) 
-[v0] Layout rendering...
-   Generating static pages (14/19) 
- ✓ Generating static pages (19/19)
-   Finalizing page optimization ...
-   Collecting build traces ...
+Failed to compile.
 
-Route (app)                                 Size  First Load JS
-┌ ○ /                                    5.59 kB         133 kB
-├ ○ /_not-found                            988 B         102 kB
-├ ƒ /api/cache/health                      159 B         102 kB
-├ ƒ /api/cache/invalidate                  159 B         102 kB
-├ ƒ /api/cache/stats                       159 B         102 kB
-├ ƒ /api/cache/warm                        159 B         102 kB
-├ ƒ /api/nfl-data                          159 B         102 kB
-├ ƒ /api/rookie-draft                      159 B         102 kB
-├ ○ /dashboard                           17.2 kB         191 kB
-├ ○ /dynasty-status-demo                  6.3 kB         130 kB
-├ ○ /more                                6.17 kB         119 kB
-├ ○ /nfl-data                            9.16 kB         157 kB
-├ ○ /player-row-demo                     5.56 kB         115 kB
-├ ○ /rankings                            10.8 kB         182 kB
-├ ○ /recommendations                     11.9 kB         177 kB
-├ ○ /rookie-draft                        10.9 kB         151 kB
-└ ○ /trades                              3.01 kB         151 kB
-+ First Load JS shared by all             101 kB
-  ├ chunks/3422-ec0ac03baebd1640.js      45.9 kB
-  ├ chunks/359746bb-df67e45daec3b3c5.js  53.3 kB
-  └ other shared chunks (total)          2.32 kB
+./hooks/use-nfl-data-fetch.ts:12:7
+Type error: Type '{ total_players: number; total_weekly_records: number; total_seasonal_records: number; total_aggregated_records: number; }' is missing the following properties from type '{ years: number[]; positions: string[]; week?: number | undefined; extracted_at: string; total_weekly_records: number; total_seasonal_records: number; total_aggregated_records: number; total_players: number; total_teams: number; }': years, positions, extracted_at, total_teams
 
-
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
+[0m [90m 10 |[39m   [36mif[39m (responses[33m.[39mlength [33m===[39m [35m0[39m) {[0m
+[0m [90m 11 |[39m     [36mreturn[39m {[0m
+[0m[31m[1m>[22m[39m[90m 12 |[39m       metadata[33m:[39m {[0m
+[0m [90m    |[39m       [31m[1m^[22m[39m[0m
+[0m [90m 13 |[39m         total_players[33m:[39m [35m0[39m[33m,[39m[0m
+[0m [90m 14 |[39m         total_weekly_records[33m:[39m [35m0[39m[33m,[39m[0m
+[0m [90m 15 |[39m         total_seasonal_records[33m:[39m [35m0[39m[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

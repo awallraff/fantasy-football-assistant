@@ -32,7 +32,7 @@ export function NFLDataManagerFixed() {
   const [showLegend, setShowLegend] = useState(false)
 
   // Custom hooks for data operations
-  const { data: nflData, loading, error, testResult, testConnection, extractData } = useNFLDataFetch({
+  const { data: nflData, loading, error, testResult, testConnection, extractData, progress } = useNFLDataFetch({
     selectedYears,
     selectedPositions,
     selectedWeek,
@@ -170,6 +170,33 @@ export function NFLDataManagerFixed() {
               message={`${selectedYears[0]} season data is not yet available. Most recent data available: ${latestAvailableYear}`}
               showRetry={false}
             />
+          )}
+
+          {/* Progress Indicator */}
+          {loading && progress && (
+            <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+              <CardContent className="pt-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-blue-900 dark:text-blue-100">
+                      Fetching {progress.position} data...
+                    </span>
+                    <span className="text-blue-700 dark:text-blue-300">
+                      {progress.current} / {progress.total}
+                    </span>
+                  </div>
+                  <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Fetching positions sequentially to avoid timeouts
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Enhanced Error Display with Retry */}

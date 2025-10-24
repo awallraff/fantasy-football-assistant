@@ -3,6 +3,86 @@ import type { NFLDataResponse } from "@/lib/nfl-data-service"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { logger, generateRequestId } from "@/lib/logging-service"
 
+/**
+ * Merges multiple NFL data responses into a single response
+ */
+function mergeNFLDataResponses(responses: NFLDataResponse[]): NFLDataResponse {
+  if (responses.length === 0) {
+    return {
+      metadata: {
+        years: [],
+        positions: [],
+        week: undefined,
+        extracted_at: new Date().toISOString(),
+        total_players: 0,
+        total_weekly_records: 0,
+        total_seasonal_records: 0,
+        total_aggregated_records: 0,
+        total_teams: 0,
+      },
+      weekly_stats: [],
+      seasonal_stats: [],
+      aggregated_season_stats: [],
+      player_info: [],
+      team_analytics: [],
+    }
+  }
+
+  if (responses.length === 1) {
+    return responses[0]
+  }
+
+  // Merge all responses
+  const allYears = new Set<number>()
+  const allPositions = new Set<string>()
+  let commonWeek: number | undefined = responses[0].metadata?.week
+
+  const merged: NFLDataResponse = {
+    metadata: {
+      years: [],
+      positions: [],
+      week: commonWeek,
+      extracted_at: new Date().toISOString(),
+      total_players: 0,
+      total_weekly_records: 0,
+      total_seasonal_records: 0,
+      total_aggregated_records: 0,
+      total_teams: 0,
+    },
+    weekly_stats: [],
+    seasonal_stats: [],
+    aggregated_season_stats: [],
+    player_info: [],
+    team_analytics: [],
+  }
+
+  for (const response of responses) {
+    // Collect years and positions
+    response.metadata?.years?.forEach(y => allYears.add(y))
+    response.metadata?.positions?.forEach(p => allPositions.add(p))
+
+    // Sum metadata
+    merged.metadata.total_players += response.metadata?.total_players || 0
+    merged.metadata.total_weekly_records += response.metadata?.total_weekly_records || 0
+    merged.metadata.total_seasonal_records += response.metadata?.total_seasonal_records || 0
+    merged.metadata.total_aggregated_records += response.metadata?.total_aggregated_records || 0
+    merged.metadata.total_teams += response.metadata?.total_teams || 0
+
+    // Merge arrays
+    merged.weekly_stats.push(...(response.weekly_stats || []))
+    merged.seasonal_stats.push(...(response.seasonal_stats || []))
+    merged.aggregated_season_stats.push(...(response.aggregated_season_stats || []))
+    merged.player_info.push(...(response.player_info || []))
+    merged.team_analytics.push(...(response.team_analytics || []))
+  }
+
+  // Set merged years and positions
+  merged.metadata.years = Array.from(allYears).sort()
+  merged.metadata.positions = Array.from(allPositions).sort()
+
+  return merged
+}
+
 export interface UseNFLDataFetchOptions {
   selectedYears: string[]
   selectedPositions: string[]
@@ -17,6 +97,7 @@ export interface UseNFLDataFetchResult {
   testResult: { success: boolean; message: string } | null
   testConnection: () => Promise<void>
   extractData: () => Promise<void>
+  progress: { current: number; total: number; position: string } | null
 }
 
 /**
@@ -33,6 +114,7 @@ export function useNFLDataFetch({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [progress, setProgress] = useState<{ current: number; total: number; position: string } | null>(null)
 
   // Refs for race condition prevention
   const hasInitialLoadAttempted = useRef(false)
@@ -72,7 +154,7 @@ export function useNFLDataFetch({
     const requestId = generateRequestId('nfl-data')
     const timer = logger.startTimer(requestId)
 
-    logger.info('NFL data fetch started', {
+    logger.info('NFL data fetch started (sequential)', {
       years: selectedYears,
       positions: selectedPositions,
       week: selectedWeek,
@@ -90,44 +172,70 @@ export function useNFLDataFetch({
 
     setLoading(true)
     setError(null)
+    setProgress(null)
 
     try {
-      const params = new URLSearchParams({
-        action: 'extract',
-        years: selectedYears.join(','),
-        positions: selectedPositions.join(',')
-      })
+      // Fetch positions sequentially to avoid timeout
+      const allData: NFLDataResponse[] = []
+      const totalPositions = selectedPositions.length
 
-      if (selectedWeek && selectedWeek !== "all") {
-        params.set('week', selectedWeek)
+      for (let i = 0; i < totalPositions; i++) {
+        const position = selectedPositions[i]
+
+        // Update progress
+        setProgress({
+          current: i + 1,
+          total: totalPositions,
+          position: position
+        })
+
+        logger.info(`Fetching position ${i + 1}/${totalPositions}: ${position}`, undefined, requestId)
+
+        const params = new URLSearchParams({
+          action: 'extract',
+          years: selectedYears.join(','),
+          positions: position // Single position at a time
+        })
+
+        if (selectedWeek && selectedWeek !== "all") {
+          params.set('week', selectedWeek)
+        }
+
+        const response = await fetchWithRetry(`/api/nfl-data?${params}`, { signal })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText} (Position: ${position})`)
+        }
+
+        const responseData = await response.json()
+
+        if (responseData.error) {
+          throw new Error(`${responseData.error} (Position: ${position})`)
+        }
+
+        allData.push(responseData)
       }
 
-      const response = await fetchWithRetry(`/api/nfl-data?${params}`, { signal })
+      // Merge all position data
+      const mergedData = mergeNFLDataResponses(allData)
+      setData(mergedData)
+      setProgress(null)
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const responseData = await response.json()
-
-      if (responseData.error) {
-        throw new Error(responseData.error)
-      }
-
-      setData(responseData)
-
-      timer.end('NFL data fetch completed', {
-        records: responseData?.metadata?.total_players,
+      timer.end('NFL data fetch completed (sequential)', {
+        positions: totalPositions,
+        records: mergedData?.metadata?.total_players,
       })
     } catch (err) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') {
         logger.debug('NFL data fetch aborted', undefined, requestId)
+        setProgress(null)
         return
       }
 
       const errorMessage = err instanceof Error ? err.message : 'Failed to extract NFL data'
       setError(errorMessage)
+      setProgress(null)
 
       logger.error(
         'NFL data fetch failed',
@@ -170,5 +278,6 @@ export function useNFLDataFetch({
     testResult,
     testConnection,
     extractData,
+    progress,
   }
 }
