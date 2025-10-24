@@ -26,6 +26,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Preload critical fonts to prevent FOUT/layout shifts */}
+        <link
+          rel="preload"
+          href="/_next/static/media/028c0d39d2e8f589-s.p.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/_next/static/media/5b01f339abf2f1a5.p.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <style>{`
 html {
   font-family: ${GeistSans.style.fontFamily};
