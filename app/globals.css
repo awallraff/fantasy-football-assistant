@@ -47,8 +47,8 @@
 
   /* Text Colors */
   --foreground: 255 255 255;        /* #FFFFFF - Primary text */
-  --text-secondary: 142 142 147;    /* #8E8E93 - Secondary text */
-  --text-tertiary: 99 99 102;       /* #636366 - Tertiary text */
+  --text-secondary: 156 156 160;    /* #9C9CA0 - Secondary text (4.6:1 contrast - WCAG AA pass) */
+  --text-tertiary: 120 120 125;     /* #78787D - Tertiary text (3.8:1 for large text - WCAG AA pass) */
 
   /* Card & Popover */
   --card: 28 28 30;                 /* #1C1C1E */
@@ -281,5 +281,17 @@
 
   .safe-area-inset-right {
     padding-right: env(safe-area-inset-right, 0);
+  }
+
+  /* Respect user's motion preferences (WCAG Level A - 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

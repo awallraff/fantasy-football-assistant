@@ -391,3 +391,5 @@ Pending:
 - Always confirm when creating new tasks, completing task, or when doing any task-related work, that there is no conflicting tasks with duplicate numbers.
 - Always have an agent(s) that are specialized with testing, review changes prior to pushing to main to trigger a deployment.
 - when pushing to main, always check the deployment afterwards with the Vercel CLI tool to confirm if the deployment was successful. If not, make sure to resolve and determine if you can fix forward.
+- after deploying to production and the vercel build completes. ALWAYS use chrome dev tools to test/validate the changes directly at the production url of dynastyff.vercel.app
+- Every time a UI task is worked or UI is changed ensure that the radix agent reviews and approves the changes or suggests and makes adjustments to improve as needed.

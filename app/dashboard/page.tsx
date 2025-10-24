@@ -161,19 +161,19 @@ export default function DashboardPage() {
 
           <Tabs defaultValue="overview" className="space-y-0">
             <TabsList className="grid w-full grid-cols-4 min-h-[44px] bg-background-elevated shadow-md rounded-lg mb-8">
-              <TabsTrigger value="overview" className="min-h-[44px] gap-2" title="Overview">
+              <TabsTrigger value="overview" className="min-h-[44px] gap-2" title="Overview" aria-label="View league overview">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden md:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="teams" className="min-h-[44px] gap-2" title="Teams">
+              <TabsTrigger value="teams" className="min-h-[44px] gap-2" title="Teams" aria-label="View all teams">
                 <Users className="h-4 w-4" />
                 <span className="hidden md:inline">Teams</span>
               </TabsTrigger>
-              <TabsTrigger value="standings" className="min-h-[44px] gap-2" title="Standings">
+              <TabsTrigger value="standings" className="min-h-[44px] gap-2" title="Standings" aria-label="View league standings">
                 <Trophy className="h-4 w-4" />
                 <span className="hidden md:inline">Standings</span>
               </TabsTrigger>
-              <TabsTrigger value="activity" className="min-h-[44px] gap-2" title="Activity">
+              <TabsTrigger value="activity" className="min-h-[44px] gap-2" title="Activity" aria-label="View recent activity">
                 <Activity className="h-4 w-4" />
                 <span className="hidden md:inline">Activity</span>
               </TabsTrigger>

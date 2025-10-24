@@ -1,0 +1,52 @@
+{
+  "agents": {
+    "radix-ui-specialist": {
+      "name": "Radix UI & Tailwind CSS Specialist",
+      "description": "Elite UI specialist expert in Radix UI primitives, Tailwind CSS v4, accessibility best practices, and production-ready component implementation. Provides comprehensive guidance on component design, styling, responsive patterns, and modern design systems.",
+      "prompt_file": ".claude/agents/radix-ui-specialist.md",
+      "use_cases": [
+        "Implementing new Radix UI components with Tailwind styling",
+        "Reviewing UI implementations for Radix + Tailwind best practices",
+        "Fixing accessibility issues (WCAG AA compliance)",
+        "Optimizing Tailwind class usage and component performance",
+        "Creating responsive mobile-first designs",
+        "Implementing dark mode with Tailwind",
+        "Building design systems with CSS custom properties",
+        "Troubleshooting keyboard navigation or focus issues",
+        "Converting vanilla components to Radix + Tailwind",
+        "Advanced Tailwind patterns (group/peer, data attributes, animations)",
+        "Color contrast and touch target optimization"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "WebFetch"],
+      "trigger_keywords": [
+        "ui",
+        "radix",
+        "radix ui",
+        "tailwind",
+        "tailwind css",
+        "styling",
+        "css",
+        "dialog",
+        "dropdown",
+        "popover",
+        "select",
+        "tooltip",
+        "accordion",
+        "tabs",
+        "button",
+        "component",
+        "accessible",
+        "accessibility",
+        "aria",
+        "keyboard navigation",
+        "screen reader",
+        "dark mode",
+        "responsive",
+        "mobile",
+        "design system",
+        "focus state",
+        "hover state"
+      ]
+    }
+  }
+}

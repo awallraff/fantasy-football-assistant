@@ -1,5 +1,5 @@
 
-> my-v0-project@0.1.0 build
+> my-v0-project@0.1.0 build C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant
 > next build
 
    ▲ Next.js 15.2.4
@@ -71,16 +71,49 @@
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
    Collecting page data ...
    Generating static pages (0/19) ...
-Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
-PageNotFoundError: Cannot find module for page: /_not-found/page
-    at getPagePath (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\server\require.js:88:15)
-    at requirePage (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\server\require.js:93:22)
-    at loadComponentsImpl (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\server\load-components.js:129:57)
-    at async exportPageImpl (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\export\worker.js:163:24)
-    at async Span.traceAsyncFn (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\trace\trace.js:157:20)
-    at async exportPage (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\export\worker.js:357:18)
-    at async exportPageWithRetry (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\export\worker.js:247:26)
-    at async Promise.all (index 3)
-    at async Object.exportPages (C:\Users\Adamw\Documents\FantasySports\Fantasy_assistant\fantasy-football-assistant\node_modules\.pnpm\next@15.2.4_@babel+core@7.2_b8a40b83b110af7893bf39d7999de674\node_modules\next\dist\export\worker.js:334:31)
-Export encountered an error on /_not-found/page: /_not-found, exiting the build.
- ⨯ Next.js build worker exited with code: 1 and signal: null
+[v0] Layout rendering...
+[v0] HomePage rendering...
+[v0] Layout rendering...
+[v0] Layout rendering...
+[v0] Layout rendering...
+[v0] Layout rendering...
+   Generating static pages (4/19) 
+[v0] Layout rendering...
+[v0] Layout rendering...
+[v0] Layout rendering...
+[v0] Layout rendering...
+[v0] Layout rendering...
+   Generating static pages (9/19) 
+[v0] Layout rendering...
+   Generating static pages (14/19) 
+ ✓ Generating static pages (19/19)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    5.59 kB         133 kB
+├ ○ /_not-found                            988 B         102 kB
+├ ƒ /api/cache/health                      159 B         102 kB
+├ ƒ /api/cache/invalidate                  159 B         102 kB
+├ ƒ /api/cache/stats                       159 B         102 kB
+├ ƒ /api/cache/warm                        159 B         102 kB
+├ ƒ /api/nfl-data                          159 B         102 kB
+├ ƒ /api/rookie-draft                      159 B         102 kB
+├ ○ /dashboard                           17.2 kB         191 kB
+├ ○ /dynasty-status-demo                  6.3 kB         130 kB
+├ ○ /more                                6.17 kB         119 kB
+├ ○ /nfl-data                            9.16 kB         157 kB
+├ ○ /player-row-demo                     5.56 kB         115 kB
+├ ○ /rankings                            10.8 kB         182 kB
+├ ○ /recommendations                     11.9 kB         177 kB
+├ ○ /rookie-draft                        10.9 kB         151 kB
+└ ○ /trades                              3.01 kB         151 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/3422-ec0ac03baebd1640.js      45.9 kB
+  ├ chunks/359746bb-df67e45daec3b3c5.js  53.3 kB
+  └ other shared chunks (total)          2.32 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

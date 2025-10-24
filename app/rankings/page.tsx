@@ -491,7 +491,7 @@ export default function RankingsPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b sticky top-0">
                 <tr>
-                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                       onClick={() => handleTableSort("rank")}>
                     <div className="flex items-center gap-1">
                       Rank
@@ -502,7 +502,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                       onClick={() => handleTableSort("playerName")}>
                     <div className="flex items-center gap-1">
                       Player
@@ -513,7 +513,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                       onClick={() => handleTableSort("position")}>
                     <div className="flex items-center gap-1">
                       Position
@@ -524,7 +524,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                       onClick={() => handleTableSort("team")}>
                     <div className="flex items-center gap-1">
                       Team
@@ -535,7 +535,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                       onClick={() => handleTableSort("projectedPoints")}>
                     <div className="flex items-center gap-1">
                       Projected Points
@@ -546,7 +546,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                       onClick={() => handleTableSort("tier")}>
                     <div className="flex items-center gap-1">
                       Tier
@@ -557,10 +557,10 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th className="text-left p-2 font-medium">
+                  <th scope="col" className="text-left p-2 font-medium">
                     Status
                   </th>
-                  <th className="text-left p-2 font-medium">
+                  <th scope="col" className="text-left p-2 font-medium">
                     Notes
                   </th>
                 </tr>
@@ -994,8 +994,8 @@ export default function RankingsPage() {
           </Card>
         )}
 
-        <Tabs defaultValue="import" className="space-y-6 md:space-y-8 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[44px]">
+        <Tabs defaultValue="import" className="space-y-6 md:space-y-8 overflow-x-hidden">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[44px] overflow-x-auto">
             <TabsTrigger value="import" className="min-h-[44px] truncate px-2">Import</TabsTrigger>
             <TabsTrigger value="manage" className="min-h-[44px] truncate px-2">Manage</TabsTrigger>
             <TabsTrigger value="search" className="min-h-[44px] truncate px-2">Search</TabsTrigger>

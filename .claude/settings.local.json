@@ -89,7 +89,12 @@
       "mcp__chrome-devtools__hover",
       "Bash(for:*)",
       "Bash(do echo \"=== $id ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "WebFetch(domain:dynastyff.vercel.app)",
+      "Bash(xargs:*)",
+      "Bash(tasklist)",
+      "Bash(npm outdated)",
+      "Bash(npm view:*)"
     ],
     "deny": [],
     "ask": [],

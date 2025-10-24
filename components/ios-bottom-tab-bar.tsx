@@ -12,11 +12,11 @@ import {
 } from "lucide-react"
 
 const tabs = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "Rankings", href: "/rankings", icon: TrendingUp },
-  { name: "Rookie", href: "/rookie-draft", icon: Users },
-  { name: "More", href: "/more", icon: MoreHorizontal },
+  { name: "Home", href: "/", icon: Home, ariaLabel: "Navigate to Home page" },
+  { name: "Dashboard", href: "/dashboard", icon: BarChart3, ariaLabel: "Navigate to Dashboard page" },
+  { name: "Rankings", href: "/rankings", icon: TrendingUp, ariaLabel: "Navigate to Rankings page" },
+  { name: "Rookie", href: "/rookie-draft", icon: Users, ariaLabel: "Navigate to Rookie Draft page" },
+  { name: "More", href: "/more", icon: MoreHorizontal, ariaLabel: "Navigate to More options page" },
 ]
 
 export function IOSBottomTabBar() {
@@ -35,9 +35,11 @@ export function IOSBottomTabBar() {
             <Link
               key={tab.name}
               href={tab.href}
+              aria-label={tab.ariaLabel}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 touch-target",
-                "active:scale-95",
+                "active:brightness-90",
                 isActive ? "text-primary" : "text-text-secondary"
               )}
             >

@@ -29,14 +29,23 @@ function Badge({
   className,
   variant,
   asChild = false,
+  role,
   ...props
 }: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+  VariantProps<typeof badgeVariants> & { asChild?: boolean; role?: string }) {
   const Comp = asChild ? Slot : "span"
+
+  // Auto-assign role="status" for status-like badges if not explicitly set
+  const semanticRole = role || (
+    variant === "destructive" || variant === "secondary"
+      ? "status"
+      : undefined
+  )
 
   return (
     <Comp
       data-slot="badge"
+      role={semanticRole}
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     />
