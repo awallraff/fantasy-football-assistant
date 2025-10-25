@@ -43,77 +43,15 @@ export function LineupOptimizer({ league, userId }: LineupOptimizerProps) {
   const [selectedWeek, setSelectedWeek] = useState<string>("current")
   const [riskTolerance, setRiskTolerance] = useState<"conservative" | "balanced" | "aggressive">("balanced")
 
-  // Mock optimization data
+  // TODO: Implement real lineup optimization using:
+  // - Player projections from rankings
+  // - Bench depth analysis
+  // - Matchup ratings
+  // - Injury status and practice reports
+  // - Vegas lines and game environments
   useEffect(() => {
-    const mockOptimization: LineupOptimization = {
-      week: 5,
-      totalProjectedPoints: 127.8,
-      currentProjectedPoints: 119.3,
-      potentialGain: 8.5,
-      riskLevel: "balanced",
-      recommendations: [
-        {
-          playerId: "1",
-          name: "Jaylen Waddle",
-          position: "WR",
-          team: "MIA",
-          projectedPoints: 16.2,
-          confidence: 85,
-          matchupRating: "excellent",
-          reasoning: [
-            "Facing bottom-5 pass defense",
-            "Target share increased 15% over last 3 games",
-            "Weather conditions favorable",
-            "No injury concerns",
-          ],
-          isCurrentStarter: false,
-          benchAlternative: {
-            name: "DJ Moore",
-            projectedPoints: 12.8,
-          },
-        },
-        {
-          playerId: "2",
-          name: "Kenneth Walker III",
-          position: "RB",
-          team: "SEA",
-          projectedPoints: 18.5,
-          confidence: 78,
-          matchupRating: "good",
-          reasoning: [
-            "Opponent allows 4.8 YPC to RBs",
-            "Expected game script favors rushing",
-            "Red zone touches trending up",
-          ],
-          isCurrentStarter: true,
-          benchAlternative: {
-            name: "Dameon Pierce",
-            projectedPoints: 14.2,
-          },
-        },
-        {
-          playerId: "3",
-          name: "Tyler Higbee",
-          position: "TE",
-          team: "LAR",
-          projectedPoints: 8.9,
-          confidence: 62,
-          matchupRating: "average",
-          reasoning: [
-            "Consistent target share in red zone",
-            "Matchup allows average TE production",
-            "Injury to WR2 may increase targets",
-          ],
-          isCurrentStarter: false,
-          benchAlternative: {
-            name: "Logan Thomas",
-            projectedPoints: 6.4,
-          },
-        },
-      ],
-    }
-
-    setOptimization(mockOptimization)
+    // For now, show empty state until implementation is complete
+    setOptimization(null)
   }, [league, userId, selectedWeek, riskTolerance])
 
   const getMatchupColor = (rating: string) => {
@@ -174,7 +112,20 @@ export function LineupOptimizer({ league, userId }: LineupOptimizerProps) {
         </CardContent>
       </Card>
 
-      {optimization && (
+      {!optimization ? (
+        <Card className="bg-background-elevated border-border">
+          <CardHeader>
+            <CardTitle className="text-ios-title-3 font-semibold">Lineup Optimizer</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center py-12">
+            <Zap className="h-16 w-16 mx-auto mb-4 text-text-secondary opacity-30" />
+            <h3 className="text-ios-headline font-semibold mb-2 text-foreground">Lineup Optimization Coming Soon</h3>
+            <p className="text-ios-subheadline text-text-secondary max-w-md mx-auto">
+              AI-powered lineup optimization will analyze your roster, bench depth, and matchups to maximize your projected points each week.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
         <>
           {/* Optimization Summary */}
           <Card>

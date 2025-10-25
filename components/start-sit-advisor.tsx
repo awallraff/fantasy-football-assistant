@@ -34,89 +34,15 @@ export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
   const [week, setWeek] = useState<string>("current")
 
-  // Mock start/sit decisions
+  // TODO: Implement real start/sit analysis using:
+  // - Player projections from rankings
+  // - Matchup difficulty ratings
+  // - Injury reports and player status
+  // - Weather conditions
+  // - Vegas betting lines and game totals
   useEffect(() => {
-    const mockDecisions: StartSitDecision[] = [
-      {
-        playerId: "1",
-        name: "Tyreek Hill",
-        position: "WR",
-        team: "MIA",
-        opponent: "vs NYJ",
-        recommendation: "start",
-        confidence: 95,
-        projectedPoints: 18.5,
-        reasoning: [
-          "Elite target share and air yards",
-          "Jets secondary vulnerable to deep balls",
-          "Tua healthy and connecting well",
-          "Home field advantage",
-        ],
-        matchupGrade: "A+",
-        riskLevel: "low",
-        injuryStatus: "healthy",
-      },
-      {
-        playerId: "2",
-        name: "Courtland Sutton",
-        position: "WR",
-        team: "DEN",
-        opponent: "@ KC",
-        recommendation: "sit",
-        confidence: 78,
-        projectedPoints: 9.2,
-        reasoning: [
-          "Chiefs defense improved vs WRs",
-          "Russell Wilson struggling on road",
-          "Limited red zone opportunities",
-          "Better options available",
-        ],
-        matchupGrade: "D+",
-        riskLevel: "high",
-        injuryStatus: "healthy",
-      },
-      {
-        playerId: "3",
-        name: "David Montgomery",
-        position: "RB",
-        team: "DET",
-        opponent: "vs TB",
-        recommendation: "flex",
-        confidence: 72,
-        projectedPoints: 14.8,
-        reasoning: [
-          "Solid floor with goal line work",
-          "Bucs run defense middle of pack",
-          "Game script could favor passing",
-          "Flex consideration over WR3",
-        ],
-        matchupGrade: "B",
-        riskLevel: "medium",
-        injuryStatus: "healthy",
-      },
-      {
-        playerId: "4",
-        name: "Amari Cooper",
-        position: "WR",
-        team: "CLE",
-        opponent: "@ PIT",
-        recommendation: "start",
-        confidence: 68,
-        projectedPoints: 13.1,
-        reasoning: [
-          "Steelers secondary banged up",
-          "Watson targeting him frequently",
-          "Divisional game, expect targets",
-          "Weather looks clear",
-        ],
-        matchupGrade: "B+",
-        riskLevel: "medium",
-        weatherConcern: false,
-        injuryStatus: "questionable",
-      },
-    ]
-
-    setDecisions(mockDecisions)
+    // For now, show empty state until implementation is complete
+    setDecisions([])
   }, [league, userId, week])
 
   const filteredDecisions = decisions.filter((decision) => {
@@ -217,6 +143,15 @@ export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
           <CardDescription>AI-powered advice for your toughest lineup decisions</CardDescription>
         </CardHeader>
         <CardContent>
+          {filteredDecisions.length === 0 ? (
+            <div className="text-center py-12 text-text-secondary">
+              <TrendingUp className="h-16 w-16 mx-auto mb-4 opacity-30" />
+              <h3 className="text-ios-headline font-semibold mb-2 text-foreground">Start/Sit Analysis Coming Soon</h3>
+              <p className="text-ios-subheadline max-w-md mx-auto">
+                AI-powered start/sit recommendations will analyze matchups, projections, weather, and injury reports to help you make optimal lineup decisions.
+              </p>
+            </div>
+          ) : (
           <div className="space-y-4">
             {filteredDecisions.map((decision) => (
               <Card key={decision.playerId} className="border-l-4 border-l-blue-500">
@@ -288,6 +223,7 @@ export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
               </Card>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
 

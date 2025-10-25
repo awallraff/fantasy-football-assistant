@@ -124,10 +124,10 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
   }
 
   const findTradeOpportunity = (
-    userRoster: SleeperRoster,
-    opponentRoster: SleeperRoster,
-    userNeeds: Record<string, boolean>,
-    opponentNeeds: Record<string, boolean>,
+    _userRoster: SleeperRoster,
+    _opponentRoster: SleeperRoster,
+    _userNeeds: Record<string, boolean>,
+    _opponentNeeds: Record<string, boolean>,
   ): {
     confidence: number
     projectedGain: number
@@ -138,27 +138,14 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
     urgency: "high" | "medium" | "low"
     successProbability: number
   } | null => {
-    // This is a simplified trade opportunity finder
-    // In a real implementation, this would use player values, projections, etc.
+    // TODO: Implement real trade opportunity analysis using:
+    // - Player values from rankings
+    // - Recent performance data
+    // - Injury status
+    // - Matchup schedules
+    // - League scoring settings
 
-    if (userNeeds.needsRB && opponentNeeds.needsWR) {
-      return {
-        confidence: 85,
-        projectedGain: 8.5,
-        reasoning: [
-          "2025 season analysis shows complementary roster needs",
-          "Your WR depth can address their positional weakness",
-          "Their RB surplus aligns with your roster construction",
-          "League scoring settings favor this trade structure",
-        ],
-        yourPlayers: [{ name: "WR Depth Player", position: "WR", currentValue: 60, projectedValue: 55 }],
-        theirPlayers: [{ name: "RB Target", position: "RB", currentValue: 65, projectedValue: 70 }],
-        tradeType: "positional_need",
-        urgency: "medium",
-        successProbability: 82,
-      }
-    }
-
+    // For now, return null (no recommendations) until proper implementation
     return null
   }
 
@@ -225,12 +212,12 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
               <p className="text-gray-500">Analyzing {league.name} rosters and generating recommendations...</p>
             </div>
           ) : recommendations.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-text-secondary">
               <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg mb-2">No trade opportunities found</p>
-              <p className="text-sm">
-                Your roster looks well-balanced for {league.name}, or other teams don&apos;t have complementary needs right
-                now.
+              <p className="text-ios-headline font-semibold mb-2">Trade Recommendations Coming Soon</p>
+              <p className="text-ios-subheadline">
+                AI-powered trade analysis is currently in development. Check back soon for personalized recommendations
+                based on your league&apos;s rosters and scoring settings.
               </p>
             </div>
           ) : (

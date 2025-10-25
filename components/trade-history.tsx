@@ -203,10 +203,12 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
       const leagueRosters = await sleeperAPI.getLeagueRosters(leagueId)
       console.log("League users:", leagueUsers)
 
-      let transactions = allTransactions
+      const transactions = allTransactions
       if (!transactions || transactions.length === 0) {
-        console.log("No real transactions found, using mock data for demonstration")
-        transactions = generateMockTrades()
+        console.log("No transactions found for this league")
+        setTrades([])
+        analyzeOwnerBehavior([], leagueUsers)
+        return
       }
 
       // Process all transactions (trades, waivers, free agents)
@@ -240,35 +242,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
       analyzeOwnerBehavior(evaluatedTrades, leagueUsers)
     } catch (error) {
       console.error("Error loading trade history:", error)
-
-      try {
-        const leagueUsers = await sleeperAPI.getLeagueUsers(leagueId)
-        const leagueRosters = await sleeperAPI.getLeagueRosters(leagueId)
-        const mockTrades = generateMockTrades()
-        const processedTrades: ProcessedTrade[] = mockTrades.map((trade) => {
-          // Map roster IDs to owner user IDs for proper matching (same as above)
-          const participantUserIds = (trade.roster_ids || []).map(rosterId => {
-            const roster = leagueRosters.find(r => r.roster_id === rosterId)
-            return roster?.owner_id || rosterId.toString()
-          })
-
-          return {
-            transaction: trade,
-            participants: participantUserIds,
-            playersTraded: Object.keys(trade.adds || {}).length + Object.keys(trade.drops || {}).length,
-            picksTraded: trade.draft_picks?.length || 0,
-            date: new Date(trade.created || Date.now()).toLocaleDateString(),
-            week: getWeekFromTimestamp(trade.created || Date.now()),
-            season: selectedSeason,
-          }
-        })
-
-        const evaluatedTrades = await evaluateTrades(processedTrades, leagueUsers, leagueRosters)
-        setTrades(evaluatedTrades)
-        analyzeOwnerBehavior(evaluatedTrades, leagueUsers)
-      } catch (fallbackError) {
-        console.error("Fallback error:", fallbackError)
-      }
+      setTrades([])
     } finally {
       setLoading(false)
     }
@@ -323,54 +297,6 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
   useEffect(() => {
     loadTradeHistory()
   }, [leagueId, loadTradeHistory])
-
-  const generateMockTrades = (): SleeperTransaction[] => {
-    const mockTrades: SleeperTransaction[] = [
-      {
-        transaction_id: "mock_1",
-        type: "trade",
-        status: "complete",
-        created: Date.now() - 86400000 * 7, // 1 week ago
-        roster_ids: [1, 2],
-        adds: { "4017": 2, "4018": 1 },
-        drops: { "4019": 1, "4020": 2 },
-        draft_picks: [],
-        waiver_budget: [],
-      },
-      {
-        transaction_id: "mock_2",
-        type: "trade",
-        status: "complete",
-        created: Date.now() - 86400000 * 14, // 2 weeks ago
-        roster_ids: [3, 4],
-        adds: { "4021": 4, "4022": 3 },
-        drops: { "4023": 3, "4024": 4 },
-        draft_picks: [
-          {
-            season: "2025",
-            round: 2,
-            roster_id: 4,
-            previous_owner_id: 3,
-            owner_id: 4,
-          },
-        ],
-        waiver_budget: [],
-      },
-      {
-        transaction_id: "mock_3",
-        type: "trade",
-        status: "complete",
-        created: Date.now() - 86400000 * 21, // 3 weeks ago
-        roster_ids: [1, 3, 5],
-        adds: { "4025": 3, "4026": 5, "4027": 1 },
-        drops: { "4028": 1, "4029": 3, "4030": 5 },
-        draft_picks: [],
-        waiver_budget: [],
-      },
-    ]
-
-    return mockTrades
-  }
 
   return (
     <div className="space-y-6">
@@ -479,18 +405,17 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
               {/* Trade List - existing code with season badge added */}
               {filteredTrades.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="text-gray-500 mb-4">
-                    {loading ? "Loading trades..." : "No trades found for the selected filters"}
+                  <div className="text-text-secondary mb-4 text-ios-body">
+                    {loading ? "Loading trades..." : "No transactions found for the selected filters"}
                   </div>
                   {!loading && (
-                    <div className="text-sm text-gray-400">
+                    <div className="text-ios-subheadline text-text-secondary">
                       <p>This could mean:</p>
                       <ul className="mt-2 space-y-1">
-                        <li>• No trades have occurred in this league yet</li>
+                        <li>• No transactions have occurred in this league yet</li>
                         <li>• The selected filters are too restrictive</li>
-                        <li>• League data is still being processed</li>
+                        <li>• Try selecting &quot;All Transactions&quot; or a different week</li>
                       </ul>
-                      <p className="mt-4 text-xs">Mock data is shown for demonstration when no real trades exist</p>
                     </div>
                   )}
                 </div>
