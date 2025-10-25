@@ -55,15 +55,15 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
   }
 
   return (
-    <Card>
+    <Card className="bg-card shadow-md border-border/50">
       <CardHeader>
-        <CardTitle>League Standings</CardTitle>
-        <CardDescription>Current season rankings and playoff picture</CardDescription>
+        <CardTitle className="text-ios-title-3">League Standings</CardTitle>
+        <CardDescription className="text-ios-subheadline text-text-secondary">Current season rankings and playoff picture</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2 overflow-x-hidden">
           {/* Header - Mobile shows only essential columns */}
-          <div className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-12 gap-2 md:gap-4 text-sm font-medium text-muted-foreground pb-2 border-b border-border">
+          <div className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-12 gap-2 md:gap-4 text-ios-subheadline font-medium text-text-secondary pb-2 border-b border-separator">
             <div className="md:col-span-1">Rank</div>
             <div className="md:col-span-4 truncate">Team</div>
             <div className="md:col-span-2">Record</div>
@@ -83,14 +83,14 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
             return (
               <div
                 key={roster.roster_id}
-                className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-12 gap-2 md:gap-4 py-3 text-sm hover:bg-accent rounded-lg px-2"
+                className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-12 gap-2 md:gap-4 py-3 text-ios-body hover:bg-background-elevated active:scale-[0.99] transition-all duration-ios rounded-lg px-2"
               >
                 <div className="md:col-span-1 flex items-center flex-shrink-0">{getRankIcon(rank)}</div>
 
                 <div className="md:col-span-4 flex items-center min-w-0">
                   <div className="min-w-0">
-                    <p className="font-medium truncate">{getOwnerName(roster.owner_id)}</p>
-                    <p className="text-xs text-muted-foreground truncate">{winPercentage.toFixed(1)}% win rate</p>
+                    <p className="font-medium text-foreground truncate">{getOwnerName(roster.owner_id)}</p>
+                    <p className="text-ios-footnote text-text-secondary truncate">{winPercentage.toFixed(1)}% win rate</p>
                   </div>
                 </div>
 
@@ -117,8 +117,8 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
 
         {/* Playoff Line Indicator */}
         {league.settings.playoff_teams && (
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-4 pt-4 border-t border-separator">
+            <p className="text-ios-footnote text-text-secondary">
               Top {league.settings.playoff_teams} teams make playoffs
             </p>
           </div>

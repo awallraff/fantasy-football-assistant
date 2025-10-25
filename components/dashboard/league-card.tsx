@@ -15,7 +15,7 @@ interface LeagueCardProps {
 
 export function LeagueCard({ league, loading, onViewAnalytics, onRemoveLeague }: LeagueCardProps) {
   return (
-    <Card className="bg-background-elevated hover:shadow-lg transition-all duration-200 border-border/50 shadow-md rounded-lg">
+    <Card className="bg-card hover:shadow-lg active:scale-[0.98] transition-all duration-ios border-border/50 shadow-md">
       <CardHeader className="pb-compact-sm">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-ios-title-3 text-foreground truncate">{league.name}</CardTitle>
