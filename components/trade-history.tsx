@@ -325,7 +325,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
 
             <TabsContent value="history" className="space-y-6">
               {evaluating && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
+                <div className="bg-background-elevated border border-border/50 rounded-lg p-3 text-ios-subheadline text-foreground">
                   <div className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4 animate-spin" />
                     <span>Evaluating trades with NFL data and rankings...</span>
@@ -445,11 +445,11 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                                   {typeLabel}
                                 </Badge>
                                 <Badge variant="outline">Week {trade.week}</Badge>
-                                <span className="text-sm text-gray-500">{trade.date}</span>
+                                <span className="text-ios-subheadline text-text-secondary">{trade.date}</span>
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <div className="text-sm text-gray-500">#{index + 1}</div>
+                              <div className="text-ios-subheadline text-text-secondary">#{index + 1}</div>
                             </div>
                           </div>
 
@@ -460,7 +460,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                                 <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-sm mb-1">Trade Analysis</p>
-                                  <p className="text-sm text-gray-700 dark:text-gray-300">{evaluation.analysis}</p>
+                                  <p className="text-ios-subheadline text-foreground">{evaluation.analysis}</p>
                                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                                     <Badge variant={
                                       evaluation.overallFairness === 'very_fair' ? 'default' :
@@ -718,7 +718,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold">{trades.length}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Trades</p>
+                <p className="text-ios-subheadline text-text-secondary">Total Trades</p>
               </div>
             </CardContent>
           </Card>
@@ -729,7 +729,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
                 <p className="text-2xl font-bold">
                   {(trades.reduce((sum, t) => sum + t.playersTraded, 0) / trades.length).toFixed(1)}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Players Per Trade</p>
+                <p className="text-ios-subheadline text-text-secondary">Avg Players Per Trade</p>
               </div>
             </CardContent>
           </Card>
@@ -738,7 +738,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold">{trades.filter((t) => t.participants.length > 2).length}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Multi-Team Trades</p>
+                <p className="text-ios-subheadline text-text-secondary">Multi-Team Trades</p>
               </div>
             </CardContent>
           </Card>

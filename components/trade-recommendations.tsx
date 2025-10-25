@@ -209,7 +209,7 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
           {loading ? (
             <div className="text-center py-12">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Analyzing {league.name} rosters and generating recommendations...</p>
+              <p className="text-text-secondary text-ios-body">Analyzing {league.name} rosters and generating recommendations...</p>
             </div>
           ) : recommendations.length === 0 ? (
             <div className="text-center py-12 text-text-secondary">
@@ -222,35 +222,35 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">League Context: {league.name}</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="bg-background-elevated p-4 rounded-lg border border-border/50">
+                <h4 className="font-semibold mb-2 text-ios-headline">League Context: {league.name}</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-ios-subheadline">
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Season:</span>
-                    <span className="ml-2 font-medium">2025</span>
+                    <span className="text-text-secondary">Season:</span>
+                    <span className="ml-2 font-medium text-foreground">2025</span>
                   </div>
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Teams:</span>
-                    <span className="ml-2 font-medium">{league.total_rosters}</span>
+                    <span className="text-text-secondary">Teams:</span>
+                    <span className="ml-2 font-medium text-foreground">{league.total_rosters}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Format:</span>
-                    <span className="ml-2 font-medium">{league.settings.num_teams}-team</span>
+                    <span className="text-text-secondary">Format:</span>
+                    <span className="ml-2 font-medium text-foreground">{league.settings.num_teams}-team</span>
                   </div>
                   <div>
-                    <span className="text-gray-600 dark:text-gray-400">Rosters:</span>
-                    <span className="ml-2 font-medium">{rosters.length} active</span>
+                    <span className="text-text-secondary">Rosters:</span>
+                    <span className="ml-2 font-medium text-foreground">{rosters.length} active</span>
                   </div>
                 </div>
               </div>
 
               {recommendations.map((rec) => (
-                <Card key={rec.id} className="border-l-4 border-l-blue-500">
+                <Card key={rec.id} className="border-l-4 border-l-primary bg-background-elevated">
                   <CardContent className="pt-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold mb-2">Trade with {rec.targetOwner}</h3>
+                        <h3 className="text-ios-title-3 font-semibold mb-2">Trade with {rec.targetOwner}</h3>
                         <div className="flex items-center gap-2 mb-2">
                           <Badge className={getTypeColor(rec.tradeType)}>{getTypeLabel(rec.tradeType)}</Badge>
                           <Badge variant="outline" className={getUrgencyColor(rec.urgency)}>
@@ -259,8 +259,8 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">+{rec.projectedGain.toFixed(1)}</div>
-                        <div className="text-sm text-gray-500">projected points/week</div>
+                        <div className="text-2xl font-bold text-success">+{rec.projectedGain.toFixed(1)}</div>
+                        <div className="text-ios-caption text-text-secondary">projected points/week</div>
                       </div>
                     </div>
 
@@ -369,36 +369,36 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
 
       {/* Quick Stats */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">{recommendations.length}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Active Recommendations</p>
+              <p className="text-2xl font-bold text-foreground">{recommendations.length}</p>
+              <p className="text-ios-subheadline text-text-secondary">Active Recommendations</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-bold text-foreground">
                 {recommendations.reduce((sum, rec) => sum + rec.projectedGain, 0).toFixed(1)}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Projected Gain</p>
+              <p className="text-ios-subheadline text-text-secondary">Total Projected Gain</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-bold text-foreground">
                 {recommendations.length > 0
                   ? (recommendations.reduce((sum, rec) => sum + rec.confidence, 0) / recommendations.length).toFixed(0)
                   : 0}
                 %
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Avg Confidence</p>
+              <p className="text-ios-subheadline text-text-secondary">Avg Confidence</p>
             </div>
           </CardContent>
         </Card>

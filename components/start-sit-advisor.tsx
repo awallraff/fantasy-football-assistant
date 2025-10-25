@@ -229,46 +229,46 @@ export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
 
       {/* Summary Stats */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-success">
                 {filteredDecisions.filter((d) => d.recommendation === "start").length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Start Recommendations</p>
+              <p className="text-ios-subheadline text-text-secondary">Start Recommendations</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-destructive">
                 {filteredDecisions.filter((d) => d.recommendation === "sit").length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Sit Recommendations</p>
+              <p className="text-ios-subheadline text-text-secondary">Sit Recommendations</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-600">
+              <p className="text-2xl font-bold text-warning">
                 {filteredDecisions.filter((d) => d.recommendation === "flex").length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Flex Considerations</p>
+              <p className="text-ios-subheadline text-text-secondary">Flex Considerations</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-background-elevated border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">
-                {(filteredDecisions.reduce((sum, d) => sum + d.confidence, 0) / filteredDecisions.length).toFixed(0)}%
+              <p className="text-2xl font-bold text-foreground">
+                {filteredDecisions.length > 0 ? (filteredDecisions.reduce((sum, d) => sum + d.confidence, 0) / filteredDecisions.length).toFixed(0) : 0}%
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Avg Confidence</p>
+              <p className="text-ios-subheadline text-text-secondary">Avg Confidence</p>
             </div>
           </CardContent>
         </Card>
