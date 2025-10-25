@@ -23,7 +23,7 @@
  */
 
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { usePlayerData } from "@/contexts/player-data-context"
 import { getInjuryBadgeColor } from "@/lib/player-utils"
 import { User, TrendingUp, TrendingDown, Minus, Trophy, Calendar, Activity } from "lucide-react"
@@ -136,6 +136,9 @@ export function PlayerDetailModal({
               </div>
             </div>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Detailed player information for {player.full_name}, including dynasty metrics, league ownership, and weekly projections
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-compact-xl">

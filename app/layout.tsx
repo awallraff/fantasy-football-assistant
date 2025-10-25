@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { PlayerDataProvider } from "@/contexts/player-data-context"
 import { ProjectionsProvider } from "@/contexts/projections-context"
+import { ConfirmationProvider } from "@/hooks/use-confirmation"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata: Metadata = {
   title: "Fantasy Football Analytics",
@@ -50,26 +52,30 @@ html {
         `}</style>
       </head>
       <body className="bg-background">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <PlayerDataProvider>
-            <ProjectionsProvider>
-              {/* Desktop Sidebar Navigation */}
-              <IOSDesktopNav />
+        <ErrorBoundary level="root">
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <ConfirmationProvider>
+              <PlayerDataProvider>
+                <ProjectionsProvider>
+                  {/* Desktop Sidebar Navigation */}
+                  <IOSDesktopNav />
 
-              {/* Main Content Area */}
-              <main className="md:ml-64 pb-20 md:pb-6">
-                <div className="min-h-screen">
-                  {children}
-                </div>
-              </main>
+                  {/* Main Content Area */}
+                  <main className="md:ml-64 pb-20 md:pb-6">
+                    <div className="min-h-screen">
+                      {children}
+                    </div>
+                  </main>
 
-              {/* Mobile Bottom Tab Bar */}
-              <IOSBottomTabBar />
+                  {/* Mobile Bottom Tab Bar */}
+                  <IOSBottomTabBar />
 
-              <Toaster />
-            </ProjectionsProvider>
-          </PlayerDataProvider>
-        </ThemeProvider>
+                  <Toaster />
+                </ProjectionsProvider>
+              </PlayerDataProvider>
+            </ConfirmationProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

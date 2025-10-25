@@ -17,6 +17,7 @@ import { getNextUpcomingWeek } from "@/lib/nfl-season-utils"
 import { getTierColor } from "@/lib/ranking-utils"
 import { debugLog, debugInfo, debugError } from "@/lib/debug-utils"
 import { API_DEBOUNCE_TIMEOUT_MS } from "@/lib/constants/rankings"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 // Lazy-load heavy tab components to reduce initial bundle size
 const RankingsImporter = dynamic(() => import("@/components/rankings-importer").then(mod => ({ default: mod.RankingsImporter })), {

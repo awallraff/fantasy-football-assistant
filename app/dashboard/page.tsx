@@ -15,6 +15,8 @@ import { useLeagueSelection } from "@/hooks/use-league-selection"
 import { useLoadingStates } from "@/hooks/use-loading-states"
 import { useDebugInfo } from "@/hooks/use-debug-info"
 import { useSafeLocalStorage } from "@/hooks/use-local-storage"
+import { useConfirmation } from "@/hooks/use-confirmation"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { SleeperLeague } from "@/lib/sleeper-api"
 
 // Lazy-load heavy tab components to reduce initial bundle size
@@ -75,12 +77,15 @@ export default function DashboardPage() {
   } = useLoadingStates()
 
   // Debug information management
-  const { 
-    debugInfo, 
-    generateInitialDebugInfo, 
+  const {
+    debugInfo,
+    generateInitialDebugInfo,
     generateRetryDebugInfo,
-    setDebugInfo 
+    setDebugInfo
   } = useDebugInfo()
+
+  // Confirmation dialog hook
+  const { confirm } = useConfirmation()
 
   // Initialize debug info when user and leagues data change
   useEffect(() => {
@@ -118,14 +123,29 @@ export default function DashboardPage() {
     await withLoading(() => loadLeagueDetails(league))
   }, [withLoading, loadLeagueDetails])
 
-  // Enhanced remove league with current league check
-  const handleRemoveLeague = useCallback((leagueId: string, leagueName?: string) => {
+  // Enhanced remove league with current league check and confirmation dialog
+  const handleRemoveLeague = useCallback(async (leagueId: string, leagueName?: string) => {
+    // Get league info for confirmation message
+    const league = leagues.find(l => l.league_id === leagueId)
+    const displayName = leagueName || league?.name || "this league"
+
+    // Show non-blocking confirmation dialog
+    const confirmed = await confirm({
+      title: "Remove League",
+      description: `Are you sure you want to remove "${displayName}"? This action cannot be undone.`,
+      confirmLabel: "Remove",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    })
+
+    if (!confirmed) return
+
     // If the removed league was the currently selected one, go back to leagues
     if (selectedLeague?.league_id === leagueId) {
       handleBackToLeagues()
     }
     removeLeague(leagueId, leagueName)
-  }, [selectedLeague, handleBackToLeagues, removeLeague])
+  }, [selectedLeague, handleBackToLeagues, removeLeague, leagues, confirm])
 
 
   // Show loading state during hydration
@@ -182,11 +202,14 @@ export default function DashboardPage() {
             </TabsList>
 
             <TabsContent value="overview" className="mt-0">
-              <LeagueOverview league={selectedLeague} rosters={rosters} users={leagueUsers} />
+              <ErrorBoundary level="component">
+                <LeagueOverview league={selectedLeague} rosters={rosters} users={leagueUsers} />
+              </ErrorBoundary>
             </TabsContent>
 
             <TabsContent value="teams" className="mt-0">
-              <div className="grid gap-compact-md md:gap-compact-xl">
+              <ErrorBoundary level="component">
+                <div className="grid gap-compact-md md:gap-compact-xl">
                 {/* Debug info - remove after fixing */}
                 {process.env.NODE_ENV === 'development' && (
                   <div className="bg-yellow-100 dark:bg-yellow-900/20 p-compact-md rounded-lg text-xs shadow-sm">
@@ -237,14 +260,19 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
+              </ErrorBoundary>
             </TabsContent>
 
             <TabsContent value="standings" className="mt-0">
-              <StandingsTable rosters={rosters} users={leagueUsers} league={selectedLeague} />
+              <ErrorBoundary level="component">
+                <StandingsTable rosters={rosters} users={leagueUsers} league={selectedLeague} />
+              </ErrorBoundary>
             </TabsContent>
 
             <TabsContent value="activity" className="mt-0">
-              <RecentActivity leagueId={selectedLeague.league_id} users={leagueUsers} rosters={rosters} />
+              <ErrorBoundary level="component">
+                <RecentActivity leagueId={selectedLeague.league_id} users={leagueUsers} rosters={rosters} />
+              </ErrorBoundary>
             </TabsContent>
           </Tabs>
         </div>

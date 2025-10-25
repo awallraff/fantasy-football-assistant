@@ -109,14 +109,8 @@ export function useDashboardData(): UseDashboardDataReturn {
   }, [user])
 
   const removeLeague = useCallback((leagueId: string, leagueName?: string) => {
-    // Add confirmation dialog
-    const league = leagues.find(l => l.league_id === leagueId)
-    const displayName = leagueName || league?.name || "this league"
-    
-    if (!confirm(`Are you sure you want to remove "${displayName}"? This action cannot be undone.`)) {
-      return
-    }
-    
+    // Confirmation should be handled by the calling component using useConfirmation hook
+    // This function now only performs the removal logic
     try {
       // Filter out the league from current leagues array
       const filteredLeagues = leagues.filter(league => league.league_id !== leagueId)
