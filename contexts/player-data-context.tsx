@@ -7,8 +7,12 @@ import { formatPlayerName, normalizePosition } from "@/lib/player-utils"
 import { sleeperCache } from "@/lib/cache/sleeper-cache"
 import { indexedDBCache } from "@/lib/cache/indexeddb-cache"
 import { cacheMigration } from "@/lib/cache/cache-migration"
-import "@/lib/cache/cache-debug" // Initialize debug utilities
-import "@/lib/cache/indexeddb-debug" // Initialize IndexedDB debug utilities
+
+// Load debug utilities only in development (Phase 1 optimization)
+if (process.env.NODE_ENV !== "production") {
+  import("@/lib/cache/cache-debug") // Initialize debug utilities
+  import("@/lib/cache/indexeddb-debug") // Initialize IndexedDB debug utilities
+}
 
 interface PlayerDataContextType {
   players: { [player_id: string]: SleeperPlayer }
@@ -38,9 +42,6 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
     try {
       setIsLoading(true)
       setError(null)
-
-      // Auto-migrate from sessionStorage to IndexedDB if needed
-      await cacheMigration.autoMigrate()
 
       // Cache Priority:
       // 1. IndexedDB (persistent, fast)
@@ -139,6 +140,13 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
   useEffect(() => {
     loadPlayerData()
   }, [loadPlayerData])
+
+  // Phase 1 optimization: Run migration in background (non-blocking)
+  useEffect(() => {
+    cacheMigration.autoMigrate().catch((err) => {
+      console.error("[PlayerData] Background migration failed:", err)
+    })
+  }, [])
 
   const getPlayerName = useCallback((playerId: string): string => {
     const player = players[playerId]
