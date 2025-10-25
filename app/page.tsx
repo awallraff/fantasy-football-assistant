@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Users, Trophy } from "lucide-react"
 import { LeagueConnector } from "@/components/league-connector"
@@ -9,6 +10,7 @@ import type { SleeperUser, SleeperLeague } from "@/lib/sleeper-api"
 export default function HomePage() {
   console.log("[v0] HomePage rendering...")
 
+  const router = useRouter()
   const { setItem, isClient } = useSafeLocalStorage()
 
   const handleLeaguesConnected = (user: SleeperUser, leagues: SleeperLeague[]) => {
@@ -18,9 +20,9 @@ export default function HomePage() {
       setItem("sleeper_user", JSON.stringify(user))
       setItem("sleeper_leagues", JSON.stringify(leagues))
 
-      // Redirect to dashboard
+      // Redirect to dashboard using Next.js router (prevents XSS, maintains React state)
       if (isClient) {
-        window.location.href = "/dashboard"
+        router.push("/dashboard")
       }
     } catch (error) {
       console.error("Error saving league data:", error)

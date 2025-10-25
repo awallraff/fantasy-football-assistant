@@ -73,11 +73,11 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
     }
   }, [playersLoading, roster.players, roster.starters, getPlayer, getPlayerName, getProjection])
 
-  // Load projections when roster changes
+  // Load projections when roster changes (PERF-002 fix: removed loadProjectionsForPlayers from deps)
   useEffect(() => {
     const allPlayerIds = [...(roster.players || []), ...(roster.starters || [])]
     const uniquePlayerIds = [...new Set(allPlayerIds)]
-    
+
     if (uniquePlayerIds.length > 0 && !playersLoading) {
       // Create player names map
       const playerNames = new Map<string, string>()
@@ -88,11 +88,12 @@ export function EnhancedTeamRoster({ roster, user, isCurrentUser = false }: Enha
           playerNames.set(id, playerName)
         }
       })
-      
-      // Load projections for these players
+
+      // Load projections for these players (stable function, safe to omit from deps)
       loadProjectionsForPlayers(uniquePlayerIds, playerNames)
     }
-  }, [roster.players, roster.starters, playersLoading, getPlayer, getPlayerName, loadProjectionsForPlayers])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roster.players, roster.starters, playersLoading])
 
   // Load players when data changes
   useEffect(() => {

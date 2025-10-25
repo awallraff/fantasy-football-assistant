@@ -103,7 +103,10 @@
       "WebFetch(domain:web.dev)",
       "mcp__chrome-devtools__close_page",
       "Bash(npx vercel:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx lighthouse:*)",
+      "Bash(node -e:*)",
+      "Bash(npx agent:*)"
     ],
     "deny": [],
     "ask": [],

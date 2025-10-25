@@ -47,7 +47,7 @@
 
   /* Text Colors */
   --foreground: 255 255 255;        /* #FFFFFF - Primary text */
-  --text-secondary: 156 156 160;    /* #9C9CA0 - Secondary text (4.6:1 contrast - WCAG AA pass) */
+  --text-secondary: 160 160 165;    /* #A0A0A5 - Secondary text (4.52:1 contrast - WCAG AA compliant) */
   --text-tertiary: 120 120 125;     /* #78787D - Tertiary text (3.8:1 for large text - WCAG AA pass) */
 
   /* Card & Popover */

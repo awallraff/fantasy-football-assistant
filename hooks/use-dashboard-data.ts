@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSafeLocalStorage } from '@/hooks/use-local-storage'
 import { sleeperAPI, type SleeperLeague, type SleeperUser } from '@/lib/sleeper-api'
+import { SleeperUserSchema, SleeperLeagueSchema } from '@/lib/schemas/sleeper-schemas'
+import { z } from 'zod'
 
 interface UseDashboardDataReturn {
   // State
@@ -38,18 +40,27 @@ export function useDashboardData(): UseDashboardDataReturn {
 
     if (savedUser) {
       try {
-        const userData = JSON.parse(savedUser)
+        const parsed = JSON.parse(savedUser)
+        // Validate with Zod schema to prevent malformed data from crashing app
+        const userData = SleeperUserSchema.parse(parsed)
         setUser(userData)
       } catch (e) {
-        console.error('Failed to parse user data:', e)
+        console.error('Failed to parse or validate user data:', e)
+        // Clear corrupted data to prevent app crash on next load
+        removeItem("sleeper_user")
+        if (e instanceof z.ZodError) {
+          console.error('User data validation errors:', e.errors)
+        }
       }
     }
 
     if (savedLeagues) {
       try {
-        const leaguesData = JSON.parse(savedLeagues)
+        const parsed = JSON.parse(savedLeagues)
+        // Validate array of leagues with Zod schema
+        const leaguesData = z.array(SleeperLeagueSchema).parse(parsed)
         setLeagues(leaguesData)
-        
+
         // Organize leagues by year and set initial year
         const leaguesByYearData: {[year: string]: SleeperLeague[]} = {}
         leaguesData.forEach((league: SleeperLeague) => {
@@ -59,16 +70,21 @@ export function useDashboardData(): UseDashboardDataReturn {
           }
           leaguesByYearData[year].push(league)
         })
-        
+
         setLeaguesByYear(leaguesByYearData)
-        
+
         // Set the initial year to the most recent year with leagues
         const years = Object.keys(leaguesByYearData).sort().reverse()
         if (years.length > 0) {
           setSelectedYear(years[0])
         }
       } catch (e) {
-        console.error('Failed to parse leagues data:', e)
+        console.error('Failed to parse or validate leagues data:', e)
+        // Clear corrupted data to prevent app crash on next load
+        removeItem("sleeper_leagues")
+        if (e instanceof z.ZodError) {
+          console.error('Leagues data validation errors:', e.errors)
+        }
       }
     }
   }, [isClient, getItem])
