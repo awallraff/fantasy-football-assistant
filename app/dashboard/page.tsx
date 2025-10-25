@@ -5,7 +5,6 @@ import dynamic from "next/dynamic"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { RefreshCw, BarChart3, Users, Trophy, Activity } from "lucide-react"
-import { EnhancedTeamRoster } from "@/components/enhanced-team-roster"
 import { DashboardLoadingSkeleton } from "@/components/dashboard/loading-skeleton"
 import { NoLeaguesConnected } from "@/components/no-leagues-connected"
 import { LeagueCard } from "@/components/dashboard/league-card"
@@ -19,6 +18,9 @@ import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { SleeperLeague } from "@/lib/sleeper-api"
 
 // Lazy-load heavy tab components to reduce initial bundle size
+const EnhancedTeamRoster = dynamic(() => import("@/components/enhanced-team-roster").then(mod => ({ default: mod.EnhancedTeamRoster })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
 const LeagueOverview = dynamic(() => import("@/components/league-overview").then(mod => ({ default: mod.LeagueOverview })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
 })

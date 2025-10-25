@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,14 +9,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Brain, Target, TrendingUp, Users } from "lucide-react"
 import Link from "next/link"
-import { TradeRecommendations } from "@/components/trade-recommendations"
-import { LineupOptimizer } from "@/components/lineup-optimizer"
-import { WaiverWireAnalyzer } from "@/components/waiver-wire-analyzer"
-import { StartSitAdvisor } from "@/components/start-sit-advisor"
-import { StrategicInsights } from "@/components/strategic-insights"
 import { ErrorDisplay, categorizeError } from "@/components/ui/error-display"
 import type { SleeperLeague, SleeperUser } from "@/lib/sleeper-api"
 import { sleeperAPI } from "@/lib/sleeper-api"
+
+// Lazy-load heavy tab components to reduce initial bundle size
+const TradeRecommendations = dynamic(() => import("@/components/trade-recommendations").then(mod => ({ default: mod.TradeRecommendations })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const LineupOptimizer = dynamic(() => import("@/components/lineup-optimizer").then(mod => ({ default: mod.LineupOptimizer })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const WaiverWireAnalyzer = dynamic(() => import("@/components/waiver-wire-analyzer").then(mod => ({ default: mod.WaiverWireAnalyzer })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const StartSitAdvisor = dynamic(() => import("@/components/start-sit-advisor").then(mod => ({ default: mod.StartSitAdvisor })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
+const StrategicInsights = dynamic(() => import("@/components/strategic-insights").then(mod => ({ default: mod.StrategicInsights })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+})
 
 export default function RecommendationsPage() {
   const [user, setUser] = useState<SleeperUser | null>(null)

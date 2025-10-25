@@ -34,5 +34,17 @@ coverage/
 __pycache__/
 *.pyc
 
+# build logs and temporary files
+*.log
+build-logs/
+*.backup
+nul
+
+# screenshots and images (should be in docs/screenshots/)
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+
 /lib/generated/prisma
 .claude/settings.local.json

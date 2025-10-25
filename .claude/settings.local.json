@@ -96,7 +96,14 @@
       "Bash(npm outdated)",
       "Bash(npm view:*)",
       "mcp__chrome-devtools__list_network_requests",
-      "mcp__chrome-devtools__get_network_request"
+      "mcp__chrome-devtools__get_network_request",
+      "mcp__chrome-devtools__emulate_network",
+      "mcp__chrome-devtools__performance_start_trace",
+      "mcp__chrome-devtools__performance_analyze_insight",
+      "WebFetch(domain:web.dev)",
+      "mcp__chrome-devtools__close_page",
+      "Bash(npx vercel:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [],

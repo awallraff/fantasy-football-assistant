@@ -1,11 +1,17 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Database, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { NFLDataManagerFixed } from "@/components/nfl-data-manager-fixed"
 import { NFLDataErrorBoundary } from "@/components/nfl-data/NFLDataErrorBoundary"
+
+// Lazy-load heavy NFL data component to reduce initial bundle size
+const NFLDataManagerFixed = dynamic(() => import("@/components/nfl-data-manager-fixed").then(mod => ({ default: mod.NFLDataManagerFixed })), {
+  loading: () => <div className="flex items-center justify-center p-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>,
+  ssr: false
+})
 
 export default function NFLDataPage() {
   return (
