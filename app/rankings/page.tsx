@@ -458,12 +458,12 @@ export default function RankingsPage() {
         )}
 
         {/* Desktop: Table layout */}
-        <div className="hidden md:block border rounded-md overflow-hidden">
+        <div className="hidden md:block border border-border rounded-md overflow-hidden bg-card shadow-md">
           <div className="overflow-x-auto max-h-96">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b sticky top-0">
+            <table className="w-full text-ios-subheadline">
+              <thead className="bg-background-elevated border-b border-separator sticky top-0">
                 <tr>
-                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary cursor-pointer hover:bg-background active:scale-[0.99] transition-all duration-ios"
                       onClick={() => handleTableSort("rank")}>
                     <div className="flex items-center gap-1">
                       Rank
@@ -474,7 +474,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary cursor-pointer hover:bg-background active:scale-[0.99] transition-all duration-ios"
                       onClick={() => handleTableSort("playerName")}>
                     <div className="flex items-center gap-1">
                       Player
@@ -485,7 +485,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary cursor-pointer hover:bg-background active:scale-[0.99] transition-all duration-ios"
                       onClick={() => handleTableSort("position")}>
                     <div className="flex items-center gap-1">
                       Position
@@ -496,7 +496,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary cursor-pointer hover:bg-background active:scale-[0.99] transition-all duration-ios"
                       onClick={() => handleTableSort("team")}>
                     <div className="flex items-center gap-1">
                       Team
@@ -507,7 +507,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary cursor-pointer hover:bg-background active:scale-[0.99] transition-all duration-ios"
                       onClick={() => handleTableSort("projectedPoints")}>
                     <div className="flex items-center gap-1">
                       Projected Points
@@ -518,7 +518,7 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary cursor-pointer hover:bg-background active:scale-[0.99] transition-all duration-ios"
                       onClick={() => handleTableSort("tier")}>
                     <div className="flex items-center gap-1">
                       Tier
@@ -529,10 +529,10 @@ export default function RankingsPage() {
                       )}
                     </div>
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium">
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary">
                     Status
                   </th>
-                  <th scope="col" className="text-left p-2 font-medium">
+                  <th scope="col" className="text-left p-2 font-medium text-text-secondary">
                     Notes
                   </th>
                 </tr>
@@ -540,7 +540,7 @@ export default function RankingsPage() {
               <tbody>
                 {sortedData.map((player) => (
                   <tr key={player.playerId}
-                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="border-b border-separator hover:bg-background-elevated active:scale-[0.99] transition-all duration-ios cursor-pointer"
                       onClick={() => setSelectedPlayerForModal({
                 player_id: player.playerId,
                 full_name: player.playerName,
@@ -551,39 +551,39 @@ export default function RankingsPage() {
                 tier: player.tier,
               })}>
                     <td className="p-2">
-                      <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-bold ${getTierColor(player.tier)}`}>
+                      <div className={`w-8 h-8 text-white rounded-full flex items-center justify-center text-ios-footnote font-bold ${getTierColor(player.tier)}`}>
                         {player.rank}
                       </div>
                     </td>
-                    <td className="p-2 font-medium">
+                    <td className="p-2 font-medium text-foreground">
                       {player.playerName}
                     </td>
                     <td className="p-2">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-ios-caption">
                         {player.position}
                       </Badge>
                     </td>
-                    <td className="p-2">
+                    <td className="p-2 text-foreground">
                       {player.team}
                     </td>
-                    <td className="p-2 font-medium">
+                    <td className="p-2 font-medium text-foreground">
                       {player.projectedPoints ? `${player.projectedPoints.toFixed(1)} pts` : '-'}
                     </td>
-                    <td className="p-2">
+                    <td className="p-2 text-text-secondary">
                       {player.tier ? `Tier ${player.tier}` : '-'}
                     </td>
                     <td className="p-2">
                       {player.injuryStatus && player.injuryStatus !== "Healthy" ? (
-                        <Badge variant="destructive" className="text-xs">
+                        <Badge variant="destructive" className="text-ios-caption">
                           {player.injuryStatus}
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-ios-caption">
                           Healthy
                         </Badge>
                       )}
                     </td>
-                    <td className="p-2 text-xs text-muted-foreground">
+                    <td className="p-2 text-ios-footnote text-text-secondary">
                       {player.notes ? player.notes.slice(0, 50) + (player.notes.length > 50 ? '...' : '') : '-'}
                     </td>
                   </tr>
@@ -723,14 +723,14 @@ export default function RankingsPage() {
           </Card>
         )}
 
-        <Card className="mb-6 overflow-hidden">
+        <Card className="mb-6 overflow-hidden bg-card shadow-md border-border/50">
           <CardHeader>
-            <CardTitle>Ranking Filters & Sorting</CardTitle>
+            <CardTitle className="text-ios-title-3">Ranking Filters & Sorting</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="min-w-0">
-                <label className="text-sm font-medium mb-2 block truncate">Ranking Source</label>
+                <label className="text-ios-subheadline font-medium mb-2 block truncate text-foreground">Ranking Source</label>
                 <Select value={selectedSource} onValueChange={(value: RankingSource) => {
                   setSelectedSource(value);
                   // Auto-select the most recent/relevant system for the new source
@@ -759,7 +759,7 @@ export default function RankingsPage() {
               </div>
 
               <div className="min-w-0">
-                <label className="text-sm font-medium mb-2 block truncate">Position</label>
+                <label className="text-ios-subheadline font-medium mb-2 block truncate text-foreground">Position</label>
                 <Select value={selectedPosition} onValueChange={setSelectedPosition}>
                   <SelectTrigger className="min-h-[44px] w-full">
                     <SelectValue />
@@ -776,7 +776,7 @@ export default function RankingsPage() {
               </div>
 
               <div className="min-w-0">
-                <label className="text-sm font-medium mb-2 block truncate">Ranking System</label>
+                <label className="text-ios-subheadline font-medium mb-2 block truncate text-foreground">Ranking System</label>
                 <Select
                   value={selectedSystem?.id || undefined}
                   onValueChange={(value) => {
@@ -806,7 +806,7 @@ export default function RankingsPage() {
               </div>
 
               <div className="min-w-0">
-                <label className="text-sm font-medium mb-2 block truncate">AI Projection Type</label>
+                <label className="text-ios-subheadline font-medium mb-2 block truncate text-foreground">AI Projection Type</label>
                 <Select
                   value={projectionType}
                   onValueChange={(value: "season" | "weekly") => handleProjectionTypeChange(value)}
@@ -827,14 +827,14 @@ export default function RankingsPage() {
 
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6">
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden bg-card shadow-md border-border/50">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between min-w-0">
                 <div className="flex items-center space-x-2 min-w-0">
                   <BarChart3 className="h-5 w-5 text-primary shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-2xl font-bold">{userRankingSystems.length}</p>
-                    <p className="text-sm text-muted-foreground truncate">User Imported</p>
+                    <p className="text-ios-title-2 font-bold text-foreground">{userRankingSystems.length}</p>
+                    <p className="text-ios-footnote text-text-secondary truncate">User Imported</p>
                   </div>
                 </div>
               </div>
@@ -842,30 +842,30 @@ export default function RankingsPage() {
           </Card>
 
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden bg-card shadow-md border-border/50">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between min-w-0">
                 <div className="flex items-center space-x-2 min-w-0 flex-1">
                   <TrendingUp className="h-5 w-5 text-primary shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-sm text-muted-foreground truncate">External APIs</p>
+                    <p className="text-ios-title-2 font-bold text-foreground">0</p>
+                    <p className="text-ios-footnote text-text-secondary truncate">External APIs</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-xs shrink-0 ml-2">
+                <Badge variant="secondary" className="text-ios-caption shrink-0 ml-2">
                   {isLoading ? "Loading..." : "Available"}
                 </Badge>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden bg-card shadow-md border-border/50">
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2 min-w-0">
                 <Brain className="h-5 w-5 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-2xl font-bold">{filteredRankings.length}</p>
-                  <p className="text-sm text-muted-foreground truncate">Filtered Players</p>
+                  <p className="text-ios-title-2 font-bold text-foreground">{filteredRankings.length}</p>
+                  <p className="text-ios-footnote text-text-secondary truncate">Filtered Players</p>
                 </div>
               </div>
             </CardContent>
