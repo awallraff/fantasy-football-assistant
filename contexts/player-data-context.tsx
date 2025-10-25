@@ -5,8 +5,8 @@ import type { SleeperPlayer } from "@/lib/sleeper-api"
 import sleeperAPI from "@/lib/sleeper-api"
 import { formatPlayerName, normalizePosition } from "@/lib/player-utils"
 import { sleeperCache } from "@/lib/cache/sleeper-cache"
-import { indexedDBCache } from "@/lib/cache/indexeddb-cache"
-import { cacheMigration } from "@/lib/cache/cache-migration"
+// Phase 2 optimization: Lazy-load IndexedDB cache to defer heavy DB code
+// import { indexedDBCache } from "@/lib/cache/indexeddb-cache"
 
 // Load debug utilities only in development (Phase 1 optimization)
 if (process.env.NODE_ENV !== "production") {
@@ -43,36 +43,34 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
       setIsLoading(true)
       setError(null)
 
-      // Cache Priority:
-      // 1. IndexedDB (persistent, fast)
-      // 2. sessionStorage (session-only, Phase 1 fallback)
-      // 3. API fetch (slow, always works)
+      // Phase 2 optimization: Lazy-load IndexedDB cache
+      const { indexedDBCache } = await import("@/lib/cache/indexeddb-cache")
 
-      // Try IndexedDB first
-      if (indexedDBCache.isAvailable()) {
-        try {
-          const indexedPlayers = await indexedDBCache.getAllPlayers()
+      // Phase 2 optimization: Check caches in parallel instead of sequential
+      // This reduces latency by running IndexedDB and sessionStorage checks simultaneously
+      const [indexedPlayers, sessionPlayers] = await Promise.all([
+        // Try IndexedDB (with error handling)
+        indexedDBCache.isAvailable()
+          ? indexedDBCache.getAllPlayers().catch((err) => {
+              console.warn("[PlayerData] IndexedDB error:", err)
+              return null
+            })
+          : Promise.resolve(null),
+        // Try sessionStorage (synchronous, wrapped in Promise)
+        Promise.resolve(sleeperCache.get("allPlayers", "nfl")),
+      ])
 
-          if (indexedPlayers) {
-            console.log(
-              `[PlayerData] ✅ Loaded ${Object.keys(indexedPlayers).length} players from IndexedDB cache`
-            )
-            setPlayers(indexedPlayers)
-            setIsLoading(false)
-            return
-          }
-
-          console.log("[PlayerData] IndexedDB cache miss, trying sessionStorage...")
-        } catch (indexedError) {
-          console.warn("[PlayerData] IndexedDB error, falling back to sessionStorage:", indexedError)
-        }
-      } else {
-        console.log("[PlayerData] IndexedDB not available, using sessionStorage")
+      // Use IndexedDB if available
+      if (indexedPlayers) {
+        console.log(
+          `[PlayerData] ✅ Loaded ${Object.keys(indexedPlayers).length} players from IndexedDB cache`
+        )
+        setPlayers(indexedPlayers)
+        setIsLoading(false)
+        return
       }
 
-      // Fallback to sessionStorage
-      const sessionPlayers = sleeperCache.get("allPlayers", "nfl")
-
+      // Fall back to sessionStorage
       if (sessionPlayers) {
         console.log(
           `[PlayerData] ✅ Loaded ${Object.keys(sessionPlayers).length} players from sessionStorage cache`
@@ -142,9 +140,12 @@ export function PlayerDataProvider({ children }: PlayerDataProviderProps) {
   }, [loadPlayerData])
 
   // Phase 1 optimization: Run migration in background (non-blocking)
+  // Phase 2 optimization: Also lazy-load the migration module
   useEffect(() => {
-    cacheMigration.autoMigrate().catch((err) => {
-      console.error("[PlayerData] Background migration failed:", err)
+    import("@/lib/cache/cache-migration").then(({ cacheMigration }) => {
+      cacheMigration.autoMigrate().catch((err) => {
+        console.error("[PlayerData] Background migration failed:", err)
+      })
     })
   }, [])
 
