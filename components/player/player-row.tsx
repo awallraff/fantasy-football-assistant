@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import {
   PlayerRowProps,
@@ -136,10 +137,13 @@ export function PlayerRow({
           {/* Team Logo + Abbreviation */}
           {options.showTeamLogo && player.team && (
             <div className="flex items-center gap-1.5 mt-0.5">
-              <img
+              <Image
                 src={getTeamLogoUrl(player.team)}
                 alt={`${player.team} logo`}
+                width={options.compact ? 16 : 20}
+                height={options.compact ? 16 : 20}
                 className={cn('flex-shrink-0', options.compact ? 'h-4 w-4' : 'h-5 w-5')}
+                loading="lazy"
                 onError={(e) => {
                   // Fallback to text if image fails
                   e.currentTarget.style.display = 'none'
