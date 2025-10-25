@@ -13,8 +13,8 @@ import { SleeperPlayer, SleeperRoster, SleeperUser, SleeperLeague, SleeperTransa
 export function createMockSleeperUser(overrides?: Partial<SleeperUser>): SleeperUser {
   return {
     user_id: '123456789',
-    username: 'testuser',
-    display_name: 'Test User',
+    username: 'wallreezy',
+    display_name: 'Wallreezy',
     avatar: 'abc123',
     ...overrides,
   }

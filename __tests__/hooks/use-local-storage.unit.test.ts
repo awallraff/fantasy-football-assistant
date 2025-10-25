@@ -177,7 +177,7 @@ describe('useLocalStorage Hook', () => {
     })
 
     it('should store complex objects in localStorage', async () => {
-      const testObject = { user: 'testuser', leagues: ['league1', 'league2'] }
+      const testObject = { user: 'wallreezy', leagues: ['league1', 'league2'] }
       const { result } = renderHook(() => useLocalStorage('complex-key', {}))
 
       await waitFor(() => {

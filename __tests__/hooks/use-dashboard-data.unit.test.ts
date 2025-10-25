@@ -98,7 +98,7 @@ describe('useDashboardData Hook', () => {
     })
 
     it('should load user from localStorage on mount', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'test_user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'test_user_123', username: 'wallreezy' })
       mockLocalStorage.setItem('sleeper_user', JSON.stringify(mockUser))
 
       const { result } = renderHook(() => useDashboardData())
@@ -109,7 +109,7 @@ describe('useDashboardData Hook', () => {
     })
 
     it('should load leagues from localStorage and organize by year', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       const league2025 = createMockSleeperLeague({ league_id: 'league_1', name: 'Dynasty 2025', season: '2025' })
       const league2024 = createMockSleeperLeague({ league_id: 'league_2', name: 'Redraft 2024', season: '2024' })
       const leagues = [league2025, league2024]
@@ -197,7 +197,7 @@ describe('useDashboardData Hook', () => {
 
   describe('loadLeaguesForYear', () => {
     it('should load leagues for a specific year', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       const league2024a = createMockSleeperLeague({ league_id: 'l1', name: 'Dynasty 2024', season: '2024' })
       const league2024b = createMockSleeperLeague({ league_id: 'l2', name: 'Redraft 2024', season: '2024' })
       mockLocalStorage.setItem('sleeper_user', JSON.stringify(mockUser))
@@ -233,7 +233,7 @@ describe('useDashboardData Hook', () => {
     })
 
     it('should handle API errors gracefully', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       mockLocalStorage.setItem('sleeper_user', JSON.stringify(mockUser))
 
       ;(sleeperAPI.getUserLeagues as jest.Mock).mockRejectedValue(new Error('API Error'))
@@ -363,7 +363,7 @@ describe('useDashboardData Hook', () => {
 
   describe('retryConnection', () => {
     it('should reload all leagues for multiple seasons', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       const leagues2025 = [createMockSleeperLeague({ league_id: 'l1', name: 'Dynasty 2025', season: '2025' })]
       const leagues2024 = [createMockSleeperLeague({ league_id: 'l2', name: 'Redraft 2024', season: '2024' })]
       const leagues2023 = [createMockSleeperLeague({ league_id: 'l3', name: 'League 2023', season: '2023' })]
@@ -393,7 +393,7 @@ describe('useDashboardData Hook', () => {
     })
 
     it('should handle errors for individual seasons gracefully', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       const leagues2025 = [createMockSleeperLeague({ league_id: 'l1', name: 'Dynasty 2025', season: '2025' })]
 
       mockLocalStorage.setItem('sleeper_user', JSON.stringify(mockUser))
@@ -419,7 +419,7 @@ describe('useDashboardData Hook', () => {
     })
 
     it('should not throw error if all seasons fail (errors are logged)', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       mockLocalStorage.setItem('sleeper_user', JSON.stringify(mockUser))
 
       ;(sleeperAPI.getUserLeagues as jest.Mock).mockRejectedValue(new Error('Total failure'))
@@ -447,7 +447,7 @@ describe('useDashboardData Hook', () => {
 
   describe('clearAndRestart', () => {
     it('should clear localStorage and call window.location.href setter', async () => {
-      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'testuser' })
+      const mockUser = createMockSleeperUser({ user_id: 'user_123', username: 'wallreezy' })
       const leagues = [createMockSleeperLeague({ league_id: 'l1', name: 'Dynasty 2025', season: '2025' })]
 
       mockLocalStorage.setItem('sleeper_user', JSON.stringify(mockUser))

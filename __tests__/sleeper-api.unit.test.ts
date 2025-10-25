@@ -41,13 +41,13 @@ describe('SleeperAPI - User Endpoints', () => {
 
   describe('getUser', () => {
     it('should fetch user by username successfully', async () => {
-      const mockUser = createMockSleeperUser({ username: 'testuser' })
+      const mockUser = createMockSleeperUser({ username: 'wallreezy' })
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockUser,
       })
 
-      const result = await sleeperAPI.getUser('testuser')
+      const result = await sleeperAPI.getUser('wallreezy')
 
       expect(mockFetch).toHaveBeenCalledTimes(1)
       expect(result).toEqual(mockUser)
