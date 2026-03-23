@@ -23,7 +23,7 @@ Successfully implemented skeleton screens to reduce Cumulative Layout Shift (CLS
 ## Performance Metrics Comparison
 
 ### Before Fix (Baseline)
-**Source:** `docs/mobile-performance-audit-2025-10-24.md`
+**Source:** `docs/testing/mobile-performance-audit-2025-10-24.md`
 
 - **CLS:** 0.24 (POOR)
 - **LCP:** 2,205 ms (Needs Improvement)

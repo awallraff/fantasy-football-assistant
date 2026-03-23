@@ -57,7 +57,7 @@ export interface FilterChipProps {
 
 export function FilterChip({
   label,
-  value: _value,
+  value,
   active = false,
   count,
   onClick,
@@ -65,6 +65,7 @@ export function FilterChip({
   className,
   disabled = false,
 }: FilterChipProps) {
+  void value
   return (
     <button
       type="button"

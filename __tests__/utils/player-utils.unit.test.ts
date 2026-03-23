@@ -389,7 +389,7 @@ describe('Player Utils - filterPlayersByPosition', () => {
     const players = {
       '1': createMockSleeperPlayer({ player_id: '1', position: 'QB', full_name: 'QB Player' }),
       '2': createMockSleeperPlayer({ player_id: '2', position: undefined, full_name: 'No Position' }),
-      '3': createMockSleeperPlayer({ player_id: '3', position: null as any, full_name: 'Null Position' }),
+      '3': createMockSleeperPlayer({ player_id: '3', position: null, full_name: 'Null Position' }),
     }
 
     const result = filterPlayersByPosition(players, 'QB')
@@ -401,7 +401,7 @@ describe('Player Utils - filterPlayersByPosition', () => {
   it('should handle DST/DEF position normalization', () => {
     const players = {
       '1': createMockSleeperPlayer({ player_id: '1', position: 'DEF', full_name: 'Team A' }),
-      '2': createMockSleeperPlayer({ player_id: '2', position: 'DST' as any, full_name: 'Team B' }),
+      '2': createMockSleeperPlayer({ player_id: '2', position: 'DST', full_name: 'Team B' }),
     }
 
     const result = filterPlayersByPosition(players, 'DEF')

@@ -170,7 +170,7 @@ export const mockSleeperAPIResponses = {
 /**
  * Mock global fetch function
  */
-export function mockFetch(responses: Record<string, any>) {
+export function mockFetch(responses: Record<string, unknown>) {
   return jest.fn((url: string) => {
     const urlString = url.toString()
 
@@ -276,7 +276,7 @@ export const mockLocalStorage = (() => {
  * Mock IndexedDB for cache tests
  */
 export function mockIndexedDB() {
-  const databases: Record<string, any> = {}
+  const databases: Record<string, unknown> = {}
 
   return {
     open: jest.fn((name: string) => ({

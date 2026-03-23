@@ -8,14 +8,18 @@ import { useSafeLocalStorage } from "@/hooks/use-local-storage"
 import type { SleeperUser, SleeperLeague } from "@/lib/sleeper-api"
 
 export default function HomePage() {
-  console.log("[v0] HomePage rendering...")
+  if (process.env.NODE_ENV === "development") {
+    console.log("[v0] HomePage rendering...")
+  }
 
   const router = useRouter()
   const { setItem, isClient } = useSafeLocalStorage()
 
   const handleLeaguesConnected = (user: SleeperUser, leagues: SleeperLeague[]) => {
     try {
-      console.log("[v0] Leagues connected, saving data...")
+      if (process.env.NODE_ENV === "development") {
+        console.log("[v0] Leagues connected, saving data...")
+      }
       // Save to localStorage for dashboard access
       setItem("sleeper_user", JSON.stringify(user))
       setItem("sleeper_leagues", JSON.stringify(leagues))

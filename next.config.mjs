@@ -19,15 +19,22 @@ const nextConfig = {
       },
     ],
   },
-  // Phase 1 optimization: Strip console logs in production
+  // Strip console in production builds (keeps error/warn).
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'], // Keep error/warn for debugging
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? {
+            exclude: ["error", "warn"],
+          }
+        : false,
   },
-  experimental: {
-    swcTraceProfiling: true,
-  },
+  // Profiling only in dev — avoids production runtime issues with `next start` (webpack chunk loading).
+  experimental:
+    process.env.NODE_ENV === "development"
+      ? {
+          swcTraceProfiling: true,
+        }
+      : {},
 }
 
 export default nextConfig

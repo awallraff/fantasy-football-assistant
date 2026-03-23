@@ -5,6 +5,7 @@ import nflDataService, {
   type NFLWeeklyStats,
   type NFLSeasonalStats,
 } from './nfl-data-service'
+import { getCurrentNFLWeek } from './nfl-season-utils'
 
 /**
  * NFL Data Caching Service
@@ -215,6 +216,7 @@ class NFLDataCacheService {
     data: NFLDataResponse,
     _options: NFLDataOptions
   ): Promise<void> {
+    void _options
     try {
       const recordsToCache: Array<{
         playerId: string
@@ -338,7 +340,7 @@ class NFLDataCacheService {
    */
   private calculateTTL(season: number, week: number | null): number {
     const currentSeason = nflDataService.getCurrentSeason()
-    const currentWeek = this.getCurrentNFLWeek()
+    const currentWeek = getCurrentNFLWeek()
 
     // Historical season (completed)
     if (season < currentSeason) {
@@ -363,24 +365,6 @@ class NFLDataCacheService {
 
     // Future season (shouldn't happen)
     return DEFAULT_TTL.CURRENT_WEEK
-  }
-
-  /**
-   * Get current NFL week (rough estimation)
-   */
-  private getCurrentNFLWeek(): number {
-    const currentDate = new Date()
-    const seasonStart = new Date(currentDate.getFullYear(), 8, 1) // Roughly September 1
-
-    if (currentDate < seasonStart) {
-      return 1
-    }
-
-    const weeksSinceStart = Math.floor(
-      (currentDate.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    )
-
-    return Math.min(Math.max(weeksSinceStart + 1, 1), 18) // NFL has 18 weeks
   }
 
   /**

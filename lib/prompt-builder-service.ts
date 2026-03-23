@@ -1,5 +1,8 @@
 import type { RankingSystem } from "./rankings-types"
-import type { NFLDataResponse } from "./nfl-data-service"
+import type { NFLDataResponse, NFLSeasonalStats, NFLWeeklyStats } from "./nfl-data-service"
+
+/** Rows used for historical prompt context (weekly or aggregated season stats). */
+type HistoricalPerformanceRow = NFLWeeklyStats | NFLSeasonalStats
 
 export interface PromptBuilderOptions {
   year?: number
@@ -97,10 +100,8 @@ export class PromptBuilderService {
   private addHistoricalPerformanceContext(nflData: NFLDataResponse, type: "weekly" | "season"): string {
     let contextPrompt = ""
 
-    // Type assertion to avoid TypeScript union type inference issues with array methods
-    // Both NFLWeeklyStats and NFLSeasonalStats extend NFLPlayerStats and have compatible properties
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = (type === "weekly" ? nflData.weekly_stats : nflData.aggregated_season_stats) as any[]
+    const data: HistoricalPerformanceRow[] =
+      type === "weekly" ? nflData.weekly_stats : nflData.aggregated_season_stats
 
     contextPrompt += `\nCOMPREHENSIVE HISTORICAL PERFORMANCE ANALYSIS:\n`
     contextPrompt += `Data includes ${nflData.metadata.total_players} players across ${nflData.metadata.years.join(", ")}\n`

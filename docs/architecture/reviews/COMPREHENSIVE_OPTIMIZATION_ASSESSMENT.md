@@ -425,7 +425,7 @@ Each item includes:
 - **Key Finding:** Security hardening needed for localStorage and navigation
 
 ### 2. Performance Engineer Agent
-- **Document:** `docs/performance-analysis-dashboard.md` (generated)
+- **Document:** `docs/operations/performance-analysis-dashboard.md` (generated)
 - **Optimized Components:** 2 reference implementations
   - `lib/optimized/projections-context-optimized.tsx`
   - `components/optimized/enhanced-team-roster-optimized.tsx`
@@ -433,13 +433,13 @@ Each item includes:
 - **Expected Improvement:** 70 → 90+ score, 2.8s → 1.0s LCP
 
 ### 3. React Architect Agent
-- **Document:** `docs/DASHBOARD_ARCHITECTURE_REVIEW.md` (created)
+- **Document:** `docs/architecture/reviews/DASHBOARD_ARCHITECTURE_REVIEW.md` (created)
 - **Issues Found:** 13 architectural issues
 - **Refactoring Roadmap:** 3 phases over 5 sprints (102-140 hours)
 - **ADRs:** 3 architecture decision records
 
 ### 4. UI/UX Designer Agent
-- **Document:** `docs/ui-ux-design-review.md` (generated)
+- **Document:** `docs/design/ui-ux-design-review.md` (generated)
 - **Issues Found:** 44 UI/UX issues (8 Critical, 12 High, 15 Medium, 9 Low)
 - **WCAG Compliance:** Currently C+, path to AA compliance (8 critical fixes)
 - **Mobile-First Audit:** Touch targets validated, 3 critical mobile issues

@@ -433,7 +433,7 @@ export function validatePartial<T extends z.ZodTypeAny>(
 // Export all schemas and utilities
 // ============================================================================
 
-export default {
+const sleeperSchemas = {
   // Schemas
   SleeperUserSchema,
   SleeperLeagueSchema,
@@ -462,3 +462,5 @@ export default {
   safeParseWithLogging,
   validatePartial,
 };
+
+export default sleeperSchemas;

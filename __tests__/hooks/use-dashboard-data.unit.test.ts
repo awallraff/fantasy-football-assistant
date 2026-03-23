@@ -18,8 +18,13 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useDashboardData } from '@/hooks/use-dashboard-data'
 import { sleeperAPI } from '@/lib/sleeper-api'
+import type { SleeperLeague } from '@/lib/sleeper-api'
+import { getAvailableSeasonYears, getDefaultSeasonYear } from '@/lib/constants/nfl-season'
 import { mockLocalStorage } from '../utils/test-mocks'
 import { createMockSleeperUser, createMockSleeperLeague } from '../utils/test-factories'
+
+const defaultSeason = String(getDefaultSeasonYear())
+const retrySeasons = getAvailableSeasonYears(3).map(String)
 
 // Mock sleeper-api
 jest.mock('@/lib/sleeper-api', () => ({
@@ -52,7 +57,10 @@ afterAll(() => {
 
 describe('useDashboardData Hook', () => {
   // Store original localStorage methods
-  let originalLocalStorageMethods: any
+  let originalLocalStorageMethods: Pick<
+    Storage,
+    'getItem' | 'setItem' | 'removeItem' | 'clear'
+  >
 
   beforeEach(() => {
     // Set up localStorage mock
@@ -93,7 +101,7 @@ describe('useDashboardData Hook', () => {
         expect(result.current.user).toBeNull()
         expect(result.current.leagues).toEqual([])
         expect(result.current.leaguesByYear).toEqual({})
-        expect(result.current.selectedYear).toBe('2025')
+        expect(result.current.selectedYear).toBe(defaultSeason)
       })
     })
 
@@ -125,7 +133,7 @@ describe('useDashboardData Hook', () => {
           '2025': [league2025],
           '2024': [league2024],
         })
-        expect(result.current.selectedYear).toBe('2025') // Most recent year
+        expect(result.current.selectedYear).toBe('2025') // Most recent year from loaded fixture data
       })
     })
 
@@ -138,8 +146,8 @@ describe('useDashboardData Hook', () => {
       await waitFor(() => {
         expect(result.current.user).toBeNull()
         expect(result.current.leagues).toEqual([])
-        expect(console.error).toHaveBeenCalledWith('Failed to parse user data:', expect.any(Error))
-        expect(console.error).toHaveBeenCalledWith('Failed to parse leagues data:', expect.any(Error))
+        expect(console.error).toHaveBeenCalledWith('Failed to parse or validate user data:', expect.any(Error))
+        expect(console.error).toHaveBeenCalledWith('Failed to parse or validate leagues data:', expect.any(Error))
       })
     })
   })
@@ -210,7 +218,7 @@ describe('useDashboardData Hook', () => {
         expect(result.current.user).toEqual(mockUser)
       })
 
-      let loadedLeagues: any[]
+      let loadedLeagues: SleeperLeague[]
       await act(async () => {
         loadedLeagues = await result.current.loadLeaguesForYear('2024')
       })
@@ -223,7 +231,7 @@ describe('useDashboardData Hook', () => {
     it('should return empty array if no user', async () => {
       const { result } = renderHook(() => useDashboardData())
 
-      let loadedLeagues: any[]
+      let loadedLeagues: SleeperLeague[]
       await act(async () => {
         loadedLeagues = await result.current.loadLeaguesForYear('2024')
       })
@@ -244,7 +252,7 @@ describe('useDashboardData Hook', () => {
         expect(result.current.user).toEqual(mockUser)
       })
 
-      let loadedLeagues: any[]
+      let loadedLeagues: SleeperLeague[]
       await act(async () => {
         loadedLeagues = await result.current.loadLeaguesForYear('2024')
       })
@@ -258,13 +266,11 @@ describe('useDashboardData Hook', () => {
   })
 
   describe('removeLeague', () => {
-    it('should remove league after confirmation', async () => {
+    it('should remove league when invoked', async () => {
       const league1 = createMockSleeperLeague({ league_id: 'league_1', name: 'Dynasty 2025', season: '2025' })
       const league2 = createMockSleeperLeague({ league_id: 'league_2', name: 'Redraft 2025', season: '2025' })
       const leagues = [league1, league2]
       mockLocalStorage.setItem('sleeper_leagues', JSON.stringify(leagues))
-
-      ;(window.confirm as jest.Mock).mockReturnValue(true)
 
       const { result } = renderHook(() => useDashboardData())
 
@@ -276,20 +282,15 @@ describe('useDashboardData Hook', () => {
         result.current.removeLeague('league_1', 'Dynasty 2025')
       })
 
-      expect(window.confirm).toHaveBeenCalledWith(
-        'Are you sure you want to remove "Dynasty 2025"? This action cannot be undone.'
-      )
       expect(result.current.leagues).toEqual([league2])
-      expect(mockLocalStorage.getItem('sleeper_leagues')).toBe(JSON.stringify([league2]))
+      expect(JSON.parse(mockLocalStorage.getItem('sleeper_leagues') || '[]')).toEqual([league2])
     })
 
-    it('should not remove league if user cancels confirmation', async () => {
+    it('should remove league without handling confirmation in hook', async () => {
       const league1 = createMockSleeperLeague({ league_id: 'league_1', name: 'Dynasty 2025', season: '2025' })
       const league2 = createMockSleeperLeague({ league_id: 'league_2', name: 'Redraft 2025', season: '2025' })
       const leagues = [league1, league2]
       mockLocalStorage.setItem('sleeper_leagues', JSON.stringify(leagues))
-
-      ;(window.confirm as jest.Mock).mockReturnValue(false)
 
       const { result } = renderHook(() => useDashboardData())
 
@@ -301,8 +302,8 @@ describe('useDashboardData Hook', () => {
         result.current.removeLeague('league_1', 'Dynasty 2025')
       })
 
-      expect(result.current.leagues).toEqual(leagues) // Unchanged
-      expect(mockLocalStorage.getItem('sleeper_leagues')).toBe(JSON.stringify(leagues))
+      expect(result.current.leagues).toEqual([league2])
+      expect(JSON.parse(mockLocalStorage.getItem('sleeper_leagues') || '[]')).toEqual([league2])
     })
 
     it('should update leaguesByYear when removing league', async () => {
@@ -310,8 +311,6 @@ describe('useDashboardData Hook', () => {
       const league2024 = createMockSleeperLeague({ league_id: 'l2', name: 'Redraft 2024', season: '2024' })
       const leagues = [league2025, league2024]
       mockLocalStorage.setItem('sleeper_leagues', JSON.stringify(leagues))
-
-      ;(window.confirm as jest.Mock).mockReturnValue(true)
 
       const { result } = renderHook(() => useDashboardData())
 
@@ -354,7 +353,7 @@ describe('useDashboardData Hook', () => {
 
       // useSafeLocalStorage wraps errors, so check for the wrapper message
       expect(console.error).toHaveBeenCalled()
-      const errorCall = (console.error as jest.Mock).mock.calls.find((call: any[]) =>
+      const errorCall = (console.error as jest.Mock).mock.calls.find((call: unknown[]) =>
         call[0]?.includes('Failed to set localStorage item') || call[0]?.includes('Error removing league')
       )
       expect(errorCall).toBeDefined()
@@ -385,11 +384,11 @@ describe('useDashboardData Hook', () => {
         await result.current.retryConnection()
       })
 
-      expect(sleeperAPI.getUserLeagues).toHaveBeenCalledWith('user_123', 'nfl', '2025')
-      expect(sleeperAPI.getUserLeagues).toHaveBeenCalledWith('user_123', 'nfl', '2024')
-      expect(sleeperAPI.getUserLeagues).toHaveBeenCalledWith('user_123', 'nfl', '2023')
+      expect(sleeperAPI.getUserLeagues).toHaveBeenCalledWith('user_123', 'nfl', retrySeasons[0])
+      expect(sleeperAPI.getUserLeagues).toHaveBeenCalledWith('user_123', 'nfl', retrySeasons[1])
+      expect(sleeperAPI.getUserLeagues).toHaveBeenCalledWith('user_123', 'nfl', retrySeasons[2])
       expect(result.current.leagues).toEqual([...leagues2025, ...leagues2024, ...leagues2023])
-      expect(result.current.selectedYear).toBe('2025') // Most recent
+      expect(result.current.selectedYear).toBe(retrySeasons[0]) // Most recent retry season
     })
 
     it('should handle errors for individual seasons gracefully', async () => {
@@ -415,7 +414,7 @@ describe('useDashboardData Hook', () => {
 
       // Should still load 2025 leagues despite 2024 error
       expect(result.current.leagues).toEqual(leagues2025)
-      expect(console.error).toHaveBeenCalledWith('2024 season error:', expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith(`${retrySeasons[1]} season error:`, expect.any(Error))
     })
 
     it('should not throw error if all seasons fail (errors are logged)', async () => {
@@ -436,9 +435,9 @@ describe('useDashboardData Hook', () => {
       })
 
       // Verify all 3 season errors were logged
-      expect(console.error).toHaveBeenCalledWith('2025 season error:', expect.any(Error))
-      expect(console.error).toHaveBeenCalledWith('2024 season error:', expect.any(Error))
-      expect(console.error).toHaveBeenCalledWith('2023 season error:', expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith(`${retrySeasons[0]} season error:`, expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith(`${retrySeasons[1]} season error:`, expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith(`${retrySeasons[2]} season error:`, expect.any(Error))
 
       // Leagues should remain empty (no successful loads)
       expect(result.current.leagues).toEqual([])

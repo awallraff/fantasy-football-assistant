@@ -1,12 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Target, TrendingUp, Users, Zap } from "lucide-react"
-import type { SleeperLeague } from "@/lib/sleeper-api"
+import { Target, TrendingUp, Users, Zap, Loader2 } from "lucide-react"
+import { sleeperAPI, type SleeperLeague } from "@/lib/sleeper-api"
+import { usePlayerData } from "@/contexts/player-data-context"
+import { useProjections } from "@/contexts/projections-context"
+import {
+  buildRosterRows,
+  greedyOptimalLineup,
+  lineupDiffVsCurrent,
+  getApproximateNflWeek,
+} from "@/lib/league-roster-analysis"
+
+function resolveDisplayWeek(selectedWeek: string): number {
+  const base = getApproximateNflWeek()
+  if (selectedWeek === "current") return base
+  if (selectedWeek === "next") return Math.min(18, base + 1)
+  const n = Number.parseInt(selectedWeek, 10)
+  return Number.isFinite(n) ? Math.max(1, Math.min(18, n)) : base
+}
 
 interface LineupOptimizerProps {
   league: SleeperLeague
@@ -40,19 +56,77 @@ interface LineupOptimization {
 
 export function LineupOptimizer({ league, userId }: LineupOptimizerProps) {
   const [optimization, setOptimization] = useState<LineupOptimization | null>(null)
+  const [loading, setLoading] = useState(true)
   const [selectedWeek, setSelectedWeek] = useState<string>("current")
   const [riskTolerance, setRiskTolerance] = useState<"conservative" | "balanced" | "aggressive">("balanced")
+  const { getPlayer, getPlayerName } = usePlayerData()
+  const { getProjection, loadProjectionsForPlayers } = useProjections()
 
-  // TODO: Implement real lineup optimization using:
-  // - Player projections from rankings
-  // - Bench depth analysis
-  // - Matchup ratings
-  // - Injury status and practice reports
-  // - Vegas lines and game environments
+  const runOptimization = useCallback(async () => {
+    setLoading(true)
+    try {
+      const rosters = await sleeperAPI.getLeagueRosters(league.league_id)
+      const userRoster = rosters.find((r) => r.owner_id === userId)
+      if (!userRoster) {
+        setOptimization(null)
+        return
+      }
+      const ids = [...new Set([...(userRoster.players || []), ...(userRoster.starters || [])])]
+      const nameMap = new Map(ids.map((id) => [id, getPlayerName(id)]))
+      await loadProjectionsForPlayers(ids, nameMap)
+      const rows = buildRosterRows(userRoster, getPlayer, getProjection)
+      const riskMul = riskTolerance === "conservative" ? 0.97 : riskTolerance === "aggressive" ? 1.03 : 1
+      const adjustedRows = rows.map((r) => ({ ...r, weeklyProjection: r.weeklyProjection * riskMul }))
+      const { totalProjection, optimalStarters } = greedyOptimalLineup(league, adjustedRows, getPlayer)
+      const { swaps, currentTotal } = lineupDiffVsCurrent(userRoster, optimalStarters, adjustedRows)
+      const potentialGain = Math.max(0, totalProjection - currentTotal)
+      const week = resolveDisplayWeek(selectedWeek)
+
+      const recommendations: PlayerRecommendation[] = swaps.map((s) => {
+        const matchupRating: PlayerRecommendation["matchupRating"] =
+          s.bench.weeklyProjection >= 14
+            ? "excellent"
+            : s.bench.weeklyProjection >= 9
+              ? "good"
+              : s.bench.weeklyProjection >= 5
+                ? "average"
+                : "poor"
+        return {
+          playerId: s.bench.playerId,
+          name: s.bench.name,
+          position: s.bench.position,
+          team: s.bench.team,
+          projectedPoints: s.bench.weeklyProjection,
+          confidence: Math.min(92, 55 + Math.round(s.gain * 3)),
+          matchupRating,
+          reasoning: [
+            `Projected to outscore ${s.out.name} by ~${s.gain.toFixed(1)} pts with current rankings context.`,
+            "Compared greedy optimal starters to your Sleeper lineup using the same projection set.",
+          ],
+          isCurrentStarter: false,
+          benchAlternative: { name: s.out.name, projectedPoints: s.out.weeklyProjection },
+        }
+      })
+
+      setOptimization({
+        week,
+        totalProjectedPoints: totalProjection,
+        currentProjectedPoints: currentTotal,
+        potentialGain,
+        recommendations,
+        riskLevel: riskTolerance,
+      })
+    } catch (e) {
+      console.error("Lineup optimizer:", e)
+      setOptimization(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [league, userId, selectedWeek, riskTolerance, getPlayer, getPlayerName, getProjection, loadProjectionsForPlayers])
+
   useEffect(() => {
-    // For now, show empty state until implementation is complete
-    setOptimization(null)
-  }, [league, userId, selectedWeek, riskTolerance])
+    void runOptimization()
+  }, [runOptimization])
 
   const getMatchupColor = (rating: string) => {
     switch (rating) {
@@ -107,21 +181,31 @@ export function LineupOptimizer({ league, userId }: LineupOptimizerProps) {
               </SelectContent>
             </Select>
 
-            <Button>Optimize Lineup</Button>
+            <Button type="button" onClick={() => void runOptimization()} disabled={loading} className="min-h-[44px] inline-flex items-center gap-2">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : null}
+              <span>Optimize Lineup</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {!optimization ? (
+      {loading ? (
+        <Card className="bg-background-elevated border-border">
+          <CardContent className="flex flex-col items-center justify-center py-12 gap-3">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-ios-subheadline text-text-secondary">Loading roster and projections…</p>
+          </CardContent>
+        </Card>
+      ) : !optimization ? (
         <Card className="bg-background-elevated border-border">
           <CardHeader>
             <CardTitle className="text-ios-title-3 font-semibold">Lineup Optimizer</CardTitle>
           </CardHeader>
           <CardContent className="text-center py-12">
             <Zap className="h-16 w-16 mx-auto mb-4 text-text-secondary opacity-30" />
-            <h3 className="text-ios-headline font-semibold mb-2 text-foreground">Lineup Optimization Coming Soon</h3>
+            <h3 className="text-ios-headline font-semibold mb-2 text-foreground">No roster in this league</h3>
             <p className="text-ios-subheadline text-text-secondary max-w-md mx-auto">
-              AI-powered lineup optimization will analyze your roster, bench depth, and matchups to maximize your projected points each week.
+              We couldn&apos;t find your roster for this league. Confirm you&apos;re logged in as the right Sleeper user.
             </p>
           </CardContent>
         </Card>
@@ -164,6 +248,12 @@ export function LineupOptimizer({ league, userId }: LineupOptimizerProps) {
           {/* Player Recommendations */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Recommended Changes</h3>
+            {optimization.recommendations.length === 0 && (
+              <p className="text-sm text-text-secondary">
+                No swaps clear the projection threshold — your active lineup may already match this greedy optimal
+                assignment for your league&apos;s slots.
+              </p>
+            )}
             {optimization.recommendations.map((rec) => (
               <Card key={rec.playerId} className={rec.isCurrentStarter ? "border-blue-200" : "border-green-200"}>
                 <CardContent className="pt-4">

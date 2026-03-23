@@ -2,7 +2,6 @@ import {
   retryWithBackoff,
   fetchWithRetry,
   defaultShouldRetry,
-  RetryOptions,
 } from '@/lib/api-retry'
 
 describe('API Retry Logic', () => {
@@ -213,7 +212,7 @@ describe('API Retry Logic', () => {
         delays.push(delayMs)
       })
 
-      const promise = retryWithBackoff(mockFn, {
+      retryWithBackoff(mockFn, {
         maxRetries: 3,
         initialDelayMs: 1000,
         useJitter: true,
@@ -791,6 +790,22 @@ describe('API Retry Logic', () => {
 
       expect(response.ok).toBe(true)
       expect(mockFetch).toHaveBeenCalledTimes(2)
+    })
+
+    it('should NOT retry on AbortError', async () => {
+      const abortErr = new Error('The user aborted a request.')
+      abortErr.name = 'AbortError'
+      mockFetch.mockRejectedValueOnce(abortErr)
+
+      await expect(
+        fetchWithRetry('https://api.example.com/data', {}, {
+          maxRetries: 3,
+          initialDelayMs: 100,
+          useJitter: false,
+        }),
+      ).rejects.toMatchObject({ name: 'AbortError' })
+
+      expect(mockFetch).toHaveBeenCalledTimes(1)
     })
   })
 

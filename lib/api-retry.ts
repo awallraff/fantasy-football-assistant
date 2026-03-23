@@ -232,6 +232,9 @@ export async function fetchWithRetry(
 
         // Default retry logic for fetch
         if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            return false
+          }
           const message = error.message
 
           // Don't retry on 4xx errors (except 429)

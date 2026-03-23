@@ -41,7 +41,6 @@ const NFL_CALENDAR = {
 export function getCurrentRookieSeasonYear(today: Date = new Date()): number {
   const currentYear = today.getFullYear();
   const month = today.getMonth(); // 0-indexed (0 = January, 11 = December)
-  const day = today.getDate();
 
   // After September 1st: Advance to next year's rookie class
   if (month >= NFL_CALENDAR.SEASON_START_MONTH) {

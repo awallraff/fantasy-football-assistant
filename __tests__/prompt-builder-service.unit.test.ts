@@ -1,10 +1,11 @@
 import { PromptBuilderService } from '@/lib/prompt-builder-service'
+import type { NFLDataResponse } from '@/lib/nfl-data-service'
 import type { RankingSystem } from '@/lib/rankings-types'
 
 describe('PromptBuilderService', () => {
   let service: PromptBuilderService
   let mockRankingSystems: RankingSystem[]
-  let mockNflData: any
+  let mockNflData: NFLDataResponse
 
   beforeEach(() => {
     service = new PromptBuilderService()
@@ -43,22 +44,32 @@ describe('PromptBuilderService', () => {
     mockNflData = {
       aggregated_season_stats: [
         {
+          player_id: '1',
           player_name: 'Josh Allen',
           position: 'QB',
           team: 'BUF',
+          season: 2024,
           fantasy_points_ppr: 400,
           games: 16,
           passing_yards: 4500,
           passing_tds: 30,
-          interceptions: 10
-        }
+          interceptions: 10,
+        },
       ],
       weekly_stats: [],
+      seasonal_stats: [],
+      player_info: [],
+      team_analytics: [],
       metadata: {
         total_players: 1,
         total_aggregated_records: 1,
-        years: [2024]
-      }
+        years: [2024],
+        positions: [],
+        extracted_at: '',
+        total_weekly_records: 0,
+        total_seasonal_records: 0,
+        total_teams: 0,
+      },
     }
   })
 
@@ -185,25 +196,27 @@ describe('PromptBuilderService', () => {
     })
 
     it('should group players by position', () => {
-      const nflDataWithMultiplePositions = {
+      const nflDataWithMultiplePositions: NFLDataResponse = {
         ...mockNflData,
         aggregated_season_stats: [
           ...mockNflData.aggregated_season_stats,
           {
+            player_id: '2',
             player_name: 'Christian McCaffrey',
             position: 'RB',
             team: 'SF',
+            season: 2024,
             fantasy_points_ppr: 350,
             games: 16,
             rushing_yards: 1500,
             rushing_tds: 15,
-            rushing_attempts: 300
-          }
+            rushing_attempts: 300,
+          },
         ],
         metadata: {
           ...mockNflData.metadata,
-          total_players: 2
-        }
+          total_players: 2,
+        },
       }
 
       const result = service.buildPromptWithHistoricalData(

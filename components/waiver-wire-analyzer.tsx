@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { TrendingUp, Target, Zap, Clock } from "lucide-react"
-import type { SleeperLeague } from "@/lib/sleeper-api"
+import { TrendingUp, Target, Zap, Clock, Loader2 } from "lucide-react"
+import { sleeperAPI, type SleeperLeague, type SleeperPlayer } from "@/lib/sleeper-api"
+import { usePlayerData } from "@/contexts/player-data-context"
+import { useProjections } from "@/contexts/projections-context"
+import { suggestWaiverTargets } from "@/lib/league-roster-analysis"
 
 interface WaiverWireAnalyzerProps {
   league: SleeperLeague
@@ -32,16 +35,45 @@ interface WaiverTarget {
   recommendedBid: number
 }
 
+const WAIVER_POSITIONS = ["QB", "RB", "WR", "TE", "K", "DEF"] as const
+
 export function WaiverWireAnalyzer({ league }: WaiverWireAnalyzerProps) {
   const [targets, setTargets] = useState<WaiverTarget[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const { getPlayersByPosition } = usePlayerData()
+  const { getProjection, loadProjectionsForPlayers } = useProjections()
+
+  const analyze = useCallback(async () => {
+    setLoading(true)
+    try {
+      const leagueRosters = await sleeperAPI.getLeagueRosters(league.league_id)
+      const poolById = new Map<string, SleeperPlayer>()
+      for (const pos of WAIVER_POSITIONS) {
+        for (const p of getPlayersByPosition(pos).slice(0, 40)) {
+          if (p.player_id && p.position) poolById.set(p.player_id, p)
+        }
+      }
+      const candidates = [...poolById.values()].filter((p) => (p.team || "").length > 0)
+      const ids = candidates.map((p) => p.player_id)
+      const nameMap = new Map<string, string>()
+      for (const p of candidates) {
+        const name = p.full_name?.trim() || `${p.first_name || ""} ${p.last_name || ""}`.trim() || p.player_id
+        nameMap.set(p.player_id, name)
+      }
+      await loadProjectionsForPlayers(ids, nameMap)
+      const suggested = suggestWaiverTargets(leagueRosters, candidates, getProjection, 14)
+      setTargets(suggested)
+    } catch (e) {
+      console.error("Waiver wire analyzer:", e)
+      setTargets([])
+    } finally {
+      setLoading(false)
+    }
+  }, [league.league_id, getPlayersByPosition, getProjection, loadProjectionsForPlayers])
 
   useEffect(() => {
-    // TODO: Implement real waiver wire analysis using league data
-    // This will fetch available players, analyze their opportunity, and provide recommendations
-    setLoading(false)
-    setTargets([])
-  }, [league])
+    void analyze()
+  }, [analyze])
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -82,9 +114,15 @@ export function WaiverWireAnalyzer({ league }: WaiverWireAnalyzerProps) {
           <CardDescription className="text-ios-subheadline text-text-secondary">AI-powered analysis of the best available players to target</CardDescription>
         </CardHeader>
         <CardContent>
-          {targets.length === 0 ? (
-            <div className="text-center py-12 text-text-secondary text-ios-body">
-              {loading ? "Analyzing waiver wire..." : "Waiver wire analysis will appear here when available"}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3 text-text-secondary">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-ios-body">Scanning league rosters and free-agent pool…</p>
+            </div>
+          ) : targets.length === 0 ? (
+            <div className="text-center py-12 text-text-secondary text-ios-body max-w-md mx-auto">
+              No projected free agents in the sampled pool. Run AI rankings on the Rankings page so we have projections,
+              or try again after player data finishes loading.
             </div>
           ) : (
             <div className="space-y-6">

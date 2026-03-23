@@ -68,7 +68,6 @@ export function LeagueCard({
   leagueName,
   season,
   rosterCount,
-  leagueId: _leagueId,
   cta,
   metadata,
   className,
@@ -251,9 +250,7 @@ export interface PlayerRowCardProps {
 
 export function PlayerRowCard({
   player,
-  isStarter: _isStarter = false,
   onClick,
-  projectionsLoading: _projectionsLoading = false,
   expandedContent,
   expanded = false,
   className,

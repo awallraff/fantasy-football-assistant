@@ -240,6 +240,7 @@ export function calculatePlayerValueEquivalent(
   finalValue: number,
   config: ValuationConfig = DEFAULT_VALUATION_CONFIG
 ): { low: number; high: number } {
+  void config
   // Rough mapping: 1st round picks = top 30 players
   // 2nd round = players 30-60, etc.
   const baseMapping = finalValue / 10; // Scale to player ranking range

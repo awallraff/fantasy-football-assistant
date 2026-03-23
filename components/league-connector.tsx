@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, AlertCircle } from "lucide-react"
 import { sleeperAPI, type SleeperUser, type SleeperLeague } from "@/lib/sleeper-api"
+import { getAvailableSeasonYears, getDefaultSeasonYear } from "@/lib/constants/nfl-season"
 
 interface LeagueConnectorProps {
   onLeaguesConnected?: (user: SleeperUser, leagues: SleeperLeague[]) => void
@@ -52,7 +53,7 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
       }
 
       let userLeagues: SleeperLeague[] = []
-      const seasonsToTry = ["2025", "2024", "2023", "2022"]
+      const seasonsToTry = getAvailableSeasonYears(4).map(String)
 
       for (const season of seasonsToTry) {
         try {
@@ -82,7 +83,7 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
 
       if (userLeagues.length === 0) {
         setError(
-          "User found but no leagues discovered. This might be because:\n• You don't have any leagues in recent seasons (2022-2025)\n• Your leagues are private\n• There's an API issue\n• Dynasty league data might still be updating",
+          `User found but no leagues discovered. This might be because:\n• You don't have any leagues in recent seasons (${seasonsToTry[seasonsToTry.length - 1]}-${seasonsToTry[0]})\n• Your leagues are private\n• There's an API issue\n• Dynasty league data might still be updating`,
         )
       }
     } catch (err: unknown) {
@@ -108,7 +109,9 @@ export function LeagueConnector({ onLeaguesConnected }: LeagueConnectorProps) {
         <CardDescription>
           Enter your Sleeper username to import your fantasy football leagues
           <br />
-          <span className="text-sm text-primary font-medium">Now checking 2025 season data first!</span>
+          <span className="text-sm text-primary font-medium">
+            Now checking {getDefaultSeasonYear()} season data first!
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

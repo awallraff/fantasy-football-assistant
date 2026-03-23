@@ -10,6 +10,7 @@ import { RefreshCw, ArrowRightLeft, Filter, TrendingUp, Users, Calendar, ArrowRi
 import { sleeperAPI, type SleeperTransaction, type SleeperUser, type SleeperPlayer } from "@/lib/sleeper-api"
 import { usePlayerData } from "@/contexts/player-data-context"
 import { tradeEvaluationService, type TradeEvaluation } from "@/lib/trade-evaluation-service"
+import { getAvailableSeasonYears, getDefaultSeasonYear } from "@/lib/constants/nfl-season"
 
 interface TradeHistoryProps {
   leagueId: string
@@ -44,7 +45,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
   const [ownerBehaviors, setOwnerBehaviors] = useState<OwnerBehavior[]>([])
   const [loading, setLoading] = useState(false)
   const [evaluating, setEvaluating] = useState(false)
-  const [selectedSeason, setSelectedSeason] = useState<string>("2024")
+  const [selectedSeason, setSelectedSeason] = useState<string>(String(getDefaultSeasonYear()))
   const [weekFilter, setWeekFilter] = useState<string>("all")
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<"date" | "players" | "teams">("date")
@@ -52,7 +53,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
   // Get player name resolution functions
   const { getPlayerName, getPlayer, players } = usePlayerData()
 
-  const availableSeasons = ["2024", "2023", "2022", "2021", "2020"]
+  const availableSeasons = getAvailableSeasonYears(5).map(String)
 
   const analyzeOwnerBehavior = useCallback((allTrades: ProcessedTrade[], leagueUsers: SleeperUser[]) => {
     const ownerStats: Record<string, {
@@ -190,6 +191,17 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
     }
   }, [players])
 
+  const getWeekFromTimestamp = useCallback((timestamp: number): number => {
+    // Simplified week calculation - in reality you'd want more precise logic
+    const date = new Date(timestamp)
+    const seasonStartYear = Number.parseInt(selectedSeason, 10)
+    const fallbackYear = getDefaultSeasonYear()
+    const seasonStart = new Date(`${Number.isNaN(seasonStartYear) ? fallbackYear : seasonStartYear}-09-01`)
+    const diffTime = date.getTime() - seasonStart.getTime()
+    const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7))
+    return Math.max(1, Math.min(18, diffWeeks))
+  }, [selectedSeason])
+
   const loadTradeHistory = useCallback(async () => {
     setLoading(true)
     try {
@@ -246,7 +258,7 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
     } finally {
       setLoading(false)
     }
-  }, [leagueId, analyzeOwnerBehavior, selectedSeason, evaluateTrades])
+  }, [leagueId, analyzeOwnerBehavior, selectedSeason, evaluateTrades, getWeekFromTimestamp])
 
   const getPreferredTradeTypes = (types: Record<string, number>) => {
     const preferences = []
@@ -260,15 +272,6 @@ export function TradeHistory({ leagueId }: TradeHistoryProps) {
     if (totalTrades >= 10) return "High"
     if (totalTrades >= 5) return "Medium"
     return "Low"
-  }
-
-  const getWeekFromTimestamp = (timestamp: number): number => {
-    // Simplified week calculation - in reality you'd want more precise logic
-    const date = new Date(timestamp)
-    const seasonStart = new Date("2024-09-01")
-    const diffTime = date.getTime() - seasonStart.getTime()
-    const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7))
-    return Math.max(1, Math.min(18, diffWeeks))
   }
 
   const filteredTrades = trades

@@ -17,7 +17,7 @@ import { getNextUpcomingWeek } from "@/lib/nfl-season-utils"
 import { getTierColor } from "@/lib/ranking-utils"
 import { debugLog, debugInfo, debugError } from "@/lib/debug-utils"
 import { API_DEBOUNCE_TIMEOUT_MS } from "@/lib/constants/rankings"
-import { ErrorBoundary } from "@/components/error-boundary"
+import { RankingCardsSkeletonList } from "@/components/rankings/ranking-card-skeleton"
 
 // Lazy-load heavy tab components to reduce initial bundle size
 const RankingsImporter = dynamic(() => import("@/components/rankings-importer").then(mod => ({ default: mod.RankingsImporter })), {
@@ -40,9 +40,21 @@ const APIKeyManager = dynamic(() => import("@/components/api-key-manager").then(
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
 })
 
-// Import skeleton components for CLS prevention
-import { RankingCardsSkeletonList } from "@/components/rankings/ranking-card-skeleton"
-import { VirtualizedRankingList } from "@/components/rankings/virtualized-ranking-list"
+// react-window + AutoSizer rely on DOM measurement; skip SSR/RSC for stable flight payloads (see VirtualizedRankingList)
+const VirtualizedRankingList = dynamic(
+  () =>
+    import("@/components/rankings/virtualized-ranking-list").then((mod) => ({
+      default: mod.VirtualizedRankingList,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="md:hidden">
+        <RankingCardsSkeletonList count={10} />
+      </div>
+    ),
+  }
+)
 
 type RankingSource = "all" | "user" | "ai"
 

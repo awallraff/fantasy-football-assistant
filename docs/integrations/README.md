@@ -13,6 +13,8 @@ Vercel hosting platform configuration, deployment guides, and database setup.
 ### [Sleeper API](./sleeper/)
 Sleeper fantasy football API integration and caching implementation.
 
+- [sleeper-tech-stack-analysis.md](./sleeper/sleeper-tech-stack-analysis.md) - Sleeper integration architecture and stack analysis
+
 ---
 
 [← Back to Documentation Index](../README.md)

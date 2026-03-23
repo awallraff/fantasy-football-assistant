@@ -1,5 +1,5 @@
 import React from "react"
-import { List } from "react-window"
+import { List, type RowComponentProps } from "react-window"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -27,21 +27,11 @@ interface CustomRowProps {
   onPlayerClick: (player: SimplePlayerRanking) => void
 }
 
-interface FullRowProps extends CustomRowProps {
-  index: number
-  style: React.CSSProperties
-  ariaAttributes?: {
-    "aria-posinset": number
-    "aria-setsize": number
-    role: string
-  }
-}
-
 export const VirtualizedRankingList: React.FC<VirtualizedRankingListProps> = ({ data, onPlayerClick }) => {
   // Fixed height of 140px + 12px spacing (py-1.5 = 6px top + 6px bottom)
   const ITEM_SIZE = 152
 
-  const RankingRow: React.FC<FullRowProps> = ({ index, style, playerData, onPlayerClick: handleClick }) => {
+  const RankingRow: React.FC<RowComponentProps<CustomRowProps>> = ({ index, style, playerData, onPlayerClick: handleClick }) => {
     const player = playerData[index]
 
     return (
@@ -96,14 +86,13 @@ export const VirtualizedRankingList: React.FC<VirtualizedRankingListProps> = ({ 
     <div className="md:hidden" style={{ height: "600px" }}>
       <AutoSizer>
         {({ height, width }) => (
-          <List
+          <List<CustomRowProps>
             defaultHeight={height}
             style={{ width }}
             rowCount={data.length}
             rowHeight={ITEM_SIZE}
             rowComponent={RankingRow}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            rowProps={{ playerData: data, onPlayerClick } as any}
+            rowProps={{ playerData: data, onPlayerClick }}
             overscanCount={5}
           />
         )}

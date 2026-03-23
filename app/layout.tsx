@@ -23,7 +23,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  console.log("[v0] Layout rendering...")
+  if (process.env.NODE_ENV === "development") {
+    console.log("[v0] Layout rendering...")
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>

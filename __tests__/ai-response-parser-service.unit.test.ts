@@ -1,4 +1,10 @@
 import { AIResponseParserService } from '@/lib/ai-response-parser-service'
+import type { PlayerRanking } from '@/lib/rankings-types'
+
+/** Tests private tier helper (implementation uses `week` as a weekly-vs-seasonal flag). */
+type AIResponseParserWithTier = AIResponseParserService & {
+  calculateTier: (position: string, projectedPoints: number, week?: number | boolean) => number
+}
 
 describe('AIResponseParserService', () => {
   let service: AIResponseParserService
@@ -111,7 +117,7 @@ Another invalid line
   describe('calculateTier', () => {
     it('should calculate seasonal tiers correctly', () => {
       // Access private method for testing
-      const calculateTier = (service as any).calculateTier
+      const calculateTier = (service as AIResponseParserWithTier).calculateTier
 
       // QB tiers (seasonal) - [300, 280, 260, 240, 220]
       expect(calculateTier('QB', 320)).toBe(1) // Above 300
@@ -131,7 +137,7 @@ Another invalid line
     })
 
     it('should calculate weekly tiers correctly', () => {
-      const calculateTier = (service as any).calculateTier
+      const calculateTier = (service as AIResponseParserWithTier).calculateTier
 
       // QB tiers (weekly) - [20, 18, 16, 14, 12]
       expect(calculateTier('QB', 22, true)).toBe(1) // Above 20
@@ -146,7 +152,7 @@ Another invalid line
     })
 
     it('should handle unknown positions', () => {
-      const calculateTier = (service as any).calculateTier
+      const calculateTier = (service as AIResponseParserWithTier).calculateTier
 
       // Should default to WR tier breakpoints
       expect(calculateTier('K', 300)).toBe(1) // Uses WR seasonal tiers
@@ -177,7 +183,7 @@ Another invalid line
       ]
 
       incompleteRankings.forEach(ranking => {
-        expect(service.validateRanking(ranking as any)).toBe(false)
+        expect(service.validateRanking(ranking as unknown as PlayerRanking)).toBe(false)
       })
     })
 

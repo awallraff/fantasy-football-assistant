@@ -8,6 +8,9 @@ import { Progress } from "@/components/ui/progress"
 import { ArrowRightLeft, TrendingUp, Target, Brain, Loader2 } from "lucide-react"
 import { sleeperAPI, type SleeperLeague, type SleeperRoster, type SleeperUser } from "@/lib/sleeper-api"
 import type { TradeRecommendation } from "@/types/trade-recommendation"
+import { usePlayerData } from "@/contexts/player-data-context"
+import { useProjections } from "@/contexts/projections-context"
+import { findComplementaryTradeOpportunity } from "@/lib/league-roster-analysis"
 
 interface TradeRecommendationsProps {
   league: SleeperLeague
@@ -19,6 +22,8 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
   const [recommendations, setRecommendations] = useState<TradeRecommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [rosters, setRosters] = useState<SleeperRoster[]>([])
+  const { getPlayer, getPlayerName } = usePlayerData()
+  const { getProjection, loadProjectionsForPlayers } = useProjections()
 
   const generateLeagueSpecificRecommendations = useCallback(async (
     league: SleeperLeague,
@@ -26,21 +31,27 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
     allRosters: SleeperRoster[],
     allUsers: SleeperUser[],
   ): Promise<TradeRecommendation[]> => {
+    const allIds = new Set<string>()
+    for (const r of allRosters) {
+      for (const id of r.players || []) allIds.add(id)
+      for (const id of r.starters || []) allIds.add(id)
+    }
+    const idList = [...allIds]
+    const nameMap = new Map<string, string>()
+    for (const id of idList) {
+      nameMap.set(id, getPlayerName(id))
+    }
+    await loadProjectionsForPlayers(idList, nameMap)
+
     const recommendations: TradeRecommendation[] = []
 
-    // Analyze each opponent roster for trade opportunities
     for (const roster of allRosters) {
-      if (roster.owner_id === userId) continue // Skip user's own roster
+      if (roster.owner_id === userId) continue
 
       const opponent = allUsers.find((u) => u.user_id === roster.owner_id)
       if (!opponent) continue
 
-      // Analyze roster construction and needs
-      const userNeeds = analyzeRosterNeeds(userRoster, league.roster_positions)
-      const opponentNeeds = analyzeRosterNeeds(roster, league.roster_positions)
-
-      // Find complementary needs
-      const tradeOpportunity = findTradeOpportunity(userRoster, roster, userNeeds, opponentNeeds)
+      const tradeOpportunity = findComplementaryTradeOpportunity(userRoster, roster, getPlayer, getProjection)
 
       if (tradeOpportunity) {
         recommendations.push({
@@ -59,9 +70,8 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
       }
     }
 
-    // Sort by confidence and return top recommendations
     return recommendations.sort((a, b) => b.confidence - a.confidence).slice(0, 5)
-  }, [userId])
+  }, [userId, getPlayer, getPlayerName, getProjection, loadProjectionsForPlayers])
 
   useEffect(() => {
     const fetchLeagueData = async () => {
@@ -101,53 +111,6 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
 
     fetchLeagueData()
   }, [league, userId, generateLeagueSpecificRecommendations])
-
-  const analyzeRosterNeeds = (roster: SleeperRoster, rosterPositions: string[]) => {
-    const positionCounts = rosterPositions.reduce(
-      (acc, pos) => {
-        acc[pos] = (acc[pos] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>,
-    )
-
-    // This would ideally use player data to determine actual needs
-    // For now, return mock analysis based on roster structure
-    return {
-      needsRB: positionCounts["RB"] > 0,
-      needsWR: positionCounts["WR"] > 0,
-      needsQB: positionCounts["QB"] > 0,
-      needsTE: positionCounts["TE"] > 0,
-      hasExcessRB: roster.players?.length > 15,
-      hasExcessWR: roster.players?.length > 15,
-    }
-  }
-
-  const findTradeOpportunity = (
-    _userRoster: SleeperRoster,
-    _opponentRoster: SleeperRoster,
-    _userNeeds: Record<string, boolean>,
-    _opponentNeeds: Record<string, boolean>,
-  ): {
-    confidence: number
-    projectedGain: number
-    reasoning: string[]
-    yourPlayers: Array<{ name: string; position: string; currentValue: number; projectedValue: number }>
-    theirPlayers: Array<{ name: string; position: string; currentValue: number; projectedValue: number }>
-    tradeType: "buy_low" | "sell_high" | "positional_need" | "value_play"
-    urgency: "high" | "medium" | "low"
-    successProbability: number
-  } | null => {
-    // TODO: Implement real trade opportunity analysis using:
-    // - Player values from rankings
-    // - Recent performance data
-    // - Injury status
-    // - Matchup schedules
-    // - League scoring settings
-
-    // For now, return null (no recommendations) until proper implementation
-    return null
-  }
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -214,10 +177,10 @@ export function TradeRecommendations({ league, userId }: TradeRecommendationsPro
           ) : recommendations.length === 0 ? (
             <div className="text-center py-12 text-text-secondary">
               <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-ios-headline font-semibold mb-2">Trade Recommendations Coming Soon</p>
-              <p className="text-ios-subheadline">
-                AI-powered trade analysis is currently in development. Check back soon for personalized recommendations
-                based on your league&apos;s rosters and scoring settings.
+              <p className="text-ios-headline font-semibold mb-2">No complementary bench swaps found</p>
+              <p className="text-ios-subheadline max-w-md mx-auto">
+                We compare your bench depth to each opponent using synced projections. When a cross-position bench swap
+                looks favorable, it will appear here. Load rankings on the Rankings page first if projections look empty.
               </p>
             </div>
           ) : (

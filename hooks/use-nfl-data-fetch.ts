@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import type { NFLDataResponse } from "@/lib/nfl-data-service"
-import { fetchWithRetry } from "@/lib/fetch-with-retry"
+import { fetchWithRetry } from "@/lib/api-retry"
 import { logger, generateRequestId } from "@/lib/logging-service"
 
 /**

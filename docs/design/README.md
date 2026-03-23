@@ -19,6 +19,15 @@ This project is being optimized for **information density** to improve "glanceab
 
 ## Documentation Structure
 
+### 0. Design Reviews
+**Files:** `ui-ux-design-review.md`, `ui-audit-report.md`, `ios-dark-theme-dashboard-redesign.md`
+
+**Purpose:** Historical and implementation-focused design audits and redesign proposals.
+
+**When to Use:** Reference these for prior rationale, UX findings, and redesign context before making major UI changes.
+
+---
+
 ### 1. Information Density Analysis
 **File:** `INFORMATION_DENSITY_ANALYSIS.md`
 

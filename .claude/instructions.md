@@ -5,15 +5,13 @@ This file contains project-specific instructions for Claude Code interactions.
 ## Development Workflow
 
 ### Starting the Application
-- **ALWAYS** use `npm run dev` to start the application (runs tests first by default)
-- Use `npm run dev:unsafe` only if you need to bypass tests for debugging
-- The default `dev` script runs linting and smoke tests before starting the server
+- Use `npm run dev` to start the Next.js dev server (does not run tests by default)
+- `npm run dev:unsafe` is an alias of the same dev command in this repo
 
 ### Testing
-- Smoke tests must pass before the application starts
-- Utilize the Chrome Dev Tools MCP functionality you understand to visually check and validate all changes.
-- Use `npm run test:quick` for fast smoke tests only
-- Use `npm run test` for full test suite
+- **CI-style gate:** `npm run lint`, `npm run build`, `npm run test:unit` (and `test:integration` when appropriate). Optional: `npm run validate:smoke` (lint + build).
+- **Full-product browser validation:** Documented scenarios in `docs/testing/scenarios/`; run via **Cursor MCP** (browser + optional Chrome DevTools MCP) or manual steps per **[docs/testing/POST_TICKET_VALIDATION.md](../docs/testing/POST_TICKET_VALIDATION.md)** and **[docs/testing/CHROME_DEVTOOLS_TESTING.md](../docs/testing/CHROME_DEVTOOLS_TESTING.md)**.
+- Do **not** add `@playwright/test` to the project; MCP browser tools are separate from npm Playwright.
 
 ### Code Quality
 - All code must pass TypeScript compilation (`npx tsc --noEmit`)
@@ -67,6 +65,7 @@ docs/
    - Add new feature folders when implementing major features
 
 5. **operations/** - Operational and SRE documentation
+   - **`OPEN_ITEMS.md`** - Canonical open items / tasks tracker (read first for backlog)
    - SRE action items and reviews
    - `runbooks/` - Troubleshooting and operational procedures (future)
    - Add runbooks, incident reports, and operational guides here
@@ -97,6 +96,8 @@ docs/
 ## AI Assistant Behavior
 
 ### Before Starting Any Task
+- If the request involves **priorities**, **backlog**, **open items**, or **what is left to do**, read **`docs/operations/OPEN_ITEMS.md`** first (canonical tracker; then follow links to source docs).
+
 **ALWAYS assess which agents or plugins would be helpful before working on a request:**
 1. Review the user's request and identify the domain (React, Python, DevOps, code review, etc.)
 2. Check available custom agents (`.claude/agents/`) and plugin agents
@@ -107,7 +108,7 @@ docs/
 5. For complex tasks, consider using multiple agents in parallel
 
 ### General Workflow
-- Always run the precheck (lint + smoke tests) before starting development
+- Run `npm run lint` (and tests/build as needed) before committing or opening a PR; see `docs/testing/POST_TICKET_VALIDATION.md` for the full checklist
 - Fix TypeScript and linting errors immediately when found
 - Use TodoWrite tool for multi-step tasks to track progress
 - Prefer editing existing files over creating new ones

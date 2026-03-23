@@ -11,10 +11,7 @@ import type {
   RookieDraftClass,
   RookieFilterOptions,
   RookieSortOption,
-  NFLDraftCapital,
-  DynastyProjection,
 } from './rookie-draft-types';
-import type { SleeperPlayer } from '@/lib/sleeper-api';
 
 import { rookieNFLDataService } from './rookie-nfl-data-service';
 import { getCurrentRookieSeasonYear } from './rookie-season-utils';

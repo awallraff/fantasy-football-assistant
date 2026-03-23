@@ -10,6 +10,7 @@
  */
 
 import { sleeperAPI, SleeperUser, SleeperLeague, SleeperRoster } from '@/lib/sleeper-api'
+import { getDefaultSeasonYear } from '@/lib/constants/nfl-season'
 import { createMockSleeperUser, createMockSleeperLeague, createMockSleeperRoster } from './utils/test-factories'
 
 // Mock fetch globally
@@ -180,9 +181,8 @@ describe('SleeperAPI - League Endpoints', () => {
 
       const result = await sleeperAPI.getUserLeagues('123456', 'nfl', '2025')
 
-      // Current implementation tries 2025 → 2024 → 2023 when 2025 fails with ok:false
-      // But when 2024 also fails with ok:false, it tries 2023
-      expect(mockFetch).toHaveBeenCalledTimes(2)
+      // Current implementation tries three fallback seasons by default
+      expect(mockFetch).toHaveBeenCalledTimes(3)
       expect(result).toEqual([])
     })
   })
@@ -400,9 +400,9 @@ describe('SleeperAPI - Utility Methods', () => {
   })
 
   describe('getCurrentSeason', () => {
-    it('should return 2025 for current year', () => {
+    it('should return the configured default NFL season year as a string', () => {
       const season = sleeperAPI.getCurrentSeason()
-      expect(season).toBe('2025')
+      expect(season).toBe(String(getDefaultSeasonYear()))
     })
   })
 

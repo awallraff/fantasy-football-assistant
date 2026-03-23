@@ -209,8 +209,8 @@ LCP @ 3.4s ⚠️ (10s faster!)
 
 - `contexts/player-data-context.tsx` - Conditional debug imports, lazy migration
 - `next.config.mjs` - Console log stripping
-- `docs/task-057-lcp-bottleneck-analysis.md` - Deep dive analysis
-- `docs/task-058-optimization-plan.md` - Optimization strategy
+- `docs/tasks/sprint-3/task-057-lcp-bottleneck-analysis.md` - Deep dive analysis
+- `docs/tasks/sprint-3/task-058-optimization-plan.md` - Optimization strategy
 
 ## Deployment
 

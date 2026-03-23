@@ -1,5 +1,6 @@
 import { spawn } from 'child_process'
 import path from 'path'
+import { clampSeasonYearsToAvailable } from './constants/nfl-season'
 import { isExternalAPIAvailable, fetchFromExternalAPI, testExternalAPIConnection } from './nfl-data-api-client'
 
 export interface NFLPlayerStats {
@@ -51,9 +52,9 @@ export interface NFLPlayerInfo {
   position: string
   team: string
   jersey_number?: number
-  height?: string
+  height?: string | number
   weight?: number
-  birth_date?: string
+  birth_date?: string | null
   college?: string
   season: number
 }
@@ -125,17 +126,20 @@ class NFLDataService {
   }
 
   async extractNFLData(options: NFLDataOptions = {}): Promise<NFLDataResponse> {
-    const {
-      years,
-      positions = ['QB', 'RB', 'WR', 'TE'],
-      week,
-      timeout = this.defaultTimeout
-    } = options
+    const yearsClamped =
+      options.years && options.years.length > 0
+        ? clampSeasonYearsToAvailable(options.years)
+        : undefined
+    const years = yearsClamped && yearsClamped.length > 0 ? yearsClamped : undefined
+    const positions = options.positions ?? ['QB', 'RB', 'WR', 'TE']
+    const week = options.week
+    const timeout = options.timeout ?? this.defaultTimeout
+    const resolvedOptions: NFLDataOptions = { ...options, years, positions, week, timeout }
 
     // Priority 1: Check if external API is available (for production on Vercel)
     if (isExternalAPIAvailable()) {
       console.log('Using external NFL Data API')
-      return fetchFromExternalAPI(options)
+      return fetchFromExternalAPI(resolvedOptions)
     }
 
     // Priority 2: Check if running in production environment without Python support and without external API

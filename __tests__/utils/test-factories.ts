@@ -5,17 +5,24 @@
  * Use these to generate consistent, realistic test data across all tests.
  */
 
-import { SleeperPlayer, SleeperRoster, SleeperUser, SleeperLeague, SleeperTransaction } from '@/types/sleeper'
+import type { NFLWeeklyStats } from "@/lib/nfl-data-service"
+import type {
+  SleeperPlayer,
+  SleeperRoster,
+  SleeperUser,
+  SleeperLeague,
+  SleeperTransaction,
+} from "@/types/sleeper"
 
 /**
  * Create a mock Sleeper user
  */
 export function createMockSleeperUser(overrides?: Partial<SleeperUser>): SleeperUser {
   return {
-    user_id: '123456789',
-    username: 'wallreezy',
-    display_name: 'Wallreezy',
-    avatar: 'abc123',
+    user_id: "123456789",
+    username: "wallreezy",
+    display_name: "Wallreezy",
+    avatar: "abc123",
     ...overrides,
   }
 }
@@ -25,12 +32,12 @@ export function createMockSleeperUser(overrides?: Partial<SleeperUser>): Sleeper
  */
 export function createMockSleeperLeague(overrides?: Partial<SleeperLeague>): SleeperLeague {
   return {
-    league_id: 'league123',
-    name: 'Test Dynasty League',
-    season: '2024',
-    season_type: 'regular',
-    status: 'in_season',
-    sport: 'nfl',
+    league_id: "league123",
+    name: "Test Dynasty League",
+    season: "2024",
+    season_type: "regular",
+    status: "in_season",
+    sport: "nfl",
     settings: {
       num_teams: 12,
       playoff_teams: 6,
@@ -55,7 +62,31 @@ export function createMockSleeperLeague(overrides?: Partial<SleeperLeague>): Sle
       reserve_slots: 3,
       capacity_override: 0,
     },
-    roster_positions: ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'FLEX', 'SUPER_FLEX', 'BN', 'BN', 'BN', 'BN', 'BN', 'TAXI', 'TAXI', 'TAXI', 'TAXI', 'TAXI', 'IR', 'IR', 'IR'],
+    roster_positions: [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "FLEX",
+      "SUPER_FLEX",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "TAXI",
+      "TAXI",
+      "TAXI",
+      "TAXI",
+      "TAXI",
+      "IR",
+      "IR",
+      "IR",
+    ],
     scoring_settings: {
       pass_yd: 0.04,
       pass_td: 4,
@@ -77,9 +108,9 @@ export function createMockSleeperLeague(overrides?: Partial<SleeperLeague>): Sle
 export function createMockSleeperRoster(overrides?: Partial<SleeperRoster>): SleeperRoster {
   return {
     roster_id: 1,
-    owner_id: '123456789',
-    players: ['4866', '7564', '8111'], // Sample player IDs
-    starters: ['4866', '7564'],
+    owner_id: "123456789",
+    players: ["4866", "7564", "8111"], // Sample player IDs
+    starters: ["4866", "7564"],
     reserve: [],
     taxi: [],
     settings: {
@@ -100,17 +131,17 @@ export function createMockSleeperRoster(overrides?: Partial<SleeperRoster>): Sle
  */
 export function createMockSleeperPlayer(overrides?: Partial<SleeperPlayer>): SleeperPlayer {
   return {
-    player_id: '4866',
-    first_name: 'Patrick',
-    last_name: 'Mahomes',
-    full_name: 'Patrick Mahomes',
-    position: 'QB',
-    team: 'KC',
+    player_id: "4866",
+    first_name: "Patrick",
+    last_name: "Mahomes",
+    full_name: "Patrick Mahomes",
+    position: "QB",
+    team: "KC",
     age: 28,
     years_exp: 7,
     active: true,
-    status: 'Active',
-    fantasy_positions: ['QB'],
+    status: "Active",
+    fantasy_positions: ["QB"],
     number: 15,
     depth_chart_order: 1,
     ...overrides,
@@ -122,17 +153,17 @@ export function createMockSleeperPlayer(overrides?: Partial<SleeperPlayer>): Sle
  */
 export function createMockSleeperTransaction(overrides?: Partial<SleeperTransaction>): SleeperTransaction {
   return {
-    transaction_id: 'txn123',
-    type: 'trade',
-    status: 'complete',
+    transaction_id: "txn123",
+    type: "trade",
+    status: "complete",
     leg: 1,
     created: Date.now(),
     roster_ids: [1, 2],
     settings: null,
     consenter_ids: [1, 2],
     draft_picks: [],
-    adds: { '4866': 2 },
-    drops: { '7564': 1 },
+    adds: { "4866": 2 },
+    drops: { "7564": 1 },
     ...overrides,
   }
 }
@@ -142,8 +173,8 @@ export function createMockSleeperTransaction(overrides?: Partial<SleeperTransact
  */
 export function createMockSleeperPlayers(count: number): Record<string, SleeperPlayer> {
   const players: Record<string, SleeperPlayer> = {}
-  const positions = ['QB', 'RB', 'WR', 'TE']
-  const teams = ['KC', 'BUF', 'SF', 'PHI', 'DAL', 'MIA', 'CIN', 'LAC']
+  const positions = ["QB", "RB", "WR", "TE"] as const
+  const teams = ["KC", "BUF", "SF", "PHI", "DAL", "MIA", "CIN", "LAC"]
 
   for (let i = 0; i < count; i++) {
     const playerId = `player${i + 1}`
@@ -152,7 +183,7 @@ export function createMockSleeperPlayers(count: number): Record<string, SleeperP
       first_name: `Player${i + 1}`,
       last_name: `Last${i + 1}`,
       full_name: `Player${i + 1} Last${i + 1}`,
-      position: positions[i % positions.length] as any,
+      position: positions[i % positions.length],
       team: teams[i % teams.length],
       age: 20 + (i % 15),
       years_exp: i % 10,
@@ -162,25 +193,49 @@ export function createMockSleeperPlayers(count: number): Record<string, SleeperP
   return players
 }
 
+/** Loose AI-ranking row shape used by legacy tests / mocks (not `PlayerRanking`). */
+export interface MockAIRankingRow {
+  player: string
+  position: string
+  rank: number
+  tier: number
+  analysis: string
+  confidence: number
+}
+
+/** Loose trade evaluation summary used in tests (not `TradeEvaluation` from the service). */
+export interface MockTradeEvaluationSummary {
+  tradeId: string
+  teamAValue: number
+  teamBValue: number
+  winner: string
+  fairness: string
+  analysis: string
+  confidence: number
+}
+
 /**
  * Create mock NFL weekly stats
  */
-export function createMockNFLWeeklyStats(playerId: string, overrides?: any) {
+export function createMockNFLWeeklyStats(
+  playerId: string,
+  overrides?: Partial<NFLWeeklyStats>,
+): NFLWeeklyStats {
   return {
     player_id: playerId,
     season: 2024,
     week: 1,
-    player_name: 'Test Player',
-    team: 'KC',
-    position: 'QB',
-    pass_yards: 312,
-    pass_tds: 3,
-    pass_ints: 1,
-    rush_yards: 25,
-    rush_tds: 0,
+    player_name: "Test Player",
+    team: "KC",
+    position: "QB",
+    passing_yards: 312,
+    passing_tds: 3,
+    interceptions: 1,
+    rushing_yards: 25,
+    rushing_tds: 0,
     receptions: 0,
-    rec_yards: 0,
-    rec_tds: 0,
+    receiving_yards: 0,
+    receiving_tds: 0,
     fantasy_points_ppr: 28.5,
     ...overrides,
   }
@@ -189,13 +244,13 @@ export function createMockNFLWeeklyStats(playerId: string, overrides?: any) {
 /**
  * Create mock AI ranking
  */
-export function createMockAIRanking(overrides?: any) {
+export function createMockAIRanking(overrides?: Partial<MockAIRankingRow>): MockAIRankingRow {
   return {
-    player: 'Patrick Mahomes',
-    position: 'QB',
+    player: "Patrick Mahomes",
+    position: "QB",
     rank: 1,
     tier: 1,
-    analysis: 'Elite QB1 with MVP upside',
+    analysis: "Elite QB1 with MVP upside",
     confidence: 0.95,
     ...overrides,
   }
@@ -204,14 +259,16 @@ export function createMockAIRanking(overrides?: any) {
 /**
  * Create mock trade evaluation
  */
-export function createMockTradeEvaluation(overrides?: any) {
+export function createMockTradeEvaluation(
+  overrides?: Partial<MockTradeEvaluationSummary>,
+): MockTradeEvaluationSummary {
   return {
-    tradeId: 'trade123',
+    tradeId: "trade123",
     teamAValue: 100,
     teamBValue: 95,
-    winner: 'Team A',
-    fairness: 'Fair',
-    analysis: 'Slight advantage to Team A',
+    winner: "Team A",
+    fairness: "Fair",
+    analysis: "Slight advantage to Team A",
     confidence: 0.85,
     ...overrides,
   }

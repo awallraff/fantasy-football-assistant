@@ -1,4 +1,6 @@
 import { NflDataFetcherService } from '@/lib/nfl-data-fetcher-service'
+import { LATEST_AVAILABLE_SEASON } from '@/lib/constants/nfl-season'
+import type { NFLDataResponse } from '@/lib/nfl-data-service'
 
 // Mock fetch globally
 global.fetch = jest.fn()
@@ -79,7 +81,7 @@ describe('NflDataFetcherService', () => {
       })
 
       const callUrl = mockFetch.mock.calls[0][0] as string
-      expect(callUrl).toContain('years=2025') // Updated to 2025 in Phase 1
+      expect(callUrl).toContain(`years=${LATEST_AVAILABLE_SEASON}`)
       expect(callUrl).toContain('positions=QB%2CRB')
       expect(callUrl).toContain('action=extract')
     })
@@ -112,8 +114,8 @@ describe('NflDataFetcherService', () => {
     }
 
     beforeEach(() => {
-      // Set up cached data
-      service['cachedData'] = mockNflData as any
+      // Set up cached data (partial shape; runtime paths only read player fields)
+      service['cachedData'] = mockNflData as NFLDataResponse
     })
 
     it('should find player in season stats', () => {
@@ -163,7 +165,7 @@ describe('NflDataFetcherService', () => {
     }
 
     beforeEach(() => {
-      service['cachedData'] = mockNflData as any
+      service['cachedData'] = mockNflData as NFLDataResponse
     })
 
     it('should return all players of specified position', () => {
@@ -191,8 +193,8 @@ describe('NflDataFetcherService', () => {
   describe('hasHistoricalData', () => {
     it('should return true when historical data is available', () => {
       service['cachedData'] = {
-        aggregated_season_stats: [{ player_name: 'Test' }]
-      } as any
+        aggregated_season_stats: [{ player_name: 'Test' }],
+      } as NFLDataResponse
 
       expect(service.hasHistoricalData()).toBe(true)
     })
@@ -205,8 +207,8 @@ describe('NflDataFetcherService', () => {
 
     it('should return false when cached data has no season stats', () => {
       service['cachedData'] = {
-        aggregated_season_stats: []
-      } as any
+        aggregated_season_stats: [],
+      } as NFLDataResponse
 
       expect(service.hasHistoricalData()).toBe(false)
     })
@@ -214,7 +216,7 @@ describe('NflDataFetcherService', () => {
 
   describe('cache management', () => {
     it('should clear cache correctly', () => {
-      service['cachedData'] = { some: 'data' } as any
+      service['cachedData'] = { some: 'data' } as unknown as NFLDataResponse
 
       service.clearCache()
 
@@ -223,7 +225,7 @@ describe('NflDataFetcherService', () => {
 
     it('should return cached data when available', () => {
       const mockData = { test: 'data' }
-      service['cachedData'] = mockData as any
+      service['cachedData'] = mockData as unknown as NFLDataResponse
 
       expect(service.getCachedData()).toEqual(mockData)
     })

@@ -52,8 +52,8 @@ describe('useLocalStorage Hook', () => {
   describe('SSR Safety', () => {
     it('should return default value when window is undefined (SSR)', () => {
       const originalWindow = global.window
-      // @ts-ignore - Simulating SSR environment
-      delete (global as any).window
+      // Simulating SSR environment
+      Reflect.deleteProperty(globalThis as typeof globalThis & { window?: typeof window }, "window")
 
       const { result } = renderHook(() => useLocalStorage('test-key', 'default-value'))
 
@@ -66,8 +66,8 @@ describe('useLocalStorage Hook', () => {
 
     it('should not crash when setting value in SSR environment', () => {
       const originalWindow = global.window
-      // @ts-ignore - Simulating SSR environment
-      delete (global as any).window
+      // Simulating SSR environment
+      Reflect.deleteProperty(globalThis as typeof globalThis & { window?: typeof window }, "window")
 
       const { result } = renderHook(() => useLocalStorage('test-key', 'default'))
 

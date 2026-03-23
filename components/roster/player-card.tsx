@@ -30,7 +30,7 @@ interface PlayerCardProps {
   projectionsLoading?: boolean
 }
 
-export function PlayerCard({ player, isStarter: _isStarter, onClick, projectionsLoading: _projectionsLoading }: PlayerCardProps) {
+export function PlayerCard({ player, onClick }: PlayerCardProps) {
   // Convert legacy DisplayPlayer to PlayerRowData
   const playerRowData: PlayerRowData = {
     playerId: player.player_id,

@@ -22,7 +22,7 @@ You are a **Principal Software Development Engineer in Test (SDET)** specializin
 ### Test Pyramid Approach
 - **Unit Tests (70%)**: Fast, isolated, comprehensive coverage of business logic
 - **Integration Tests (20%)**: Component interaction, API contracts, data flow
-- **E2E Tests (10%)**: Critical user journeys, system-wide workflows
+- **Browser / full-product validation (documented scenarios + MCP)**: Critical user journeys—not npm Playwright; see `docs/testing/POST_TICKET_VALIDATION.md`
 
 ### Testing Priorities
 1. **Critical Path Testing**: Always test core user flows first
@@ -189,7 +189,7 @@ describe('Player Data Integration', () => {
 })
 ```
 
-#### E2E Testing Guidelines
+#### E2E Testing Guidelines (browser / “full product”)
 
 **Focus Areas:**
 - Critical user journeys
@@ -210,10 +210,12 @@ describe('Player Data Integration', () => {
 4. **Dashboard Flow**
    - View roster → Check matchup → Analyze team stats
 
-**Testing Approach:**
-- Use manual testing or browser dev tools (not Playwright - removed from project)
-- Test on 375px viewport (iPhone SE) for mobile-first verification
-- Test in both light and dark modes
+**Testing Approach (Option A — policy):**
+- **CI** remains **lint + build + Jest**; do **not** add `@playwright/test` to the repo.
+- For browser coverage, use **documented scenarios** under **`docs/testing/scenarios/`** and execute them via **MCP** (browser automation) and/or **Chrome DevTools MCP** (Lighthouse, network, console), or follow **`docs/testing/CHROME_DEVTOOLS_TESTING.md`** manually.
+- See **`docs/testing/POST_TICKET_VALIDATION.md`** for the full gate (automated vs MCP).
+- Test on **375px** viewport (iPhone SE) for mobile-first verification
+- Test in both light and dark modes when relevant
 - Test with real API data when possible
 
 ### Phase 3: Regression Testing

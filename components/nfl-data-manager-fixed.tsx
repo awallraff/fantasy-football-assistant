@@ -13,7 +13,7 @@ import { useNFLDataSort } from "@/hooks/use-nfl-data-sort"
 import { useNFLDataFilter } from "@/hooks/use-nfl-data-filter"
 import { useNFLDataExport } from "@/hooks/use-nfl-data-export"
 import { safeNumber, formatValue, generateSafeKey } from "@/lib/nfl-data-utils"
-import { LATEST_AVAILABLE_SEASON, getAvailableSeasonYears } from "@/lib/constants/nfl-season"
+import { LATEST_AVAILABLE_SEASON, getAvailableDataSeasonYears } from "@/lib/constants/nfl-season"
 import { ErrorDisplay, categorizeError } from "@/components/ui/error-display"
 
 export function NFLDataManagerFixed() {
@@ -52,7 +52,7 @@ export function NFLDataManagerFixed() {
   // Constants with safe defaults
   // Most recent season with available data
   const latestAvailableYear = LATEST_AVAILABLE_SEASON
-  const availableYears = getAvailableSeasonYears(5)
+  const availableYears = getAvailableDataSeasonYears(5)
   const availablePositions = ["ALL", "QB", "RB", "WR", "TE"]
   const availableWeeks = Array.from({ length: 18 }, (_, i) => i + 1)
   const nflTeams = [

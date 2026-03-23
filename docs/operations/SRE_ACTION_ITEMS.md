@@ -1,7 +1,9 @@
 # NFL Data Fixes - Critical Action Items
 
-**Generated:** 2025-10-08
+**Generated:** 2025-10-08  
 **Full Review:** See `SRE_REVIEW_NFL_DATA_FIXES.md`
+
+**2026-03-23:** Runbook and season guide added: [nfl-data-service.md](../runbooks/nfl-data-service.md), [updating-nfl-season.md](../guides/updating-nfl-season.md) (TD-2026-03-20-004).
 
 ---
 

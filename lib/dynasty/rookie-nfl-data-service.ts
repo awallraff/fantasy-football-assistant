@@ -15,7 +15,7 @@
  * - Performance data: Real-time during games
  */
 
-import type { RookiePlayer, NFLDraftCapital, DynastyProjection } from './rookie-draft-types'
+import type { RookiePlayer, DynastyProjection } from './rookie-draft-types'
 
 // ============================================================================
 // API Response Types

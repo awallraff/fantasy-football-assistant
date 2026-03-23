@@ -86,7 +86,7 @@ export interface UseRankingsSortParams<T> {
  * })
  * ```
  */
-export function useRankingsSort<T extends Record<string, any>>({
+export function useRankingsSort<T extends Record<string, unknown>>({
   data,
   initialSortField,
   initialSortDirection = "asc",

@@ -302,7 +302,7 @@ export function useErrorWithRetry() {
     try {
       await fn()
       clearError()
-    } catch (err) {
+    } catch {
       setRetryCount(prev => prev + 1)
       // Error will be handled by the calling code
     } finally {

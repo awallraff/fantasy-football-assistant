@@ -674,9 +674,9 @@ describe('TradeEvaluationService', () => {
       const transaction = createMockSleeperTransaction({
         type: 'trade',
         roster_ids: [1, 2],
-        adds: undefined as any,
-        drops: undefined as any,
-        draft_picks: undefined as any,
+        adds: undefined,
+        drops: undefined,
+        draft_picks: undefined,
       })
 
       const result = await service.evaluateTransaction(

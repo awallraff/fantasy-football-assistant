@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **Fantasy Football Assistant** - a Next.js 15.2.4 application that integrates with the Sleeper API to provide advanced fantasy football analytics, AI-powered player rankings, trade recommendations, and league management tools. The project is deployed on Vercel and syncs with v0.app.
 
+## Open items and tasks
+
+When the user asks about **open items**, **open tasks**, **backlog**, or **what is left to do**, read **[docs/operations/OPEN_ITEMS.md](docs/operations/OPEN_ITEMS.md)** first. It is the canonical tracker (engineering IDs `TD-2026-03-20-xxx`, reference rows `REF-*`, deferred sprint items, and links to source docs). Update that file when closing or re-scoping work. [docs/operations/ISSUE_REGISTER.md](docs/operations/ISSUE_REGISTER.md) is a short alias that points to the same tracker.
+
 ## Build & Development Commands
 
 ### Development
@@ -31,9 +35,10 @@ npm run precheck         # Runs lint before deployment
 \`\`\`bash
 npm run test:unit        # Run Jest unit tests
 npm run test:integration # Run Jest integration tests
+npm run validate:smoke   # Lint + production build (quick gate; no Jest)
 \`\`\`
 
-**Important:** Playwright was removed from this project. Do not attempt to add or use Playwright testing.
+**Important:** The **`@playwright/test` npm package** is not used; do not add in-repo Playwright/CI browser E2E. **Full-product browser validation** uses **documented MCP scenarios** (Cursor) and/or manual Chrome DevTools—see **[docs/testing/POST_TICKET_VALIDATION.md](docs/testing/POST_TICKET_VALIDATION.md)** and **[docs/testing/scenarios/](docs/testing/scenarios/)**.
 
 ### Testing Requirements
 
@@ -63,7 +68,7 @@ npm run test:integration # Run Jest integration tests
 3. **Testing Checklist Before Deployment:**
    - [ ] `npm run test:unit` passes
    - [ ] `npm run build` passes with no errors
-   - [ ] Browser testing completed (for UI/cache/user-facing changes)
+   - [ ] Browser testing completed (for UI/cache/user-facing changes)—see post-ticket validation doc and scenario index
    - [ ] Performance benchmarks measured (for performance changes)
    - [ ] Integration tests validated (for multi-service features)
 

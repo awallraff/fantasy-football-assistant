@@ -1,5 +1,6 @@
 // Sleeper API client for fantasy football data
 import { fetchWithRetry, type RetryOptions } from "./api-retry"
+import { getAvailableSeasonYears, getDefaultSeasonYear } from "./constants/nfl-season"
 import {
   validateSleeperUser,
   validateSleeperLeague,
@@ -134,12 +135,19 @@ class SleeperAPI {
     this.currentSessionId = Date.now().toString()
   }
 
+  private getSeasonFallbacks(startSeason: string, yearsBack = 3): string[] {
+    const recentSeasons = getAvailableSeasonYears(yearsBack).map(String)
+    const ordered = [startSeason, ...recentSeasons]
+    return Array.from(new Set(ordered))
+  }
+
   private async fetchWithTimeout(
     url: string,
     options: RequestInit = {},
     _timeoutMs = 10000, // Timeout is handled by fetch's signal, kept for API compatibility
     retryOptions?: RetryOptions
   ): Promise<Response> {
+    void _timeoutMs
     // Use fetchWithRetry for automatic retry with exponential backoff
     return fetchWithRetry(
       url,
@@ -256,44 +264,47 @@ class SleeperAPI {
   async getUserLeagues(
     userId: string,
     sport = "nfl",
-    season = "2025", // Prioritizing 2025 as default since dynasty drafts are complete
+    season = String(getDefaultSeasonYear()),
     options: RequestInit = {},
   ): Promise<SleeperLeague[]> {
-    try {
-      console.log(`Fetching leagues for user ${userId} in ${season} season...`)
-      const response = await this.fetchWithTimeout(`${this.baseUrl}/user/${userId}/leagues/${sport}/${season}`, options)
+    const seasonsToTry = this.getSeasonFallbacks(season, 3)
 
-      if (!response.ok) {
-        console.log(`${season} season data not available (status: ${response.status}), trying fallback...`)
-        if (season === "2025") {
-          console.log("Trying 2024 season as fallback...")
-          return this.getUserLeagues(userId, sport, "2024", options)
-        } else if (season === "2024") {
-          console.log("Trying 2023 season as final fallback...")
-          return this.getUserLeagues(userId, sport, "2023", options)
+    for (let i = 0; i < seasonsToTry.length; i++) {
+      const seasonToTry = seasonsToTry[i]
+      const isLastAttempt = i === seasonsToTry.length - 1
+
+      try {
+        console.log(`Fetching leagues for user ${userId} in ${seasonToTry} season...`)
+        const response = await this.fetchWithTimeout(`${this.baseUrl}/user/${userId}/leagues/${sport}/${seasonToTry}`, options)
+
+        if (!response.ok) {
+          console.log(`${seasonToTry} season data not available (status: ${response.status})`)
+          if (!isLastAttempt) {
+            console.log(`Trying ${seasonsToTry[i + 1]} season as fallback...`)
+          }
+          continue
         }
-        return []
-      }
 
-      const leagues = await response.json()
-      const validationResult = validateSleeperLeagues(leagues)
+        const leagues = await response.json()
+        const validationResult = validateSleeperLeagues(leagues)
 
-      if (!validationResult.success) {
-        logValidationError(validationResult.error, `Sleeper API - getUserLeagues(${userId}, ${season})`)
-        console.warn(`Schema validation failed for getUserLeagues, returning empty array`)
-        return []
-      }
+        if (!validationResult.success) {
+          logValidationError(validationResult.error, `Sleeper API - getUserLeagues(${userId}, ${seasonToTry})`)
+          console.warn(`Schema validation failed for getUserLeagues, returning empty array`)
+          return []
+        }
 
-      console.log(`Successfully fetched ${validationResult.data.length} leagues for ${season} season`)
-      return validationResult.data
-    } catch (error) {
-      console.error(`Error fetching user leagues for ${season}:`, error)
-      if (season === "2025") {
-        console.log("Error occurred, trying 2024 season...")
-        return this.getUserLeagues(userId, sport, "2024", options)
+        console.log(`Successfully fetched ${validationResult.data.length} leagues for ${seasonToTry} season`)
+        return validationResult.data
+      } catch (error) {
+        console.error(`Error fetching user leagues for ${seasonToTry}:`, error)
+        if (!isLastAttempt) {
+          console.log(`Error occurred, trying ${seasonsToTry[i + 1]} season...`)
+        }
       }
-      return []
     }
+
+    return []
   }
 
   async getLeague(leagueId: string): Promise<SleeperLeague | null> {
@@ -574,21 +585,7 @@ class SleeperAPI {
 
   // New methods
   getCurrentSeason(): string {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    const currentMonth = now.getMonth() + 1 // JavaScript months are 0-indexed
-
-    // NFL season typically starts in September and runs through February of next year
-    // If it's March-August, we're in the offseason for the upcoming season
-    if (currentYear === 2025) {
-      return "2025"
-    }
-
-    if (currentMonth >= 3 && currentMonth <= 8) {
-      return currentYear.toString()
-    } else {
-      return currentMonth >= 9 ? currentYear.toString() : (currentYear - 1).toString()
-    }
+    return String(getDefaultSeasonYear())
   }
 
   async isSeasonDataAvailable(userId: string, season: string): Promise<boolean> {
@@ -665,7 +662,7 @@ class SleeperAPI {
     userId: string,
     sport = "nfl",
   ): Promise<{ season: string; leagues: SleeperLeague[] }[]> {
-    const seasons = ["2025", "2024", "2023"]
+    const seasons = getAvailableSeasonYears(3).map(String)
     const results = []
 
     for (const season of seasons) {

@@ -20,6 +20,9 @@ This directory contains design reviews, analyses, and implementation guidance fo
 |----------|---------|-------------|
 | **[UX_ANALYSIS_DESIGN_SPEC.md](./UX_ANALYSIS_DESIGN_SPEC.md)** | Comprehensive UX analysis (60+ pages) | Deep dive into design system comparisons |
 | **[DESIGN_SYSTEM_COMPARISON.md](./DESIGN_SYSTEM_COMPARISON.md)** | Side-by-side visual comparisons | When evaluating design patterns or colors |
+| **[DASHBOARD_ARCHITECTURE_REVIEW.md](./DASHBOARD_ARCHITECTURE_REVIEW.md)** | Dashboard architecture quality and risk review | When working on dashboard refactors |
+| **[COMPREHENSIVE_OPTIMIZATION_ASSESSMENT.md](./COMPREHENSIVE_OPTIMIZATION_ASSESSMENT.md)** | Consolidated optimization findings | When prioritizing performance/UX optimization work |
+| **[code-splitting-improvements.md](./code-splitting-improvements.md)** | Code splitting execution notes | When reviewing bundle strategy outcomes |
 | **[DESIGN_SPEC_PROPOSAL.md](./DESIGN_SPEC_PROPOSAL.md)** | ⚠️ **REFERENCE ONLY** - 3rd party vendor proposal | Historical context only - DO NOT implement as-is |
 
 ---

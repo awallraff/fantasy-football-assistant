@@ -247,7 +247,6 @@ function calculateScarcityScore(position: string): number {
  */
 function calculateUpsideScore(player: SleeperPlayer): number {
   const age = player.age || 25;
-  const position = player.position || 'WR';
 
   // Young players have more upside
   if (age < 24) return 90;

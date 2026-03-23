@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSafeLocalStorage } from '@/hooks/use-local-storage'
 import { sleeperAPI, type SleeperLeague, type SleeperUser } from '@/lib/sleeper-api'
 import { SleeperUserSchema, SleeperLeagueSchema } from '@/lib/schemas/sleeper-schemas'
+import { getAvailableSeasonYears, getDefaultSeasonYear } from '@/lib/constants/nfl-season'
 import { z } from 'zod'
 
 interface UseDashboardDataReturn {
@@ -27,7 +28,7 @@ export function useDashboardData(): UseDashboardDataReturn {
   const [user, setUser] = useState<SleeperUser | null>(null)
   const [leagues, setLeagues] = useState<SleeperLeague[]>([])
   const [leaguesByYear, setLeaguesByYear] = useState<{[year: string]: SleeperLeague[]}>({})
-  const [selectedYear, setSelectedYear] = useState<string>("2025")
+  const [selectedYear, setSelectedYear] = useState<string>(String(getDefaultSeasonYear()))
   
   const { getItem, setItem, removeItem, isClient } = useSafeLocalStorage()
 
@@ -109,8 +110,6 @@ export function useDashboardData(): UseDashboardDataReturn {
   }, [user])
 
   const removeLeague = useCallback((leagueId: string, leagueName?: string) => {
-    // Confirmation should be handled by the calling component using useConfirmation hook
-    // This function now only performs the removal logic
     try {
       // Filter out the league from current leagues array
       const filteredLeagues = leagues.filter(league => league.league_id !== leagueId)
@@ -145,7 +144,7 @@ export function useDashboardData(): UseDashboardDataReturn {
       if (savedUser) {
         const userData = JSON.parse(savedUser)
         
-        const seasons = ["2025", "2024", "2023"]
+        const seasons = getAvailableSeasonYears(3).map(String)
         let allLeagues: SleeperLeague[] = []
         const leaguesByYearData: {[year: string]: SleeperLeague[]} = {}
 

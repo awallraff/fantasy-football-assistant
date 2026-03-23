@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, Users, Target, Calendar, TrendingUp, TrendingDown } from "lucide-react"
@@ -12,24 +13,25 @@ interface LeagueOverviewProps {
 }
 
 export function LeagueOverview({ league, rosters, users }: LeagueOverviewProps) {
-  // Calculate league stats
-  const totalPoints = rosters.reduce((sum, roster) => sum + (roster.settings.fpts || 0), 0)
-  const avgPoints = rosters.length > 0 ? totalPoints / rosters.length : 0
-
-  // Defensive checks to prevent crash on empty rosters array
-  const highestScorer = rosters.length > 0
-    ? rosters.reduce(
-        (highest, roster) => ((roster.settings.fpts || 0) > (highest.settings.fpts || 0) ? roster : highest),
-        rosters[0],
-      )
-    : null
-
-  const lowestScorer = rosters.length > 0
-    ? rosters.reduce(
-        (lowest, roster) => ((roster.settings.fpts || 0) < (lowest.settings.fpts || 0) ? roster : lowest),
-        rosters[0],
-      )
-    : null
+  const { avgPoints, highestScorer, lowestScorer } = useMemo(() => {
+    const total = rosters.reduce((sum, roster) => sum + (roster.settings.fpts || 0), 0)
+    const avg = rosters.length > 0 ? total / rosters.length : 0
+    const highest =
+      rosters.length > 0
+        ? rosters.reduce(
+            (hi, roster) => ((roster.settings.fpts || 0) > (hi.settings.fpts || 0) ? roster : hi),
+            rosters[0],
+          )
+        : null
+    const lowest =
+      rosters.length > 0
+        ? rosters.reduce(
+            (lo, roster) => ((roster.settings.fpts || 0) < (lo.settings.fpts || 0) ? roster : lo),
+            rosters[0],
+          )
+        : null
+    return { avgPoints: avg, highestScorer: highest, lowestScorer: lowest }
+  }, [rosters])
 
   const getOwnerName = (ownerId: string) => {
     const owner = users.find((u) => u.user_id === ownerId)

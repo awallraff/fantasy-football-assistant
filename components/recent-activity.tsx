@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { RefreshCw, ArrowRightLeft, UserPlus, UserMinus, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { sleeperAPI, type SleeperTransaction, type SleeperUser, type SleeperRoster } from "@/lib/sleeper-api"
+import { getCurrentNFLWeek } from "@/lib/nfl-season-utils"
 import { PlayerDataContext } from "@/contexts/player-data-context"
 
 interface RecentActivityProps {
@@ -139,21 +140,6 @@ export function RecentActivity({ leagueId, users = [], rosters = [] }: RecentAct
       }
     })
   }, [players, rosters, users, calculatePlayerValue])
-
-  const getCurrentNFLWeek = (): number => {
-    // NFL season typically starts in early September
-    // This is a simplified calculation - in production you'd want to use a more accurate method
-    const now = new Date()
-    const seasonStart = new Date(now.getFullYear(), 8, 7) // September 7th approximation
-
-    if (now < seasonStart) {
-      // Pre-season or off-season
-      return 1
-    }
-
-    const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000))
-    return Math.min(Math.max(weeksSinceStart + 1, 1), 18) // NFL regular season is 18 weeks
-  }
 
   const loadTransactions = useCallback(async () => {
     setLoading(true)

@@ -17,6 +17,11 @@ This guide provides step-by-step instructions for testing the Fantasy Football A
 7. [Mobile Testing](#mobile-testing)
 8. [Common Issues & Debugging](#common-issues--debugging)
 
+**Related (CI vs browser):**
+
+- **[post-ticket validation (Option A)](POST_TICKET_VALIDATION.md)** — Lint, build, Jest in CI; MCP + documented scenarios for full-product checks  
+- **[MCP scenarios index](scenarios/README.md)** — Smoke and ticket-specific browser flows  
+
 ---
 
 ## Test Data & Credentials

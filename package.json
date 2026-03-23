@@ -9,6 +9,7 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "precheck": "npm run lint",
+    "validate:smoke": "npm run lint && npm run build",
     "start": "next start",
     "test:integration": "jest --testPathPatterns=\"integration\"",
     "test:unit": "jest",

@@ -5,7 +5,7 @@
  * It uses child_process (Node.js only) to run the Python script.
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
 
@@ -67,7 +67,7 @@ interface PythonRookieResponse {
 // API Route Handler
 // ============================================================================
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     console.log('[Rookie Draft API] Fetching 2025 rookie data...')
 

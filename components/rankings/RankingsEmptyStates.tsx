@@ -39,6 +39,7 @@ export interface RankingsEmptyStatesProps {
  */
 export const RankingsEmptyStates = React.memo<RankingsEmptyStatesProps>(
   ({ hasNoDataSources, isLoading, selectedSource, systemsCount, onLoadDemoData }) => {
+    void selectedSource
     // No data sources at all
     if (hasNoDataSources) {
       return (

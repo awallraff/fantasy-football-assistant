@@ -1,6 +1,6 @@
 # Documentation Index
 
-**Last Updated:** 2025-10-13
+**Last Updated:** 2026-03-22 (open items tracker)
 
 This directory contains technical documentation, guides, and runbooks for the Fantasy Football Assistant.
 
@@ -8,11 +8,17 @@ This directory contains technical documentation, guides, and runbooks for the Fa
 
 ## 📚 Quick Navigation
 
+### Open items and tasks
+
+- **[OPEN_ITEMS.md](./operations/OPEN_ITEMS.md)** - **Canonical backlog tracker** (read this for open tasks and status)
+- **[ISSUE_REGISTER.md](./operations/ISSUE_REGISTER.md)** - Alias; points to OPEN_ITEMS.md
+
 ### By Category
 
 - **[🔌 Integrations](#integrations)** - External system integrations (Bark, Vercel, Sleeper)
 - **[🏗️ Architecture](#architecture)** - System architecture, reviews, and design system
 - **[🏃 Sprints](#sprints)** - Sprint-specific documentation and roadmaps
+- **[🗂️ Tasks](#tasks)** - Task-level temporary execution docs
 - **[✨ Features](#features)** - Feature-specific implementation docs
 - **[⚙️ Operations](#operations)** - SRE, runbooks, and operational guides
 - **[📋 Planning](#planning)** - Project status and roadmaps
@@ -39,6 +45,7 @@ External system integrations and setup guides.
 
 ### Sleeper API
 - **[SLEEPER_CACHE_IMPLEMENTATION.md](./integrations/sleeper/SLEEPER_CACHE_IMPLEMENTATION.md)** - Sleeper API caching implementation
+- **[sleeper-tech-stack-analysis.md](./integrations/sleeper/sleeper-tech-stack-analysis.md)** - Sleeper integration and tech stack notes
 
 ---
 
@@ -50,6 +57,9 @@ System architecture, technical reviews, and design system documentation.
 - **[ARCHITECTURAL_REVIEW.md](./architecture/reviews/ARCHITECTURAL_REVIEW.md)** - Code quality review with action items
 - **[NFL_DATA_INTEGRATION_ARCHITECTURE_REVIEW.md](./architecture/reviews/NFL_DATA_INTEGRATION_ARCHITECTURE_REVIEW.md)** - Detailed technical review of NFL data integration
 - **[NFL_DATA_INTEGRATION_EXECUTIVE_SUMMARY.md](./architecture/reviews/NFL_DATA_INTEGRATION_EXECUTIVE_SUMMARY.md)** - Executive summary of NFL data integration
+- **[DASHBOARD_ARCHITECTURE_REVIEW.md](./architecture/reviews/DASHBOARD_ARCHITECTURE_REVIEW.md)** - Dashboard architecture review
+- **[COMPREHENSIVE_OPTIMIZATION_ASSESSMENT.md](./architecture/reviews/COMPREHENSIVE_OPTIMIZATION_ASSESSMENT.md)** - Consolidated optimization assessment
+- **[code-splitting-improvements.md](./architecture/reviews/code-splitting-improvements.md)** - Code splitting analysis and outcomes
 
 ### Data Layer
 - **[PLAYER_DATA_ARCHITECTURE.md](./architecture/data-layer/PLAYER_DATA_ARCHITECTURE.md)** - Player data architecture and context
@@ -86,6 +96,15 @@ Sprint-specific documentation, roadmaps, and status updates.
 
 ---
 
+## 🗂️ Tasks
+
+Task-level execution docs and intermediate analysis artifacts. These are temporary by nature and should be reviewed for archive/migration after completion.
+
+### Sprint 3 Tasks
+- **[tasks/sprint-3/](./tasks/sprint-3/)** - TASK-056 through TASK-058 execution documents and results
+
+---
+
 ## ✨ Features
 
 Feature-specific implementation documentation.
@@ -108,17 +127,34 @@ Feature-specific implementation documentation.
 
 ---
 
+## Testing & QA
+
+- **[POST_TICKET_VALIDATION.md](./testing/POST_TICKET_VALIDATION.md)** — **CI (lint, build, Jest) vs MCP/browser scenarios** (Option A)
+- **[CHROME_DEVTOOLS_TESTING.md](./testing/CHROME_DEVTOOLS_TESTING.md)** — Manual Chrome DevTools reference (cache, network, mobile)
+- **[testing/scenarios/README.md](./testing/scenarios/README.md)** — Documented browser/MCP scenarios (smoke, ticket-specific)
+
+---
+
 ## ⚙️ Operations
 
 SRE documentation, runbooks, and operational guides.
 
+- **[OPEN_ITEMS.md](./operations/OPEN_ITEMS.md)** - **Canonical open items / tasks tracker** (TD/REF IDs, deferred work, links to evidence docs)
+- **[ISSUE_REGISTER.md](./operations/ISSUE_REGISTER.md)** - Short alias linking to OPEN_ITEMS.md
 - **[SRE_ACTION_ITEMS.md](./operations/SRE_ACTION_ITEMS.md)** - SRE-identified action items
 - **[SRE_REVIEW_NFL_DATA_FIXES.md](./operations/SRE_REVIEW_NFL_DATA_FIXES.md)** - Detailed SRE review of NFL data fixes
+- **[performance-analysis-dashboard.md](./operations/performance-analysis-dashboard.md)** - Dashboard performance analysis
+- **[REPO_HYGIENE_STATUS.md](./operations/REPO_HYGIENE_STATUS.md)** - Repository hygiene tracker
 
-### Runbooks (Planned)
-- 🔜 `runbooks/nfl-data-service.md` - Operational troubleshooting for NFL data service
-- 🔜 `runbooks/cache-invalidation.md` - Cache invalidation procedures
-- 🔜 `runbooks/deployment-rollback.md` - Deployment rollback procedures
+### Runbooks and ops guides
+
+- **[runbooks/nfl-data-service.md](./runbooks/nfl-data-service.md)** — NFL data pipeline, Vercel/Python failures, verification, rollback, observability
+- **[guides/updating-nfl-season.md](./guides/updating-nfl-season.md)** — Bumping `LATEST_AVAILABLE_SEASON`, verify data, deploy checklist
+
+Planned later:
+
+- `runbooks/cache-invalidation.md` — Cache invalidation procedures
+- `runbooks/deployment-rollback.md` — Deployment rollback procedures (see also [DEPLOYMENT_GUIDE.md](./integrations/vercel/DEPLOYMENT_GUIDE.md))
 
 ---
 
@@ -131,14 +167,27 @@ Project status, planning documents, and roadmaps.
 
 ---
 
+## 🎨 Design
+
+Design analysis and implementation-oriented UX documentation.
+
+- **[design/README.md](./design/README.md)** - Design documentation index
+- **[ui-ux-design-review.md](./design/ui-ux-design-review.md)** - Comprehensive UI/UX design review
+- **[ui-audit-report.md](./design/ui-audit-report.md)** - UI audit report
+- **[ios-dark-theme-dashboard-redesign.md](./design/ios-dark-theme-dashboard-redesign.md)** - iOS dark theme dashboard redesign notes
+
+---
+
 ## 🎯 Documentation by Audience
 
 ### For Developers
-**Start here:** [PROJECT_STATUS.md](./planning/PROJECT_STATUS.md) → [DYNASTY_FEATURE_ROADMAP.md](./sprints/DYNASTY_FEATURE_ROADMAP.md) → [CLAUDE.md](../CLAUDE.md)
+**Start here:** [OPEN_ITEMS.md](./operations/OPEN_ITEMS.md) (backlog) → [PROJECT_STATUS.md](./planning/PROJECT_STATUS.md) → [DYNASTY_FEATURE_ROADMAP.md](./sprints/DYNASTY_FEATURE_ROADMAP.md) → [CLAUDE.md](../CLAUDE.md)
 
 Key docs:
+- [OPEN_ITEMS.md](./operations/OPEN_ITEMS.md) - Open tasks and status (canonical)
 - [ARCHITECTURAL_REVIEW.md](./architecture/reviews/ARCHITECTURAL_REVIEW.md) - Code quality guidelines
 - [PLAYER_DATA_ARCHITECTURE.md](./architecture/data-layer/PLAYER_DATA_ARCHITECTURE.md) - Data layer patterns
+- [POST_TICKET_VALIDATION.md](./testing/POST_TICKET_VALIDATION.md) - Testing layers (CI vs MCP scenarios)
 - [CLAUDE.md](../CLAUDE.md) - Development conventions and commands
 
 ### For Product/Planning
@@ -149,11 +198,11 @@ Key docs:
 - Sprint status docs in [sprints/](./sprints/)
 
 ### For Operations/SRE
-**Start here:** [SRE_ACTION_ITEMS.md](./operations/SRE_ACTION_ITEMS.md) → [DEPLOYMENT_GUIDE.md](./integrations/vercel/DEPLOYMENT_GUIDE.md)
+**Start here:** [OPEN_ITEMS.md](./operations/OPEN_ITEMS.md) → [SRE_ACTION_ITEMS.md](./operations/SRE_ACTION_ITEMS.md) → [DEPLOYMENT_GUIDE.md](./integrations/vercel/DEPLOYMENT_GUIDE.md)
 
 Key docs:
 - [SRE_REVIEW_NFL_DATA_FIXES.md](./operations/SRE_REVIEW_NFL_DATA_FIXES.md) - Reliability review
-- Operations runbooks in [operations/runbooks/](./operations/runbooks/) (coming soon)
+- [runbooks/nfl-data-service.md](./runbooks/nfl-data-service.md), [guides/updating-nfl-season.md](./guides/updating-nfl-season.md)
 
 ### For End Users
 - [BARK_PUSH_NOTIFICATIONS.md](./integrations/bark/BARK_PUSH_NOTIFICATIONS.md) - Setup push notifications
@@ -179,6 +228,7 @@ All documents should include:
 ### Maintenance
 - Review quarterly (or after major releases)
 - Mark outdated sections with ⚠️ warnings
+- Keep temporary task docs in `docs/tasks/` (not `docs/` root)
 - Archive superseded docs to `docs/archive/`
 - Update `Last Updated` date when making changes
 

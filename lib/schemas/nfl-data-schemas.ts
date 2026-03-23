@@ -89,9 +89,10 @@ export const NFLPlayerInfoSchema = z.object({
   position: z.string(),
   team: z.string(),
   jersey_number: z.number().int().optional(),
-  height: z.string().optional(),
+  /** nflverse may emit height as inches (number) or a string like 6-2 */
+  height: z.union([z.string(), z.number()]).optional(),
   weight: z.number().optional(),
-  birth_date: z.string().optional(),
+  birth_date: z.string().nullish(),
   college: z.string().optional(),
   season: z.number().int().min(2000).max(2100),
 });
@@ -148,7 +149,8 @@ export type NFLTeamAnalyticsValidated = z.infer<typeof NFLTeamAnalyticsSchema>;
 export const NFLDataMetadataSchema = z.object({
   years: z.array(z.number().int()),
   positions: z.array(z.string()),
-  week: z.number().int().optional(),
+  /** Python / JSON use null when no week filter; Zod .optional() does not accept null */
+  week: z.number().int().nullish(),
   extracted_at: z.string(),
   total_weekly_records: z.number().int(),
   total_seasonal_records: z.number().int(),
@@ -173,7 +175,7 @@ export const NFLDataResponseSchema = z.object({
   player_info: z.array(NFLPlayerInfoSchema),
   team_analytics: z.array(NFLTeamAnalyticsSchema),
   metadata: NFLDataMetadataSchema,
-  error: z.string().optional(),
+  error: z.string().nullish(),
 });
 
 export type NFLDataResponseValidated = z.infer<typeof NFLDataResponseSchema>;
@@ -377,7 +379,7 @@ export function validatePartial<T extends z.ZodTypeAny>(
 // Export all schemas and utilities
 // ============================================================================
 
-export default {
+const nflDataSchemas = {
   // Schemas
   NFLPlayerStatsSchema,
   NFLWeeklyStatsSchema,
@@ -400,3 +402,5 @@ export default {
   safeParseWithLogging,
   validatePartial,
 };
+
+export default nflDataSchemas;

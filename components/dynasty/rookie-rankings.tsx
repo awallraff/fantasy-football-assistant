@@ -34,6 +34,7 @@ import {
   sortRookies,
 } from '@/lib/dynasty/rookie-data-service';
 import { getCurrentRookieSeasonYear } from '@/lib/dynasty/rookie-season-utils';
+import { ErrorDisplay } from '@/components/ui/error-display';
 
 // ============================================================================
 // Component Props
@@ -65,18 +66,19 @@ export function RookieRankings({
 }: RookieRankingsProps) {
   // Use dynamic rookie season if year not specified
   const rookieYear = year ?? getCurrentRookieSeasonYear();
-  // Load rookie class data
   const [draftClass, setDraftClass] = useState<RookieDraftClass | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   // Filter and sort state
   const [filters, setFilters] = useState<RookieFilterOptions>({});
   const [sortBy, setSortBy] = useState<RookieSortOption>('consensus-rank');
 
-  // Fetch rookie data on mount
   useEffect(() => {
     let mounted = true;
     setLoading(true);
+    setLoadError(null);
 
     getRookieDraftClass(rookieYear)
       .then((data) => {
@@ -88,7 +90,8 @@ export function RookieRankings({
       .catch((err) => {
         console.error('Error loading rookie draft class:', err);
         if (mounted) {
-          setDraftClass({ year: rookieYear, players: [], rankings: [], updatedAt: new Date(), sources: [] });
+          setDraftClass(null);
+          setLoadError(err instanceof Error ? err.message : 'Failed to load rookie rankings');
           setLoading(false);
         }
       });
@@ -96,7 +99,7 @@ export function RookieRankings({
     return () => {
       mounted = false;
     };
-  }, [rookieYear]);
+  }, [rookieYear, retryKey]);
 
   // Apply filters and sorting
   const filteredAndSortedRookies = useMemo(() => {
@@ -135,7 +138,6 @@ export function RookieRankings({
     setSortBy(value as RookieSortOption);
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="space-y-4">
@@ -150,6 +152,25 @@ export function RookieRankings({
         </Card>
       </div>
     );
+  }
+
+  if (loadError) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">{rookieYear} Rookie Rankings</h2>
+        <ErrorDisplay
+          type="server"
+          title="Could not load rookie rankings"
+          message={loadError}
+          showRetry
+          onRetry={() => setRetryKey((k) => k + 1)}
+        />
+      </div>
+    );
+  }
+
+  if (!draftClass) {
+    return null;
   }
 
   return (

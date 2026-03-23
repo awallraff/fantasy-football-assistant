@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, AlertTriangle, TrendingUp } from "lucide-react"
-import type { SleeperLeague } from "@/lib/sleeper-api"
+import { CheckCircle, XCircle, AlertTriangle, TrendingUp, Loader2 } from "lucide-react"
+import { sleeperAPI, type SleeperLeague } from "@/lib/sleeper-api"
+import { usePlayerData } from "@/contexts/player-data-context"
+import { useProjections } from "@/contexts/projections-context"
+import { buildRosterRows, buildStartSitDecisions } from "@/lib/league-roster-analysis"
 
 interface StartSitAdvisorProps {
   league: SleeperLeague
@@ -31,19 +34,37 @@ interface StartSitDecision {
 
 export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
   const [decisions, setDecisions] = useState<StartSitDecision[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedPosition, setSelectedPosition] = useState<string>("all")
   const [week, setWeek] = useState<string>("current")
+  const { getPlayer, getPlayerName } = usePlayerData()
+  const { getProjection, loadProjectionsForPlayers } = useProjections()
 
-  // TODO: Implement real start/sit analysis using:
-  // - Player projections from rankings
-  // - Matchup difficulty ratings
-  // - Injury reports and player status
-  // - Weather conditions
-  // - Vegas betting lines and game totals
+  const runAnalysis = useCallback(async () => {
+    setLoading(true)
+    try {
+      const rosters = await sleeperAPI.getLeagueRosters(league.league_id)
+      const userRoster = rosters.find((r) => r.owner_id === userId)
+      if (!userRoster) {
+        setDecisions([])
+        return
+      }
+      const ids = [...new Set([...(userRoster.players || []), ...(userRoster.starters || [])])]
+      const nameMap = new Map(ids.map((id) => [id, getPlayerName(id)]))
+      await loadProjectionsForPlayers(ids, nameMap)
+      const rows = buildRosterRows(userRoster, getPlayer, getProjection)
+      setDecisions(buildStartSitDecisions(rows))
+    } catch (e) {
+      console.error("Start/sit advisor:", e)
+      setDecisions([])
+    } finally {
+      setLoading(false)
+    }
+  }, [league.league_id, userId, getPlayer, getPlayerName, getProjection, loadProjectionsForPlayers])
+
   useEffect(() => {
-    // For now, show empty state until implementation is complete
-    setDecisions([])
-  }, [league, userId, week])
+    void runAnalysis()
+  }, [runAnalysis])
 
   const filteredDecisions = decisions.filter((decision) => {
     if (selectedPosition === "all") return true
@@ -128,7 +149,10 @@ export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
               </SelectContent>
             </Select>
 
-            <Button>Refresh Analysis</Button>
+            <Button type="button" onClick={() => void runAnalysis()} disabled={loading} className="min-h-[44px] inline-flex items-center gap-2">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : null}
+              <span>Refresh Analysis</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -143,12 +167,17 @@ export function StartSitAdvisor({ league, userId }: StartSitAdvisorProps) {
           <CardDescription>AI-powered advice for your toughest lineup decisions</CardDescription>
         </CardHeader>
         <CardContent>
-          {filteredDecisions.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3 text-text-secondary">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-ios-subheadline">Loading roster and projections…</p>
+            </div>
+          ) : filteredDecisions.length === 0 ? (
             <div className="text-center py-12 text-text-secondary">
               <TrendingUp className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <h3 className="text-ios-headline font-semibold mb-2 text-foreground">Start/Sit Analysis Coming Soon</h3>
+              <h3 className="text-ios-headline font-semibold mb-2 text-foreground">No roster or no projection data</h3>
               <p className="text-ios-subheadline max-w-md mx-auto">
-                AI-powered start/sit recommendations will analyze matchups, projections, weather, and injury reports to help you make optimal lineup decisions.
+                Connect your league and generate rankings so we can estimate weekly projections for your players.
               </p>
             </div>
           ) : (

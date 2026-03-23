@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, Medal, Award } from "lucide-react"
@@ -17,13 +18,16 @@ export function StandingsTable({ rosters, users, league }: StandingsTableProps) 
     return owner?.display_name || owner?.username || "Unknown"
   }
 
-  // Sort rosters by wins, then by points for
-  const sortedRosters = [...rosters].sort((a, b) => {
-    if (a.settings.wins !== b.settings.wins) {
-      return b.settings.wins - a.settings.wins
-    }
-    return (b.settings.fpts || 0) - (a.settings.fpts || 0)
-  })
+  const sortedRosters = useMemo(
+    () =>
+      [...rosters].sort((a, b) => {
+        if (a.settings.wins !== b.settings.wins) {
+          return b.settings.wins - a.settings.wins
+        }
+        return (b.settings.fpts || 0) - (a.settings.fpts || 0)
+      }),
+    [rosters],
+  )
 
   const getRankIcon = (rank: number) => {
     switch (rank) {

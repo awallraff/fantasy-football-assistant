@@ -2,7 +2,10 @@
  * NFL Season Constants
  *
  * Centralized constants for NFL season management.
- * Update LATEST_AVAILABLE_SEASON at the start of each new NFL season (typically early September).
+ *
+ * IMPORTANT:
+ * - PLATFORM_CURRENT_SEASON: what the app should target for league UX (upcoming season support).
+ * - LATEST_AVAILABLE_SEASON: latest season with published NFL stats data (nflverse/nflreadpy).
  */
 
 /**
@@ -21,6 +24,8 @@
  * export const LATEST_AVAILABLE_SEASON = 2026
  *
  * @changelog
+ * - 2026-03-22: Set to 2025 — nflverse releases `stats_player_week_YYYY.parquet` only after that
+ *   season exists; requesting the next calendar year (e.g. 2026 in March) returns 404 until ~Sept.
  * - 2025-10-12: Updated to 2025 (completed nflreadpy migration, 2025 data confirmed available)
  * - 2025-10-12: Reverted to 2024 (2025 season data not yet available in nfl_data_py)
  * - 2025-10-10: Updated to 2025 (migrated to nflreadpy library)
@@ -28,11 +33,19 @@
 export const LATEST_AVAILABLE_SEASON = 2025
 
 /**
+ * Season the product should present as current for league workflows.
+ *
+ * MVP is intentionally static for launch readiness.
+ * Future: make this dynamic via schedule/date-based logic or admin config.
+ */
+export const PLATFORM_CURRENT_SEASON = 2026
+
+/**
  * Get the default season year for UI components
  * Uses the latest available season as the default
  */
 export function getDefaultSeasonYear(): number {
-  return LATEST_AVAILABLE_SEASON
+  return PLATFORM_CURRENT_SEASON
 }
 
 /**
@@ -46,5 +59,28 @@ export function getDefaultSeasonYear(): number {
  * getAvailableSeasonYears(5) // [2024, 2023, 2022, 2021, 2020]
  */
 export function getAvailableSeasonYears(yearsBack: number = 5): number[] {
+  return Array.from({ length: yearsBack }, (_, i) => PLATFORM_CURRENT_SEASON - i)
+}
+
+/**
+ * Get available years for NFL stats extraction.
+ * This is intentionally capped to published stats data, not platform target season.
+ */
+export function getAvailableDataSeasonYears(yearsBack: number = 5): number[] {
   return Array.from({ length: yearsBack }, (_, i) => LATEST_AVAILABLE_SEASON - i)
+}
+
+/**
+ * Clamp requested seasons to what nflverse actually publishes (avoids 404 on parquet downloads).
+ * Call this for any API/query path that passes `years` into nflreadpy.
+ */
+export function clampSeasonYearsToAvailable(years: number[]): number[] {
+  const unique = [
+    ...new Set(
+      years
+        .filter((y) => Number.isFinite(y) && y >= 1999)
+        .map((y) => Math.min(Math.trunc(y), LATEST_AVAILABLE_SEASON))
+    ),
+  ].sort((a, b) => b - a)
+  return unique
 }

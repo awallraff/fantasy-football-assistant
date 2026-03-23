@@ -7,6 +7,31 @@
 import { NFL_SEASON_DATES, WEEK_IN_MS } from "./constants/rankings";
 
 /**
+ * Current regular-season week number (1–18), estimated from the calendar.
+ * Uses the same regular-season start as {@link getNextUpcomingWeek} (`NFL_SEASON_DATES`).
+ * Before the regular season begins, returns `1`.
+ */
+export function getCurrentNFLWeek(): number {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const seasonStart = new Date(
+    currentYear,
+    NFL_SEASON_DATES.REGULAR_SEASON_START_MONTH - 1,
+    NFL_SEASON_DATES.REGULAR_SEASON_START_DAY,
+  );
+
+  if (now < seasonStart) {
+    return 1;
+  }
+
+  const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / WEEK_IN_MS);
+  return Math.min(
+    Math.max(weeksSinceStart + 1, 1),
+    NFL_SEASON_DATES.REGULAR_SEASON_WEEKS,
+  );
+}
+
+/**
  * Result of calculating the next upcoming NFL week
  */
 export interface NextUpcomingWeek {

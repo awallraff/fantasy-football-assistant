@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, FileText, AlertCircle, CheckCircle } from "lucide-react"
 import type { RankingSystem, PlayerRanking } from "@/lib/rankings-types"
+import { getDefaultSeasonYear } from "@/lib/constants/nfl-season"
 
 interface RankingsImporterProps {
   onImportComplete: (system: RankingSystem) => void
@@ -28,7 +29,7 @@ export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
     name: "",
     description: "",
     source: "",
-    season: "2024",
+    season: String(getDefaultSeasonYear()),
     scoringFormat: "ppr",
   })
   const [file, setFile] = useState<File | null>(null)
@@ -259,7 +260,7 @@ export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
         name: "",
         description: "",
         source: "",
-        season: "2024",
+        season: String(getDefaultSeasonYear()),
         scoringFormat: "ppr",
       })
       setFile(null)
@@ -338,7 +339,7 @@ export function RankingsImporter({ onImportComplete }: RankingsImporterProps) {
                 id="season"
                 value={formData.season}
                 onChange={(e) => setFormData({ ...formData, season: e.target.value })}
-                placeholder="2024"
+                placeholder={String(getDefaultSeasonYear())}
               />
             </div>
 

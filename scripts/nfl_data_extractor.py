@@ -7,6 +7,7 @@ Now supports 2025 season data!
 
 import sys
 import json
+import math
 import argparse
 from datetime import datetime
 import warnings
@@ -18,6 +19,52 @@ import nflreadpy as nfl
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
+
+
+def sanitize_for_json(obj):
+    """
+    Recursively replace NaN/Inf and pandas NA with None so output is RFC 8259 JSON.
+    Python's json.dumps(allow_nan=True) emits NaN/Infinity which JSON.parse rejects
+    (and can surface as 'No number after minus sign' for -Infinity).
+    """
+    if obj is None:
+        return None
+    try:
+        import pandas as pd
+        if pd.api.types.is_scalar(obj) and pd.isna(obj):
+            return None
+    except Exception:
+        pass
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [sanitize_for_json(v) for v in obj]
+    if isinstance(obj, bool):
+        return obj
+    if isinstance(obj, int) and not isinstance(obj, bool):
+        return obj
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    if isinstance(obj, str):
+        return obj
+    try:
+        import numpy as np
+        if isinstance(obj, np.generic):
+            if isinstance(obj, np.floating):
+                val = float(obj)
+                if math.isnan(val) or math.isinf(val):
+                    return None
+                return val
+            if isinstance(obj, np.integer):
+                return int(obj)
+            if isinstance(obj, np.bool_):
+                return bool(obj)
+    except ImportError:
+        pass
+    return obj
+
 
 @contextmanager
 def suppress_stdout():
@@ -146,7 +193,9 @@ def extract_player_stats(years=None, positions=None, week=None):
             'error': str(e),
             'weekly_stats': [],
             'seasonal_stats': [],
+            'aggregated_season_stats': [],
             'player_info': [],
+            'team_analytics': [],
             'metadata': {
                 'years': years,
                 'positions': positions,
@@ -154,7 +203,9 @@ def extract_player_stats(years=None, positions=None, week=None):
                 'extracted_at': datetime.now().isoformat(),
                 'total_weekly_records': 0,
                 'total_seasonal_records': 0,
+                'total_aggregated_records': 0,
                 'total_players': 0,
+                'total_teams': 0,
                 'data_source': 'nflreadpy'
             }
         }
@@ -543,8 +594,9 @@ def main():
     # Extract data
     data = extract_player_stats(years=args.years, positions=args.positions, week=args.week)
 
-    # Output results
-    json_output = json.dumps(data, indent=2, default=str)
+    # Output results (must be strict JSON: no NaN/Infinity from pandas/numpy)
+    safe = sanitize_for_json(data)
+    json_output = json.dumps(safe, indent=2, default=str, allow_nan=False)
 
     if args.output:
         with open(args.output, 'w') as f:

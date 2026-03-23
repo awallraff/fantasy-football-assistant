@@ -133,8 +133,8 @@ describe('useLeagueSelection Hook', () => {
       const league1 = props.leaguesByYear['2025'][0]
       const league2 = createMockSleeperLeague({ league_id: 'league_3', name: 'Another League', season: '2025' })
 
-      let resolveFirst: any
-      const firstPromise = new Promise((resolve) => {
+      let resolveFirst: (value: unknown) => void
+      const firstPromise = new Promise<unknown>((resolve) => {
         resolveFirst = resolve
       })
 
@@ -247,8 +247,8 @@ describe('useLeagueSelection Hook', () => {
       const props = createMockProps()
       const league = props.leaguesByYear['2025'][0]
 
-      let resolveRosters: any
-      const rostersPromise = new Promise((resolve) => {
+      let resolveRosters: (value: unknown) => void
+      const rostersPromise = new Promise<unknown>((resolve) => {
         resolveRosters = resolve
       })
 
@@ -410,8 +410,8 @@ describe('useLeagueSelection Hook', () => {
       const props = createMockProps()
       const league = props.leaguesByYear['2025'][0]
 
-      let resolveRosters: any
-      const rostersPromise = new Promise((resolve) => {
+      let resolveRosters: (value: unknown) => void
+      const rostersPromise = new Promise<unknown>((resolve) => {
         resolveRosters = resolve
       })
 
